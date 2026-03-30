@@ -1,0 +1,14 @@
+active_vault: vaults/personal
+
+vaults:
+  personal:
+    path: vaults/personal
+    description: Conocimiento personal de desarrollo web full-stack (Laravel + React)
+
+# Para cambiar de vault activo:
+#   1. Edita active_vault arriba
+#   2. O usa /vault-switch <nombre>
+# Ejemplo de vault de cliente:
+#   cliente-erp-2025:
+#     path: vaults/cliente-erp-2025
+#     description: Proyecto ERP cliente 2025

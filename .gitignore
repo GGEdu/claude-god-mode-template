@@ -1,0 +1,33 @@
+# Secretos — NUNCA subir
+.env
+.env.*
+secrets/
+*.key
+*.pem
+
+# Settings locales (preferencias personales)
+.claude/settings.local.json
+
+# Dependencias
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+
+# Datos de arscontexta (se generan localmente)
+.arscontexta/
+
+# Datos de NotebookLM MCP
+~/.notebooklm-mcp-cli/
+
+# Outputs temporales
+output/
+dist/
+build/
+
+# Proyectos externos para análisis (no pertenecen al template)
+projects/
+
+# OS
+.DS_Store
+Thumbs.db
