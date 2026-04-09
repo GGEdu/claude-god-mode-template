@@ -1,0 +1,29 @@
+name: daily-memory-consolidation
+description: "Consolida .claude/memory.mmd si supera 300 líneas"
+schedule: "0 18 * * *"   # Cada día a las 18:00 UTC
+model: haiku
+output: "ops/sessions/memory-consolidation-$(date +%Y%m%d).md"
+tags: [memory, maintenance, daily]
+
+prompt: |
+  You are the memory-consolidator agent. Check if .claude/memory.mmd needs consolidation.
+
+  Step 1 — Count lines:
+    Run: wc -l .claude/memory.mmd
+
+  Step 2 — If lines > 300:
+    Read the full memory file.
+    Consolidate it:
+    - Merge duplicate or overlapping nodes
+    - Remove entries older than 30 days that are no longer relevant
+    - Keep all active architectural decisions, user preferences, and ongoing work
+    - Target: < 250 lines after consolidation
+
+    Overwrite .claude/memory.mmd with the consolidated version.
+
+    Save a consolidation log to: ops/sessions/memory-consolidation-YYYYMMDD.md
+    Log must include: lines before, lines after, what was removed.
+
+  Step 3 — If lines <= 300:
+    Output: "Memory healthy: N lines. No consolidation needed."
+    Do NOT modify the file.

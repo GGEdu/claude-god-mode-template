@@ -1,0 +1,30 @@
+name: weekly-security-audit
+description: "Auditoría de seguridad semanal sobre archivos modificados en los últimos 7 días"
+schedule: "0 9 * * 1"   # Lunes 09:00 UTC
+model: sonnet
+output: "ops/sessions/security-audit-$(date +%Y%m%d).md"
+tags: [security, audit, weekly]
+
+prompt: |
+  You are the security-reviewer agent. Conduct a weekly security audit.
+
+  Step 1 — Identify files changed in the last 7 days:
+    Run: git log --since="7 days ago" --name-only --pretty=format: | sort -u | grep -v '^$'
+
+  Step 2 — Review each relevant file for:
+    - Hardcoded secrets, API keys, or credentials
+    - Missing authentication or authorization checks
+    - Input validation gaps (SQL injection, XSS, path traversal)
+    - Insecure dependencies (check package.json / composer.json if modified)
+    - CSRF vulnerabilities on state-changing endpoints
+
+  Step 3 — Produce a markdown security audit report with:
+    1. Executive summary (2-3 sentences)
+    2. Findings table: File | Severity | Issue | Recommendation
+    3. Action items (prioritized by severity)
+    4. Files audited (count + list)
+
+  Step 4 — Save the report to: ops/sessions/security-audit-YYYYMMDD.md
+    Use today's date in the filename.
+
+  If no critical or high findings: end with "✅ No critical findings this week."

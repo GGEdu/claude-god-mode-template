@@ -1,0 +1,31 @@
+name: weekly-docs-health
+description: "Revisa la salud de la documentación del proyecto cada domingo"
+schedule: "0 9 * * 0"   # Domingo 09:00 UTC
+model: sonnet
+output: "ops/sessions/docs-health-$(date +%Y%m%d).md"
+tags: [docs, audit, weekly]
+
+prompt: |
+  You are the doc-updater agent. Conduct a weekly documentation health check.
+
+  Step 1 — Check CLAUDE.md accuracy:
+    Read .claude/CLAUDE.md.
+    Compare against the actual agents in .claude/agents/ and rules in .claude/rules/.
+    Note any references to agents or commands that no longer exist.
+
+  Step 2 — Check README.md:
+    Read README.md.
+    Verify setup instructions match the current Makefile targets.
+    Note outdated commands or missing new features.
+
+  Step 3 — Check stale docs:
+    Run: git log --since="14 days ago" --name-only --pretty=format: | sort -u | grep -v '^$'
+    For each modified source file, check if corresponding docs/ content needs updating.
+
+  Step 4 — Produce a markdown docs health report:
+    1. Summary (healthy / needs attention)
+    2. Stale items: File | Issue | Suggested update
+    3. Missing docs for recent changes
+    4. Recommended priority order
+
+  Step 5 — Save to: ops/sessions/docs-health-YYYYMMDD.md
