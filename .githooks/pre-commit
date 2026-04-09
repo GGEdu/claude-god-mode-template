@@ -1,0 +1,45 @@
+#!/bin/bash
+# Pre-commit hook: Linting automatico
+# Se ejecuta ANTES de cada git commit
+
+echo "🔍 Ejecutando pre-commit hooks..."
+
+# Detecta el tipo de proyecto
+if [ -f "package.json" ]; then
+  echo "📦 Proyecto Node.js detectado — ejecutando Biome..."
+  if command -v biome &> /dev/null; then
+    npx biome check --apply .
+    if [ $? -ne 0 ]; then
+      echo "❌ Biome encontro errores. Corrigelos antes de hacer commit."
+      exit 1
+    fi
+  elif command -v eslint &> /dev/null; then
+    npx eslint . --fix
+  fi
+fi
+
+if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ]; then
+  echo "🐍 Proyecto Python detectado — ejecutando Ruff..."
+  if command -v ruff &> /dev/null; then
+    ruff check . --fix
+    ruff format .
+    if [ $? -ne 0 ]; then
+      echo "❌ Ruff encontro errores. Corrigelos antes de hacer commit."
+      exit 1
+    fi
+  fi
+fi
+
+# Bloquear commits con secrets obvios
+# Patrones calibrados con longitud mínima para evitar falsos positivos en docs/ejemplos:
+#   ghp_ → GitHub PAT (36 chars reales; placeholders como "ghp_tu_token_aqui" tienen <20)
+#   sk-[a-zA-Z0-9]{30,} → OpenAI/Anthropic keys (son largas; "sk-proj-xxxxx" no matchea)
+#   AKIA[A-Z0-9]{16} → AWS Access Key ID (formato fijo de 20 chars total)
+#   api_key = "..." con 20+ chars → valores hardcodeados con longitud realista
+echo "🔐 Verificando que no hay secrets en los cambios..."
+if git diff --cached | grep -E "(ghp_[a-zA-Z0-9]{20,}|sk-[a-zA-Z0-9]{30,}|AKIA[A-Z0-9]{16}|api_key\s*=\s*['\"][^'\"]{20,})" --quiet; then
+  echo "❌ ALERTA: Posible secret detectado en los cambios. Revisa antes de commitear."
+  exit 1
+fi
+
+echo "✅ Pre-commit hooks pasados correctamente"

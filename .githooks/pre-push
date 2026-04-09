@@ -1,0 +1,29 @@
+#!/bin/bash
+# Pre-push hook: Tests obligatorios
+# Se ejecuta ANTES de cada git push
+
+echo "🧪 Ejecutando tests antes de push..."
+
+# Python con pytest
+if [ -f "pyproject.toml" ] || [ -f "pytest.ini" ]; then
+  echo "🐍 Ejecutando pytest..."
+  python -m pytest tests/ -x -q
+  if [ $? -ne 0 ]; then
+    echo "❌ Tests fallaron. No se puede hacer push hasta que pasen todos los tests."
+    echo "💡 Para saltarte esto en emergencias: git push --no-verify"
+    exit 1
+  fi
+fi
+
+# Node.js con npm test
+if [ -f "package.json" ] && grep -q '"test"' package.json; then
+  echo "📦 Ejecutando npm test..."
+  npm test -- --passWithNoTests
+  if [ $? -ne 0 ]; then
+    echo "❌ Tests fallaron. No se puede hacer push hasta que pasen todos los tests."
+    echo "💡 Para saltarte esto en emergencias: git push --no-verify"
+    exit 1
+  fi
+fi
+
+echo "✅ Todos los tests pasaron. Push autorizado."
