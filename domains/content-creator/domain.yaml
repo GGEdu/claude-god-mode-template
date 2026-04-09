@@ -1,0 +1,41 @@
+name: content-creator
+description: "Content Creation — Articles, social media, video, presentations"
+
+# Skills que se AÑADEN a los del tech stack (merge, no reemplazo)
+agent_skills:
+  architect:
+    - content-engine
+    - article-writing
+  planner:
+    - content-engine
+
+# Comandos extra del dominio
+commands:
+  deep-research:
+    when: "Investigación profunda multi-fuente con citas"
+  exa-search:
+    when: "Búsqueda neural web, código, empresas"
+  data-scraper-agent:
+    when: "Scraping automatizado de fuentes públicas"
+  investor-materials:
+    when: "Pitch decks, one-pagers, memos para inversores"
+  investor-outreach:
+    when: "Emails y comunicaciones para fundraising"
+  market-research:
+    when: "Análisis de mercado, competencia, industry intelligence"
+  crosspost:
+    when: "Distribuir contenido a múltiples plataformas (X, LinkedIn, Threads)"
+  x-api:
+    when: "Publicar o leer de X/Twitter programáticamente"
+  frontend-slides:
+    when: "Crear presentaciones HTML con animaciones"
+  fal-ai-media:
+    when: "Generar imágenes, video o audio con IA"
+  video-editing:
+    when: "Editar video con FFmpeg, Remotion, CapCut"
+  videodb:
+    when: "Indexar, buscar y editar video con VideoDB"
+
+# Rules extra
+rules:
+  - content.md

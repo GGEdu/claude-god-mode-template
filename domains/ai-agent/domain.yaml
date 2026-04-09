@@ -1,0 +1,45 @@
+name: ai-agent
+description: "AI Agent Engineering — Multi-agent systems, evals, LLM pipelines"
+
+# Skills que se AÑADEN a los del tech stack (merge, no reemplazo)
+agent_skills:
+  architect:
+    - agentic-engineering
+    - autonomous-loops
+    - agent-harness-construction
+    - claude-api
+    - mcp-server-patterns
+    - ralphinho-rfc-pipeline
+  planner:
+    - agentic-engineering
+    - cost-aware-llm-pipeline
+    - ai-first-engineering
+  tdd-guide:
+    - eval-harness
+    - ai-regression-testing
+  code-reviewer:
+    - agentic-engineering
+    - continuous-agent-loop
+  security-reviewer:
+    - agent-payment-x402
+
+# Comandos extra del dominio
+commands:
+  deep-research:
+    when: "Investigación profunda multi-fuente con citas"
+  exa-search:
+    when: "Búsqueda neural web, código, empresas"
+  blueprint:
+    when: "Plan multi-sesión con briefs por paso para agentes"
+  dmux-workflows:
+    when: "Orquestar múltiples agentes en paralelo con tmux"
+  enterprise-agent-ops:
+    when: "Observabilidad y lifecycle de agentes en producción"
+  agent-eval:
+    when: "Comparar agentes head-to-head (pass rate, costo, tiempo)"
+  claude-devfleet:
+    when: "Orquestar multi-agente con DevFleet"
+
+# Rules extra
+rules:
+  - ai-agent.md

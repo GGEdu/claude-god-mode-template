@@ -1,0 +1,24 @@
+name: supply-chain
+description: "Supply Chain — Logistics, procurement, inventory"
+
+# Skills que se AÑADEN a los del tech stack (merge, no reemplazo)
+agent_skills:
+  architect:
+    - carrier-relationship-management
+    - inventory-demand-planning
+    - energy-procurement
+  planner:
+    - production-scheduling
+  code-reviewer:
+    - logistics-exception-management
+    - quality-nonconformance
+    - returns-reverse-logistics
+  security-reviewer:
+    - customs-trade-compliance
+
+# Comandos extra del dominio
+commands: {}
+
+# Rules extra
+rules:
+  - supply-chain.md
