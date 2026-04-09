@@ -1,0 +1,90 @@
+name: Agent — PR Review
+
+# Triggers on every PR open, update or reopen.
+# Runs code-reviewer + security-reviewer in parallel and posts
+# a combined markdown comment on the PR.
+#
+# Required secret: ANTHROPIC_API_KEY
+# Required permission: pull-requests: write
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  agent-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Code review (code-reviewer agent)
+        id: code-review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          claude -p \
+            --allowedTools "Bash(git diff*),Bash(git log*),Read,Grep,Glob" \
+            --model sonnet \
+            "You are the code-reviewer agent. Review the changes in this PR.
+            Run: git diff ${BASE}...${HEAD}
+            to see all changes, then read the full context of modified files.
+            Apply the full review checklist: CRITICAL/HIGH/MEDIUM/LOW.
+            Output the complete review in markdown. Be concise — skip LOW issues." \
+          > /tmp/code-review.md
+
+      - name: Security review (security-reviewer agent)
+        id: security-review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          claude -p \
+            --allowedTools "Bash(git diff*),Bash(git log*),Read,Grep,Glob" \
+            --model sonnet \
+            "You are the security-reviewer agent. Analyze the PR changes for security vulnerabilities.
+            Run: git diff ${BASE}...${HEAD}
+            Focus on OWASP Top 10: injection, auth bypasses, XSS, exposed secrets, insecure dependencies.
+            Only report real findings (>80% confidence). Output as markdown with severity labels." \
+          > /tmp/security-review.md
+
+      - name: Post combined review as PR comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT=$(cat <<'EOF'
+          ## Code Review — Claude Code Agents
+
+          EOF
+          )
+          COMMENT="${COMMENT}$(cat /tmp/code-review.md)"
+          COMMENT="${COMMENT}
+
+          ---
+
+          ## Security Review — Claude Code Agents
+
+          $(cat /tmp/security-review.md)"
+
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --body "${COMMENT}"

@@ -1,0 +1,44 @@
+workflows:
+  feature:
+    description: "Feature completa con planificación, TDD y revisión"
+    steps:
+      - agent: planner
+        description: "Crear plan de implementación"
+      - agent: tdd-guide
+        description: "Escribir tests primero, luego implementar"
+      - agent: code-reviewer
+        description: "Revisar calidad del código"
+      - agent: security-reviewer
+        description: "Verificar vulnerabilidades"
+        parallel_with: code-reviewer
+      - audit: true
+        description: "Ejecutar verificaciones automáticas"
+      - agent: memory-consolidator
+        description: "Guardar decisiones en memoria"
+        always: true
+
+  hotfix:
+    description: "Fix rápido con revisión mínima"
+    steps:
+      - agent: tdd-guide
+        description: "Escribir test para el fix, luego implementar"
+      - agent: code-reviewer
+        description: "Revisar el fix"
+      - audit: true
+      - agent: memory-consolidator
+        description: "Guardar decisiones"
+        always: true
+
+  refactor:
+    description: "Mejora de código sin cambio de comportamiento"
+    steps:
+      - agent: planner
+        description: "Planificar el refactoring"
+      - agent: code-simplifier
+        description: "Simplificar código"
+      - agent: code-reviewer
+        description: "Revisar cambios"
+      - audit: true
+      - agent: memory-consolidator
+        description: "Guardar decisiones"
+        always: true

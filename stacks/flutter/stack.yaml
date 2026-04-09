@@ -1,0 +1,110 @@
+name: flutter
+description: Flutter 3 — Dart + Material/Cupertino
+mobile: dart
+mobile_framework: flutter
+tests_mobile: flutter_test
+linter_mobile: dart-analyze
+rules:
+- flutter.md
+agents:
+  architect:
+    skills:
+    - api-design
+    - architecture-decision-records
+    - deployment-patterns
+    - docker-patterns
+    - flutter-dart-code-review
+  planner:
+    skills:
+    - search-first
+  tdd-guide:
+    skills:
+    - tdd-workflow
+  code-reviewer:
+    skills:
+    - flutter-dart-code-review
+    - verification-loop
+  security-reviewer:
+    skills:
+    - security-review
+  database-reviewer:
+    skills:
+    - database-migrations
+  performance-optimizer:
+    skills: []
+  refactor-cleaner:
+    skills: []
+  e2e-runner:
+    skills: []
+  doc-updater:
+    skills: []
+  memory-consolidator:
+    skills: []
+  build-error-resolver:
+    skills: []
+  loop-operator:
+    skills:
+    - safety-guard
+  code-simplifier:
+    skills: []
+  silent-failure-hunter:
+    skills: []
+  comment-analyzer:
+    skills: []
+  conversation-analyzer:
+    skills: []
+  docs-lookup:
+    skills:
+    - documentation-lookup
+  pr-test-analyzer:
+    skills: []
+commands:
+  jedi-review:
+    when: Para código crítico — review de 3 expertos en paralelo
+  git-workflow:
+    when: Si necesitas recordar el workflow de commits y PRs
+  workflow-runner:
+    when: 'Para ejecutar un pipeline completo: /workflow feature, /workflow hotfix'
+  canary-watch:
+    when: Post-deploy — monitoreo con Playwright en URLs live
+  codebase-onboarding:
+    when: Al entrar en un repo nuevo — genera guía de onboarding
+  benchmark:
+    when: Medir rendimiento antes/después de un PR o cambio
+  browser-qa:
+    when: Testing visual de Flutter web con browser automation
+  design-md:
+    when: Al crear widgets o screens — aplica sistema de diseño
+  continuous-learning-v2:
+    when: Extrae patrones de sesiones y los persiste
+  continuous-learning:
+    when: v1 fallback — extrae patrones de sesiones
+  ck:
+    when: Persistent memory per-project, git-aware tracking
+  plankton-code-quality:
+    when: Write-time auto-format/lint enforcement
+  strategic-compact:
+    when: Sugiere /compact en puntos lógicos de la sesión
+  security-scan:
+    when: Escanea .claude/ por vulnerabilidades
+  context-budget:
+    when: Audita consumo de tokens en la sesión
+  skill-comply:
+    when: Verifica que skills/rules se siguen realmente
+  skill-stocktake:
+    when: Audita calidad de skills del proyecto
+  prompt-optimizer:
+    when: Mejora prompts del developer
+  repo-scan:
+    when: Auditoría cross-stack del código fuente
+  product-lens:
+    when: Diagnóstico producto pre-feature
+  token-budget-advisor:
+    when: Controla profundidad de respuesta
+  team-builder:
+    when: Compone equipos de agentes para tareas
+  rules-distill:
+    when: Extrae principios cross-cutting → rules
+mcps:
+  notebooklm: false
+  n8n: false
