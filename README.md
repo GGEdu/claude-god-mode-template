@@ -17,11 +17,12 @@ Template maestro para proyectos con Claude Code: rules siempre activas, stacks c
 git clone https://github.com/ggarrido/claude-god-mode-template.git
 cd claude-god-mode-template
 
-# 2. Activar git hooks (obligatorio)
-git config core.hooksPath .githooks
+# 2. Instalar globalmente (agentes, reglas, hook de memoria)
+make install
 
-# 3. Abrir Claude Code y seguir la guía de instalación
-claude
+# 3. Inicializar un proyecto con un stack (+ domain overlay opcional)
+make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto
+make init-project STACK=python-api DOMAIN=healthcare PROJECT=/ruta/al/proyecto
 ```
 
 Sigue la guía completa en [`docs/src/instalacion.md`](docs/src/instalacion.md).
@@ -29,15 +30,17 @@ Sigue la guía completa en [`docs/src/instalacion.md`](docs/src/instalacion.md).
 ## Lo que incluye
 
 - **Rules universales** en `.claude/rules/common/` — siempre activas en cada sesión
-- **5 stacks** configurables (`laravel-react`, `nextjs-saas`, `python-api`, `odoo`, `go-api`)
-- **15 agentes** especializados (`planner`, `architect`, `tdd-guide`, `security-reviewer`, etc.)
-- **Sistema de vault** (arscontexta) — segundo cerebro para capturar y conectar conocimiento
-- **MCPs preconfigurados** — GitHub y Memory activos por defecto
+- **14 tech stacks** configurables (`laravel-react`, `nextjs-saas`, `python-api`, `go-api`, `odoo`, `cpp`, `flutter`, `java-springboot`, `kotlin-multiplatform`, `ml-pytorch`, `nuxt-saas`, `perl`, `rust-api`, `swift-ios`)
+- **4 domain overlays** opcionales (`healthcare`, `ai-agent`, `content-creator`, `supply-chain`) — se combinan con cualquier tech stack
+- **21 agentes** especializados con skills embebidas por compilación (`planner`, `architect`, `tdd-guide`, `security-reviewer`, etc.)
+- **130 skills** organizadas en `skills/` — activadas por stack, no globalmente
+- **Sistema de memoria** en `.claude/memory/` — persistencia de decisiones, actualizada automáticamente al terminar cada sesión
+- **MCPs preconfigurados** — GitHub activo por defecto, NotebookLM y n8n opcionales
 
 ## Documentación
 
 | Documento | Descripción |
-|---|---|
+| --- | --- |
 | [`docs/src/instalacion.md`](docs/src/instalacion.md) | Instalación completa paso a paso |
 | [`docs/src/primeros-pasos.md`](docs/src/primeros-pasos.md) | Primera sesión de trabajo |
 | [`docs/src/nuevo-proyecto.md`](docs/src/nuevo-proyecto.md) | Inicializar un nuevo proyecto |

@@ -8,6 +8,15 @@ secrets/
 # Settings locales (preferencias personales)
 .claude/settings.local.json
 
+# Artefactos generados por dev-stack (stack-specific, se generan en el proyecto destino)
+.claude/agents/
+.claude/commands/
+.claude/rules/
+
+# Memoria de sesión de Claude (se regenera automáticamente vía hook)
+# Las decisiones permanentes van en docs/src/ — no en memory/
+.claude/memory/*.md
+
 # Dependencias
 node_modules/
 __pycache__/
@@ -17,8 +26,8 @@ __pycache__/
 # Datos de arscontexta (se generan localmente)
 .arscontexta/
 
-# Datos de NotebookLM MCP
-~/.notebooklm-mcp-cli/
+# Configs MCP locales (personales, con tokens o paths específicos del usuario)
+.mcp.local.json
 
 # Outputs temporales
 output/
