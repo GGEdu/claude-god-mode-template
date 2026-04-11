@@ -37,38 +37,7 @@ install: ## Instala config global en ~/.claude/ (una vez por maquina)
 	@mkdir -p $(GLOBAL_DIR)/rules/common $(GLOBAL_DIR)/agents $(GLOBAL_DIR)/skills $(GLOBAL_DIR)/hooks
 	@cp rules/* $(GLOBAL_DIR)/rules/common/
 	@echo "  ✅ Reglas comunes instaladas"
-	@python3 -c "\
-import yaml, glob, os, shutil; \
-used_agents = set(); \
-used_skills = set(); \
-for f in glob.glob('stacks/*/stack.yaml'): \
-    d = yaml.safe_load(open(f)); \
-    agents = d.get('agents', {}); \
-    if isinstance(agents, list): \
-        used_agents.update(agents); \
-    elif isinstance(agents, dict): \
-        used_agents.update(agents.keys()); \
-        [used_skills.update(v.get('skills', [])) for v in agents.values() if isinstance(v, dict)]; \
-    cmds = d.get('commands', {}); \
-    used_skills.update(cmds.keys()); \
-for f in glob.glob('domains/*/domain.yaml'): \
-    d = yaml.safe_load(open(f)); \
-    for skills in (d.get('agent_skills', {}) or {}).values(): \
-        used_skills.update(skills or []); \
-    used_skills.update((d.get('commands', {}) or {}).keys()); \
-a_count = 0; \
-[( \
-    shutil.copy('agents/' + n + '.md', '$(GLOBAL_DIR)/agents/' + n + '.md'), \
-    globals().update(a_count=a_count+1) \
-) for n in sorted(used_agents) if os.path.exists('agents/' + n + '.md')]; \
-a_count = sum(1 for n in used_agents if os.path.exists('agents/' + n + '.md')); \
-print('  ✅ Agentes instalados (' + str(a_count) + ' de ' + str(len(used_agents)) + ' referenciados en stacks)'); \
-s_count = 0; \
-[(os.makedirs('$(GLOBAL_DIR)/skills/' + n, exist_ok=True), \
-  shutil.copy('skills/' + n + '/SKILL.md', '$(GLOBAL_DIR)/skills/' + n + '/SKILL.md')) \
- for n in sorted(used_skills) if os.path.exists('skills/' + n + '/SKILL.md')]; \
-s_count = sum(1 for n in used_skills if os.path.exists('skills/' + n + '/SKILL.md')); \
-print('  ✅ Skills instalados (' + str(s_count) + ' referenciados en stacks)')"
+	@python3 ops/install-global.py "$(GLOBAL_DIR)"
 	@cp hooks/session-consolidate.sh $(GLOBAL_DIR)/hooks/session-consolidate.sh
 	@chmod +x $(GLOBAL_DIR)/hooks/session-consolidate.sh
 	@echo "  ✅ Hook de consolidacion de memoria instalado"
@@ -165,22 +134,11 @@ init-stack: ## [deprecado] Usar dev-stack en su lugar
 	@# 3. Activar comandos standalone (.claude/commands/)
 	@mkdir -p .claude/commands
 	@echo "✅ Comandos standalone activados:"
-	@python3 -c "\
-import yaml, os, shutil; \
-d = yaml.safe_load(open('stacks/$(STACK)/stack.yaml')); \
-cmds = d.get('commands', {}); \
-domain_cmds = {}; \
-domain_path = 'domains/$(DOMAIN)/domain.yaml' if '$(DOMAIN)' else ''; \
-if domain_path and os.path.exists(domain_path): \
-    dd = yaml.safe_load(open(domain_path)); \
-    domain_cmds = dd.get('commands', {}); \
-cmds.update(domain_cmds); \
-activated = []; \
-[( \
-    shutil.copy('skills/' + name + '/SKILL.md', '.claude/commands/' + name + '.md'), \
-    activated.append(name) \
-) for name in cmds if os.path.exists('skills/' + name + '/SKILL.md')]; \
-[print('   /' + name + ' — ' + cmds[name].get('when', '')) for name in activated]" 2>/dev/null || true
+	@if [ -n "$(DOMAIN)" ]; then \
+		python3 ops/copy-commands.py "$$PWD" stacks/$(STACK)/stack.yaml domains/$(DOMAIN)/domain.yaml; \
+	else \
+		python3 ops/copy-commands.py "$$PWD" stacks/$(STACK)/stack.yaml; \
+	fi
 	@echo ""
 	@# 4. Copiar pipeline.yaml
 	@if [ -f "stacks/$(STACK)/pipeline.yaml" ]; then \
@@ -236,22 +194,11 @@ init-project: ## Inicializa un proyecto externo con un stack: make init-project 
 		python3 ops/compile-agents.py stacks/$(STACK)/stack.yaml skills agents "$(PROJECT)/.claude/agents"; \
 	fi
 	@# 3. Copiar comandos standalone al proyecto (stack + domain)
-	@python3 -c "\
-import yaml, os, shutil; \
-d = yaml.safe_load(open('stacks/$(STACK)/stack.yaml')); \
-cmds = d.get('commands', {}); \
-domain_cmds = {}; \
-domain_path = 'domains/$(DOMAIN)/domain.yaml' if '$(DOMAIN)' else ''; \
-if domain_path and os.path.exists(domain_path): \
-    dd = yaml.safe_load(open(domain_path)); \
-    domain_cmds = dd.get('commands', {}); \
-cmds.update(domain_cmds); \
-activated = []; \
-[( \
-    shutil.copy('skills/' + name + '/SKILL.md', '$(PROJECT)/.claude/commands/' + name + '.md'), \
-    activated.append(name) \
-) for name in cmds if os.path.exists('skills/' + name + '/SKILL.md')]; \
-print('  ✅ Comandos: ' + ', '.join('/' + n for n in activated) if activated else '  ✅ Sin comandos standalone')" 2>/dev/null || echo "  ⚠️  Comandos no copiados (falta pyyaml: pip install pyyaml)"
+	@if [ -n "$(DOMAIN)" ]; then \
+		python3 ops/copy-commands.py "$(PROJECT)" stacks/$(STACK)/stack.yaml domains/$(DOMAIN)/domain.yaml; \
+	else \
+		python3 ops/copy-commands.py "$(PROJECT)" stacks/$(STACK)/stack.yaml; \
+	fi
 	@# 4. Copiar pipeline.yaml
 	@if [ -f "stacks/$(STACK)/pipeline.yaml" ]; then \
 		cp stacks/$(STACK)/pipeline.yaml "$(PROJECT)/.claude/pipeline.yaml"; \
@@ -278,6 +225,15 @@ print('  ✅ Comandos: ' + ', '.join('/' + n for n in activated) if activated el
 	@if [ -n "$(DOMAIN)" ] && [ -f "domains/$(DOMAIN)/CLAUDE-append.md" ]; then \
 		cat domains/$(DOMAIN)/CLAUDE-append.md >> "$(PROJECT)/.claude/CLAUDE.md"; \
 		echo "  ✅ Domain context appended to CLAUDE.md"; \
+	fi
+	@# 7. Actualizar .gitignore del proyecto (excluir archivos generados de Claude)
+	@if [ -f "$(PROJECT)/.gitignore" ]; then \
+		if ! grep -q "\.claude/agents/" "$(PROJECT)/.gitignore"; then \
+			printf '\n# Claude Code — archivos generados (no commitear)\n.claude/agents/\n.claude/commands/\n.claude/rules/\n.claude/pipeline.yaml\n# Claude Code — si commitear (contexto del proyecto)\n!.claude/CLAUDE.md\n!.claude/memory/\n' >> "$(PROJECT)/.gitignore"; \
+			echo "  ✅ .gitignore actualizado — archivos generados de Claude excluidos"; \
+		else \
+			echo "  ✅ .gitignore ya tiene entradas de Claude"; \
+		fi; \
 	fi
 	@echo "  ✅ .claude/memory/ listo — se llenara automaticamente al trabajar con Claude"
 	@echo ""

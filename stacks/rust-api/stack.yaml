@@ -61,6 +61,8 @@ agents:
     - documentation-lookup
   pr-test-analyzer:
     skills: []
+  github-orchestrator:
+    skills: []
 commands:
   jedi-review:
     when: Para código crítico — review de 3 expertos en paralelo

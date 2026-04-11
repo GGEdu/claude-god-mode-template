@@ -1,65 +1,66 @@
-name: kotlin-multiplatform
-description: Kotlin — Ktor backend + Compose Multiplatform + Android
-backend: kotlin
-backend_framework: ktor
-frontend: kotlin
-frontend_framework: compose-multiplatform
+name: laravel-livewire
+description: Laravel 12 (monolito) + Livewire 4 + Alpine.js + TailwindCSS
+backend: php
+backend_framework: laravel
+frontend: blade+livewire
+frontend_framework: livewire
 database: postgresql
-tests_backend: kotest
-linter_backend: detekt
+auth: laravel-auth
+tests_backend: pest
+linter_backend: pint
 rules:
-- kotlin.md
-- android.md
+- laravel.md
+- livewire.md
 agents:
   architect:
     skills:
-    - api-design
+    - laravel-patterns
     - architecture-decision-records
     - deployment-patterns
     - docker-patterns
-    - kotlin-patterns
-    - kotlin-ktor-patterns
-    - android-clean-architecture
+    - livewire-patterns
   planner:
     skills:
-    - kotlin-patterns
+    - laravel-patterns
     - search-first
+    - livewire-patterns
   tdd-guide:
     skills:
     - tdd-workflow
-    - kotlin-testing
+    - laravel-tdd
+    - livewire-patterns
   code-reviewer:
     skills:
-    - kotlin-patterns
-    - kotlin-coroutines-flows
-    - compose-multiplatform-patterns
+    - laravel-verification
     - verification-loop
+    - livewire-patterns
   security-reviewer:
     skills:
     - security-review
+    - laravel-security
   database-reviewer:
     skills:
     - database-migrations
-    - kotlin-exposed-patterns
+  build-error-resolver:
+    skills: []
   performance-optimizer:
     skills: []
   refactor-cleaner:
     skills: []
   e2e-runner:
-    skills: []
+    skills:
+    - e2e-testing
   doc-updater:
     skills: []
   memory-consolidator:
     skills: []
-  build-error-resolver:
+  silent-failure-hunter:
+    skills: []
+  code-simplifier:
     skills: []
   loop-operator:
     skills:
     - safety-guard
-  code-simplifier:
-    skills: []
-  silent-failure-hunter:
-    skills: []
   comment-analyzer:
     skills: []
   conversation-analyzer:
@@ -73,9 +74,11 @@ agents:
     skills: []
 commands:
   jedi-review:
-    when: Para código crítico — review de 3 expertos en paralelo
+    when: Para código crítico — review de 3 expertos en paralelo (Beck, Fowler, Acton)
   git-workflow:
     when: Si necesitas recordar el workflow de commits y PRs
+  last30days:
+    when: Antes de /plan — valida conocimiento actual vs knowledge cutoff del modelo
   workflow-runner:
     when: 'Para ejecutar un pipeline completo: /workflow feature, /workflow hotfix'
   canary-watch:
@@ -84,32 +87,24 @@ commands:
     when: Al entrar en un repo nuevo — genera guía de onboarding
   benchmark:
     when: Medir rendimiento antes/después de un PR o cambio
+  laravel-plugin-discovery:
+    when: Buscar y evaluar paquetes Laravel via LaraPlugins.io
   continuous-learning-v2:
     when: Extrae patrones de sesiones y los persiste
-  continuous-learning:
-    when: v1 fallback — extrae patrones de sesiones
   ck:
     when: Persistent memory per-project, git-aware tracking
   plankton-code-quality:
     when: Write-time auto-format/lint enforcement
-  strategic-compact:
-    when: Sugiere /compact en puntos lógicos de la sesión
   security-scan:
     when: Escanea .claude/ por vulnerabilidades
   context-budget:
     when: Audita consumo de tokens en la sesión
   skill-comply:
     when: Verifica que skills/rules se siguen realmente
-  skill-stocktake:
-    when: Audita calidad de skills del proyecto
-  prompt-optimizer:
-    when: Mejora prompts del developer
   repo-scan:
     when: Auditoría cross-stack del código fuente
-  product-lens:
-    when: Diagnóstico producto pre-feature
-  token-budget-advisor:
-    when: Controla profundidad de respuesta
+  prompt-optimizer:
+    when: Mejora prompts del developer
   team-builder:
     when: Compone equipos de agentes para tareas
   rules-distill:

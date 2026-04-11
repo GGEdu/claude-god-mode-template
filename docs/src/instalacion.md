@@ -125,6 +125,25 @@ make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto
 make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta/al/proyecto
 ```
 
+::: warning Rutas con espacios
+Si la ruta del proyecto contiene espacios (p.ej. `Desarrollo CEEDCV/mi-app`), usa siempre comillas dobles alrededor del valor de `PROJECT`:
+
+```bash
+make init-project STACK=laravel-livewire PROJECT="/ruta/con espacios/mi-proyecto"
+```
+
+:::
+
+Stacks disponibles más habituales:
+
+| Stack | Descripción |
+| --- | --- |
+| `laravel-react` | Laravel (API REST) + React 19 (SPA) + Sanctum |
+| `laravel-livewire` | Laravel (monolito) + Livewire 4 + Alpine.js + TailwindCSS |
+| `nextjs-saas` | Next.js 15 (App Router) + Supabase + Stripe |
+| `python-api` | Django REST Framework o FastAPI + PostgreSQL |
+| `go-api` | Go — API REST + PostgreSQL |
+
 Salida:
 
 ```text
