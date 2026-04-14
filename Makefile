@@ -5,7 +5,7 @@
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
-        triggers-setup triggers-list
+        triggers-setup triggers-list setup-labels workflows-status
 
 GLOBAL_DIR := $(HOME)/.claude
 
@@ -140,6 +140,10 @@ init-stack: ## [deprecado] Usar dev-stack en su lugar
 		python3 ops/copy-commands.py "$$PWD" stacks/$(STACK)/stack.yaml; \
 	fi
 	@echo ""
+	@# 3b. Distribuir agentes a Antigravity (.agent/skills/) y Copilot (.github/prompts/)
+	@echo "✅ Agentes distribuidos a Antigravity y Copilot:"
+	@python3 ops/distribute-agents.py stacks/$(STACK)/stack.yaml agents "$$PWD"
+	@echo ""
 	@# 4. Copiar pipeline.yaml
 	@if [ -f "stacks/$(STACK)/pipeline.yaml" ]; then \
 		cp stacks/$(STACK)/pipeline.yaml .claude/pipeline.yaml; \
@@ -199,6 +203,9 @@ init-project: ## Inicializa un proyecto externo con un stack: make init-project 
 	else \
 		python3 ops/copy-commands.py "$(PROJECT)" stacks/$(STACK)/stack.yaml; \
 	fi
+	@# 3b. Distribuir agentes a Antigravity (.agent/skills/) y Copilot (.github/prompts/)
+	@echo "  Distribuyendo agentes a Antigravity y Copilot..."
+	@python3 ops/distribute-agents.py stacks/$(STACK)/stack.yaml agents "$(PROJECT)"
 	@# 4. Copiar pipeline.yaml
 	@if [ -f "stacks/$(STACK)/pipeline.yaml" ]; then \
 		cp stacks/$(STACK)/pipeline.yaml "$(PROJECT)/.claude/pipeline.yaml"; \
@@ -464,3 +471,28 @@ triggers-list: ## Lista los triggers definidos en ops/triggers/
 	@echo ""
 	@echo "Para activarlos: make triggers-setup"
 	@echo "Para ver activos en Claude Code: /schedule list"
+
+setup-labels: ## Crea en GitHub las labels necesarias para los agent workflows (ejecutar una vez por repositorio)
+	@echo "Creando labels para agent workflows..."
+	@gh label create "needs-plan"      --color "#0075ca" --description "Triggers planner agent"        --force 2>/dev/null || true
+	@gh label create "planned"         --color "#0075ca" --description "Has implementation plan"       --force 2>/dev/null || true
+	@gh label create "needs-review"    --color "#e11d48" --description "Triggers code/security review" --force 2>/dev/null || true
+	@gh label create "reviewed"        --color "#22c55e" --description "Agent review complete"          --force 2>/dev/null || true
+	@gh label create "review-blocked"  --color "#dc2626" --description "CRITICAL issues found"         --force 2>/dev/null || true
+	@gh label create "audit"           --color "#e4e669" --description "Automated audit report"        --force 2>/dev/null || true
+	@echo "Labels configuradas. Verifica con: gh label list"
+
+workflows-status: ## Muestra los GitHub Actions instalados y el secret requerido
+	@echo "GitHub Actions instalados en .github/workflows/:"
+	@echo ""
+	@for f in .github/workflows/agent-*.yml; do \
+		[ -f "$$f" ] || continue; \
+		NAME=$$(basename $$f); \
+		TRIGGER=$$(grep -m1 "^on:" $$f -A3 | grep -E "pull_request|push|schedule|issues|workflow_dispatch" | head -1 | tr -d ' '); \
+		printf "  %-40s %s\n" "$$NAME" "$$TRIGGER"; \
+	done
+	@echo ""
+	@echo "Secret requerido en Settings → Secrets → Actions:"
+	@echo "  ANTHROPIC_API_KEY — tu clave de la API de Anthropic"
+	@echo ""
+	@echo "Para crear las labels de los workflows: make setup-labels"

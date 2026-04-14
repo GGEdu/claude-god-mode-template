@@ -33,7 +33,8 @@ Sigue la guía completa en [`docs/src/instalacion.md`](docs/src/instalacion.md).
 - **14 tech stacks** configurables (`laravel-react`, `nextjs-saas`, `python-api`, `go-api`, `odoo`, `cpp`, `flutter`, `java-springboot`, `kotlin-multiplatform`, `ml-pytorch`, `nuxt-saas`, `perl`, `rust-api`, `swift-ios`)
 - **4 domain overlays** opcionales (`healthcare`, `ai-agent`, `content-creator`, `supply-chain`) — se combinan con cualquier tech stack
 - **21 agentes** especializados con skills embebidas por compilación (`planner`, `architect`, `tdd-guide`, `security-reviewer`, etc.)
-- **130 skills** organizadas en `skills/` — activadas por stack, no globalmente
+- **9 Stack Orchestrators** (Pipeline Managers) actuando como Tech Leads para delegación automática del ciclo de vida (`laravel-orchestrator`, `django-orchestrator`, etc.)
+- **130+ skills** organizadas en `skills/` — activadas por stack, no globalmente
 - **Sistema de memoria** en `.claude/memory/` — persistencia de decisiones, actualizada automáticamente al terminar cada sesión
 - **MCPs preconfigurados** — GitHub activo por defecto, NotebookLM y n8n opcionales
 

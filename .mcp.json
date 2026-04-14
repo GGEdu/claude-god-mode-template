@@ -1,27 +1,22 @@
 {
   "mcpServers": {
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      }
-    },
     "memory": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
     },
     "notebooklm": {
       "command": "notebooklm-mcp",
-      "args": [],
-      "disabled": true,
-      "description": "Activalo para investigacion con documentacion. Consume 35 herramientas del contexto."
+      "args": []
     },
     "n8n-claw": {
       "command": "npx",
-      "args": ["-y", "@n8n/mcp-server"],
-      "disabled": true,
-      "description": "Activalo para automatizaciones con n8n."
+      "args": [
+        "-y",
+        "@n8n/mcp-server"
+      ]
     }
   }
 }

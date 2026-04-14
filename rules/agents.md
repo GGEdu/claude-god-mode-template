@@ -25,6 +25,19 @@ No user prompt needed:
 3. Bug fix or new feature - Use **tdd-guide** agent
 4. Architectural decision - Use **architect** agent
 
+## Stack Orchestrators (Pipeline Managers)
+
+For end-to-end task execution within a specific ecosystem, invoke its Stack Orchestrator. These skills enforce a strict execution pipeline (`Test -> Audit in Parallel -> Verify`) and automatically route sub-tasks to specialized domain skills. Available orchestrators:
+- `/laravel-orchestrator`
+- `/django-orchestrator`
+- `/springboot-orchestrator`
+- `/python-orchestrator`
+- `/rust-orchestrator`
+- `/golang-orchestrator`
+- `/cpp-orchestrator`
+- `/kotlin-orchestrator`
+- `/perl-orchestrator`
+
 ## Parallel Task Execution
 
 ALWAYS use parallel Task execution for independent operations:

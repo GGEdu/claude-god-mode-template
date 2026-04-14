@@ -400,6 +400,8 @@ make analyze-project NAME=nombre-del-proyecto
 | `make deactivate-n8n` | Desactiva n8n |
 | `make hooks-install` | Activa los git hooks |
 | `make hooks-uninstall` | Desactiva los git hooks |
+| `make setup-labels` | Crea en GitHub las labels necesarias para los agent workflows |
+| `make workflows-status` | Muestra los GitHub Actions instalados y el secret requerido |
 | `make triggers-setup` | Imprime comandos `/schedule create` para activar triggers en Antigravity |
 | `make triggers-list` | Lista los triggers definidos en `ops/triggers/` |
 | `make load-project URL=...` | Clona proyecto externo para análisis |
