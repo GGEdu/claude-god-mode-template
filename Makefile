@@ -5,7 +5,8 @@
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
-        triggers-setup triggers-list setup-labels workflows-status
+        triggers-setup triggers-list setup-labels workflows-status \
+        test test-quick
 
 GLOBAL_DIR := $(HOME)/.claude
 
@@ -385,6 +386,14 @@ Consolida todos los resultados en projects/$(NAME)/REPORT.md con secciones clara
 Al final incluye un apartado 'Top 5 acciones' con las mejoras más impactantes ordenadas por severidad."
 	@echo ""
 	@echo "✅ Análisis completo. Resultado en projects/$(NAME)/REPORT.md"
+
+# ---- TESTS ----
+
+test: ## Ejecuta la suite de tests integral (struct + embed + invoke)
+	python3 ops/test-suite.py
+
+test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
+	python3 ops/test-suite.py --no-invoke
 
 # ---- VERIFICACION ----
 

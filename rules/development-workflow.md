@@ -14,6 +14,7 @@ The Feature Implementation Workflow describes the development pipeline: research
    - **Exa only when the first two are insufficient:** Use Exa for broader web research or discovery after GitHub search and primary docs.
    - **Check package registries:** Search npm, PyPI, crates.io, and other registries before writing utility code. Prefer battle-tested libraries over hand-rolled solutions.
    - **Search for adaptable implementations:** Look for open-source projects that solve 80%+ of the problem and can be forked, ported, or wrapped.
+   - **Repos externos para el sistema:** Usar el agente `repo-reviewer` con la URL de un repo antes de reimplementar funcionalidad que podría existir como skill/agent reutilizable. El agente evalúa relevancia, calidad e integración en dos fases (Haiku screening → Sonnet deep-dive) y genera templates listos para integrar.
    - Prefer adopting or porting a proven approach over writing net-new code when it meets the requirement.
 
 1. **Plan First**

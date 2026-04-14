@@ -36,6 +36,7 @@ build/
 
 # Proyectos externos para análisis (no pertenecen al template)
 projects/
+proyectos/
 
 # OS
 .DS_Store
