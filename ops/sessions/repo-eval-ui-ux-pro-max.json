@@ -1,0 +1,36 @@
+{
+  "evaluation": "UI UX Pro Max Skill Repository",
+  "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+  "phase": "COMPLETE",
+  "date": "2026-04-14",
+  "overall_score": 94,
+  "tier": "INCLUDE",
+  "scores": {
+    "relevance": 25,
+    "quality": 33,
+    "extractability": 20,
+    "integration_cost": 16,
+    "total": 94
+  },
+  "metadata": {
+    "stars": 64932,
+    "language": "Python",
+    "license": "MIT",
+    "last_updated": "2026-04-14T20:23:19Z",
+    "archived": false
+  },
+  "extracted_skill": {
+    "name": "ui-ux-pro-max",
+    "description": "Comprehensive design intelligence with 161 reasoning rules, 67 UI styles, 57 font pairings, 161 product types, 99 UX guidelines, 25 chart types across 10 tech stacks.",
+    "key_features": [
+      "BM25 search engine (11 domains)",
+      "Design system generator (Master + Page Overrides)",
+      "Stack-specific guidance (React, Vue, Svelte, SwiftUI, Flutter, etc.)",
+      "Product type routing",
+      "Accessibility-first (WCAG AA/AAA)",
+      "Google Fonts integration"
+    ]
+  },
+  "integration_effort": "10-12 hours",
+  "recommendation": "PROCEED WITH INTEGRATION"
+}
