@@ -178,9 +178,9 @@ Estas skills se usan como comandos slash (`/nombre`), no se incrustan en agentes
 | `benchmark` | Todos | Medir rendimiento antes/después de PR |
 | `codebase-onboarding` | Todos | Genera guía de onboarding |
 | `git-workflow` | Todos | Recordatorio de workflow git |
-| `design-md` | flutter, laravel-react, nextjs-saas, nuxt-saas, swift-ios | Aplica identidad visual |
-| `last30days` | laravel-react, nextjs-saas | Valida conocimiento actual del modelo |
-| `laravel-plugin-discovery` | laravel-react | Buscar paquetes Laravel |
+| `design-md` | flutter, laravel (+ `LAYERS=react`), nextjs-saas, nuxt-saas, swift-ios | Aplica identidad visual |
+| `last30days` | laravel, nextjs-saas | Valida conocimiento actual del modelo |
+| `laravel-plugin-discovery` | laravel | Buscar paquetes Laravel |
 
 ### 4. Skills de domain overlays
 

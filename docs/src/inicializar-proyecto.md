@@ -22,7 +22,7 @@ Stacks disponibles:
   go-api               Go — API REST o microservicio + PostgreSQL
   java-springboot      Java — Spring Boot 3 + PostgreSQL + Maven/Gradle
   kotlin-multiplatform Kotlin — Ktor backend + Compose Multiplatform + Android
-  laravel-react        Laravel 13 (API REST) + React 19 (SPA) + Sanctum
+  laravel              Laravel 13 (API REST) + MySQL + Sanctum + Pest
   ml-pytorch           Machine Learning — PyTorch + Python + CUDA
   nextjs-saas          Next.js 15 (App Router) + Supabase + Stripe
   nuxt-saas            Nuxt 4 — Vue 3 + Nitro + PostgreSQL
@@ -38,13 +38,13 @@ Stacks disponibles:
 ## Inicializar el proyecto
 
 ```bash
-make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 ```
 
 Con domain overlay (opcional):
 
 ```bash
-make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta/al/proyecto
+make init-project STACK=laravel LAYERS=react DOMAIN=healthcare PROJECT=/ruta/al/proyecto
 ```
 
 Domains disponibles: `healthcare`, `ai-agent`, `content-creator`, `supply-chain`. Un domain añade skills especializadas a los agentes del tech stack (merge, no reemplazo).
@@ -52,7 +52,7 @@ Domains disponibles: `healthcare`, `ai-agent`, `content-creator`, `supply-chain`
 Salida:
 
 ```text
-Inicializando stack 'laravel-react' + domain 'healthcare' en /ruta/al/proyecto...
+Inicializando stack 'laravel' + layer 'react' + domain 'healthcare' en /ruta/al/proyecto...
   ✅ Stack rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   ✅ Domain rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   Compilando agentes con skills embebidas...
@@ -136,7 +136,7 @@ cd ~/ruta/al/template && make check
 # Primer commit en el proyecto
 cd /ruta/al/proyecto
 git add .claude/
-git commit -m "feat: inicializar proyecto con god-mode (stack: laravel-react)"
+git commit -m "feat: inicializar proyecto con god-mode (stack: laravel, layer: react)"
 ```
 
 ---

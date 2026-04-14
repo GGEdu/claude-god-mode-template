@@ -2,6 +2,7 @@
 
 > Ejemplo real y paso a paso de qué ocurre cuando pides una nueva característica.
 > Stack: Laravel 13 (API) + React 19 (SPA) + Sanctum para autenticación.
+> Inicializado con: `make init-project STACK=laravel LAYERS=react PROJECT=/ruta`
 
 ---
 

@@ -10,7 +10,7 @@ Este tutorial te lleva paso a paso por el workflow real de desarrollo usando el 
 Antes de empezar, asegúrate de haber completado la [instalación completa](/instalacion) y de haber inicializado el stack:
 
 ```bash
-make init-project STACK=laravel-react
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 ```
 
 Si `make check` muestra todo en verde, estás listo.
@@ -132,7 +132,7 @@ Contexto liberado: ~8,400 tokens → ~1,200 tokens de resumen
 > **Cuándo:** Antes de escribir cualquier línea de código de producción
 
 Las reglas de Laravel TDD (`laravel-tdd`) van embebidas en el agente `tdd-guide`
-del stack `laravel-react`. Al ejecutar `/tdd`, Claude aplica ese contexto
+del stack `laravel`. Al ejecutar `/tdd`, Claude aplica ese contexto
 automáticamente.
 
 **Output — Claude confirma las reglas activas:**
@@ -923,7 +923,7 @@ Estas variables están configuradas en `.claude/settings.json`:
 ls .claude/agents/
 
 # Si está vacío, vuelve a ejecutar:
-make init-project STACK=laravel-react
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 
 # Luego reinicia Claude Code completamente (no solo /reset)
 # Cierra la sesión y vuelve a abrir con: claude
@@ -975,7 +975,7 @@ Agentes (.claude/agents/):
 **Solución:**
 
 ```bash
-make init-project STACK=laravel-react
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 # Reiniciar Claude Code después
 ```
 
@@ -1003,5 +1003,5 @@ Has completado el tutorial básico. Para continuar:
 
 - **[Referencia completa de comandos](/referencia)** — Todos los comandos disponibles en una tabla
 - **[Flujo completo de una feature](/examples/flujo-feature-laravel-react)** — Cómo funcionan internamente las capas del sistema
-- **[Stack Laravel + React](/stacks/laravel-react)** — Convenciones del stack y comandos disponibles
+- **[Stack Laravel + React](/stacks/laravel-react)** — Cómo inicializar con `STACK=laravel LAYERS=react`
 - **[Analizar proyectos externos](/analizar-proyecto-externo)** — Usa el template para auditar código existente

@@ -1,8 +1,10 @@
 # Directorio: `domains/`
 
-Los **4 domain overlays** añaden skills extra a los agentes de cualquier tech stack. Un domain NO reemplaza el stack — se fusiona encima (merge), añadiendo contexto vertical de negocio a los agentes existentes.
+Los **4 domain overlays** añaden skills extra a los agentes de cualquier tech stack. Un domain NO reemplaza el stack — se fusiona encima (merge), añadiendo contexto vertical de **negocio** a los agentes existentes.
 
-> `make dev-stack STACK=<s> DOMAIN=<d>` o `make init-project STACK=<s> DOMAIN=<d>` activan el overlay. `ops/compile-agents.py` recibe el `domain.yaml` como quinto argumento y hace merge de skills.
+> **Domains vs Layers:** Los domains son para **verticales de negocio** (healthcare, supply-chain). Los [layers](./layers.md) son para **tech horizontal** (React frontend, etc.). Ambos usan el mismo mecanismo de merge pero con semánticas distintas.
+
+> `make init-project STACK=<s> DOMAIN=<d> [LAYERS=<l>]` activa el overlay. `ops/compile-agents.py` recibe los overlays como argumentos posicionales y hace merge de skills.
 
 ---
 

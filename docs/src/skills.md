@@ -39,9 +39,9 @@ que esté en `commands/` (nivel 2). Si está solo en `skills/` o `agents/`, no h
 
 ## Qué hace `make dev-stack`
 
-Al ejecutar `make dev-stack STACK=laravel-react`, el comando:
+Al ejecutar `make dev-stack STACK=laravel LAYERS=react`, el comando:
 
-1. Copia `stacks/laravel-react/rules/*.md` → `.claude/rules/stack/` (**Nivel 3**)
+1. Copia `stacks/laravel/rules/*.md` + `layers/react/rules/*.md` → `.claude/rules/stack/` (**Nivel 3**)
    Las convenciones del stack quedan activas en cada sesión sin invocar nada.
 
 2. **Compila** los agentes con skills embebidas → `.claude/agents/` (**Nivel 4**)
@@ -53,7 +53,7 @@ Al ejecutar `make dev-stack STACK=laravel-react`, el comando:
    Solo los declarados en `commands:` del `stack.yaml`. Son herramientas que
    el developer invoca explícitamente (ej: `/jedi-review`, `/git-workflow`).
 
-4. Copia `stacks/laravel-react/CLAUDE.md` → `.claude/CLAUDE.md`
+4. Copia `stacks/laravel/CLAUDE.md` → `.claude/CLAUDE.md` (y appenda `layers/react/CLAUDE-append.md` si hay layer)
    Configura el cerebro del proyecto con los datos del stack.
 
 5. Si se indicó `DOMAIN=`, añade skills del domain a los agentes (merge)
@@ -61,9 +61,9 @@ Al ejecutar `make dev-stack STACK=laravel-react`, el comando:
 
 ---
 
-## Skills activadas para el stack `laravel-react`
+## Skills activadas para el stack `laravel` + `LAYERS=react`
 
-Después de `make dev-stack STACK=laravel-react`, estos slash commands quedan
+Después de `make dev-stack STACK=laravel LAYERS=react`, estos slash commands quedan
 disponibles:
 
 ### Slash commands standalone (comandos reales)
@@ -146,7 +146,7 @@ Tú → /tdd             (inicias ciclo RED/GREEN/REFACTOR)
 
 ---
 
-## Skills en `skills/` que NO se activan con laravel-react
+## Skills en `skills/` que NO se activan con `laravel` + `LAYERS=react`
 
 Las 130 skills del directorio `skills/` cubren muchos otros stacks y casos.
 Las que no forman parte del stack activo no se mueven a `commands/` y no

@@ -44,6 +44,13 @@ def main():
             used_skills.update(skills or [])
         used_skills.update((d.get("commands", {}) or {}).keys())
 
+    for f in glob.glob("layers/*/layer.yaml"):
+        with open(f) as fh:
+            d = yaml.safe_load(fh)
+        for skills in (d.get("agent_skills", {}) or {}).values():
+            used_skills.update(skills or [])
+        used_skills.update((d.get("commands", {}) or {}).keys())
+
     agents_dir = os.path.join(global_dir, "agents")
     a_count = 0
     for name in sorted(used_agents):

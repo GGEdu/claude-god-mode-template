@@ -2,13 +2,10 @@
 
 ## Stack
 - **Backend**: Laravel 13 (API REST)
-- **Frontend**: React 19 + TypeScript (SPA)
 - **Base de datos**: MySQL 8
 - **Auth**: Sanctum (tokens SPA)
-- **Tests backend**: Pest
-- **Tests frontend**: Vitest + Testing Library
-- **Linter backend**: Pint
-- **Linter frontend**: Biome
+- **Tests**: Pest
+- **Linter**: Pint
 
 ## Arquitectura
 [DESCRIPCIÓN BREVE: qué hace este proyecto y cómo se organiza]
@@ -34,15 +31,8 @@ app/
 │   └── Resources/      ← Formato de respuestas API
 ├── Services/           ← Lógica de negocio
 └── Models/
-
-src/
-├── components/         ← Componentes React
-├── hooks/              ← Hooks customizados
-├── services/           ← Clientes API
-└── contexts/           ← Estado global (auth, theme)
 ```
 
 ## Variables de entorno necesarias
-- `APP_URL` — URL del backend Laravel
-- `VITE_API_URL` — URL para el frontend React
+- `APP_URL` — URL del backend
 - `DB_*` — Credenciales de base de datos

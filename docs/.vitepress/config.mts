@@ -55,7 +55,7 @@ export default withMermaid(
           collapsed: true,
           items: [
             { text: 'Go API', link: '/stacks/go-api' },
-            { text: 'Laravel + React', link: '/stacks/laravel-react' },
+            { text: 'Laravel (+ LAYERS=react)', link: '/stacks/laravel-react' },
             { text: 'Next.js SaaS', link: '/stacks/nextjs-saas' },
             { text: 'Odoo 19', link: '/stacks/odoo' },
             { text: 'Python API', link: '/stacks/python-api' },

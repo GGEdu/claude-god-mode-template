@@ -201,10 +201,10 @@ Flujo para usar god-mode en un proyecto existente:
       make setup-project PROJECT=/ruta/al/proyecto
 
   2b. Modo manual (stack explicito):
-      make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto
+      make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 
   2c. Con domain overlay (opcional):
-      make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta
+      make init-project STACK=laravel LAYERS=react DOMAIN=healthcare PROJECT=/ruta
 
   3. Personalizar el contexto del proyecto:
      Edita /ruta/al/proyecto/.claude/CLAUDE.md
@@ -235,7 +235,7 @@ Stacks disponibles:
   go-api               Go — API REST o microservicio + PostgreSQL
   java-springboot      Java — Spring Boot 3 + PostgreSQL + Maven/Gradle
   kotlin-multiplatform Kotlin — Ktor backend + Compose Multiplatform + Android
-  laravel-react        Laravel 13 (API REST) + React 19 (SPA) + Sanctum
+  laravel              Laravel 13 (API REST) + MySQL + Sanctum + Pest
   ml-pytorch           Machine Learning — PyTorch + Python + CUDA
   nextjs-saas          Next.js 15 (App Router) + Supabase + Stripe
   nuxt-saas            Nuxt 4 — Vue 3 + Nitro + PostgreSQL
@@ -245,7 +245,8 @@ Stacks disponibles:
   rust-api             Rust — Axum/Actix Web + PostgreSQL
   swift-ios            Swift — SwiftUI + iOS/macOS/visionOS
 
-Uso: make dev-stack STACK=laravel-react
+Uso: make dev-stack STACK=laravel
+     make dev-stack STACK=laravel LAYERS=react  # con layer frontend
 ```
 
 ### `make list-domains`
@@ -266,23 +267,26 @@ Domain overlays disponibles:
   healthcare           Healthcare — EMR/CDSS + HIPAA compliance
   supply-chain         Supply Chain — Logistics, inventory, carrier management
 
-Uso: make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta
+Uso: make init-project STACK=laravel LAYERS=react DOMAIN=healthcare PROJECT=/ruta
 ```
 
-### `make init-project STACK=nombre PROJECT=/ruta [DOMAIN=nombre]`
+### `make init-project STACK=nombre PROJECT=/ruta [LAYERS=nombre] [DOMAIN=nombre]`
 
-Inicializa un proyecto externo con un stack concreto. Opcionalmente acepta `DOMAIN=` para añadir un domain overlay.
+Inicializa un proyecto externo con un stack concreto. Opcionalmente acepta `LAYERS=` para añadir un layer técnico y `DOMAIN=` para añadir un domain overlay.
 
 ```bash
-make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto
+make init-project STACK=laravel PROJECT=/ruta/al/proyecto
+
+# Con layer técnico (frontend)
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 
 # Con domain overlay
-make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta/al/proyecto
+make init-project STACK=laravel LAYERS=react DOMAIN=healthcare PROJECT=/ruta/al/proyecto
 ```
 
 Lo que hace en el proyecto de destino:
 
-1. Copia `stacks/laravel-react/rules/*.md` → `project/.claude/rules/stack/`
+1. Copia `stacks/laravel/rules/*.md` → `project/.claude/rules/stack/` (y `layers/react/rules/*.md` si hay `LAYERS=react`)
    Las convenciones del stack quedan **siempre activas** en ese proyecto.
 
 2. Si hay `DOMAIN=`, copia también `domains/<DOMAIN>/rules/*.md` al mismo directorio.
@@ -300,7 +304,7 @@ Lo que hace en el proyecto de destino:
 Salida:
 
 ```text
-Inicializando stack 'laravel-react' en /ruta/al/proyecto...
+Inicializando stack 'laravel' + layer 'react' en /ruta/al/proyecto...
   ✅ Stack rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   Compilando agentes con skills embebidas...
   ✅ Agentes compilados (22 agentes con skills del stack)
@@ -316,7 +320,7 @@ Proyecto listo.
 Activa un stack en el propio repositorio del template. Útil para trabajar en el template mismo.
 
 ```bash
-make dev-stack STACK=laravel-react
+make dev-stack STACK=laravel LAYERS=react
 ```
 
 A diferencia de `init-project`, actúa sobre el directorio actual (`.claude/` del template).
