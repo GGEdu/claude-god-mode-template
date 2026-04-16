@@ -45,7 +45,7 @@ Copia a `~/.claude/` de una vez:
 - `settings.json` con modelo, tokens y permisos preconfigurados
 
 ::: tip Skills por proyecto, no globales
-Las 130 skills (slash commands) **no se instalan globalmente**. Se activan por stack cuando inicializas un proyecto: `make init-project STACK=laravel PROJECT=/ruta`. Los agentes se **compilan** con skills embebidas del stack — el developer no necesita invocar skills manualmente.
+Las 140 skills (slash commands) **no se instalan globalmente**. Se activan por stack cuando inicializas un proyecto: `make init-project STACK=laravel PROJECT=/ruta`. Los agentes se **compilan** con skills embebidas del stack — el developer no necesita invocar skills manualmente.
 :::
 
 ::: tip settings.json ya existe
@@ -199,7 +199,7 @@ Claude lee `.claude/CLAUDE.md` automáticamente al iniciar. Si hay error de cont
 | --- | --- |
 | Instalación global | `make check` desde el template |
 | Claude Code arranca | `claude` en el proyecto |
-| Comandos disponibles | `/plan` o `/jedi-review` dentro de Claude Code |
+| Comandos disponibles | `/jedi-review` o `"Planifica: [feature]"` dentro de Claude Code |
 | Agentes disponibles | "Usa el agente planner para..." |
 | Hook activo | Termina la sesión → revisa `.claude/memory/` |
 | Stack configurado | El CLAUDE.md no tiene `[PLACEHOLDER]` sin rellenar |

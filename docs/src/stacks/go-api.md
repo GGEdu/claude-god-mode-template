@@ -18,7 +18,7 @@ Activa: reglas Go, slash commands, CLAUDE.md con plantilla.
 | --- | --- |
 | `/jedi-review` | Para código crítico (3 expertos: Beck, Fowler, Acton) |
 | `/git-workflow` | Workflow de commits y PRs |
-| `/workflow <nombre>` | Ejecutar pipelines (`feature`, `hotfix`, `refactor`) |
+| `/workflow-runner <nombre>` | Ejecutar pipelines (`feature`, `hotfix`, `refactor`) |
 | `/canary-watch URL` | Monitoreo post-deploy en staging/producción |
 | `/security-scan` | Auditoría de seguridad de configuración y `.claude/` |
 | `/benchmark` | Medir regresiones de rendimiento |

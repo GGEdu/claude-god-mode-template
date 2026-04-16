@@ -20,22 +20,23 @@ La memoria del proyecto se gestiona **automáticamente** por el Stop hook (`sess
 
 ### Planificación y desarrollo
 
-| Comando | Qué hace | Cuándo |
+Planificación y TDD no son slash commands — se invocan mediante lenguaje natural, lo que activa los agentes correspondientes automáticamente:
+
+| Invocación | Agente activado | Cuándo |
 | --- | --- | --- |
-| `/plan "descripción"` | Genera plan con fases, dependencias y riesgos antes de escribir código | Antes de cualquier feature |
-| `/tdd` | Guía el ciclo RED → GREEN → REFACTOR paso a paso | Al implementar features con tests |
-| `/tdd "feature"` | Inicia TDD sobre un feature específico | Al empezar una tarea nueva |
+| `"Planifica: [descripción del feature]"` | `planner` — plan con fases, dependencias y riesgos | Antes de cualquier feature |
+| `"Implementa con TDD: [feature]"` | `tdd-guide` — ciclo RED → GREEN → REFACTOR | Al implementar features nuevos |
 
 Ejemplo:
 
 ```text
-/plan "añadir autenticación Sanctum a la API"
+"Planifica: añadir autenticación Sanctum a la API"
 → Fase 1: Instalar laravel/sanctum, publicar config, migrar tabla
 → Fase 2: Endpoints login/logout/me
 → Fase 3: Middleware auth:sanctum en rutas protegidas
 → Riesgos: CORS en SPA, stateful domains para cookies
 
-/tdd "endpoint POST /api/login"
+"Implementa con TDD: endpoint POST /api/login"
 → Escribe primero: tests/Feature/Auth/LoginTest.php
 → Test debe fallar (RED) → implementa → pasa (GREEN) → refactoriza
 ```
@@ -48,7 +49,6 @@ Ejemplo:
 | --- | --- | --- |
 | `/jedi-review` | 3 subagentes en paralelo: Kent Beck + Martin Fowler + Mike Acton | Después de escribir código importante |
 | `/security-scan` | Auditoría de seguridad enfocada en OWASP Top 10 | Antes de cada release |
-| `/code-review` | Review rápido de calidad y patrones | Después de cambios menores |
 
 Salida típica de `/jedi-review`:
 
@@ -68,9 +68,9 @@ Top 3 acciones: 1) LoginRequest, 2) createToken('spa-web'), 3) AuthService
 | Comando | Qué hace | Cuándo |
 | --- | --- | --- |
 | `/canary-watch URL` | Playwright comprueba errores de consola, peticiones fallidas, tiempos de carga | Después de desplegar |
-| `/workflow feature` | Ejecuta pipeline completo: planner → tdd-guide → code-reviewer → security-reviewer | Features nuevos |
-| `/workflow hotfix` | Pipeline rápido: tdd-guide → security-reviewer → audit | Fixes urgentes |
-| `/workflow refactor` | Pipeline de refactor: planner → code-simplifier → code-reviewer | Refactorizaciones |
+| `/workflow-runner feature` | Ejecuta pipeline completo: planner → tdd-guide → code-reviewer → security-reviewer | Features nuevos |
+| `/workflow-runner hotfix` | Pipeline rápido: tdd-guide → security-reviewer → audit | Fixes urgentes |
+| `/workflow-runner refactor` | Pipeline de refactor: planner → code-simplifier → code-reviewer | Refactorizaciones |
 
 Ejemplo:
 
@@ -244,7 +244,7 @@ proyecto/
 │   │   ├── planner.md         ← Incluye skills del stack dentro del agente
 │   │   ├── code-reviewer.md
 │   │   └── ...
-│   ├── pipeline.yaml          ← Workflows orquestables (/workflow feature)
+│   ├── pipeline.yaml          ← Workflows orquestables (/workflow-runner feature)
 │   └── rules/
 │       ├── common/            ← Reglas universales — siempre activas
 │       └── stack/             ← Reglas del stack + domain elegidos — siempre activas
@@ -283,9 +283,9 @@ El domain **merge** skills extra en los agentes del stack. Por ejemplo, `DOMAIN=
 
 ## Resumen rápido — cuándo usar cada cosa
 
-- Voy a implementar algo: `/plan "descripción"`
-- Escribo código nuevo: `/tdd` + agente `tdd-guide`
-- Terminé de escribir código: `/jedi-review` o `/code-review`
+- Voy a implementar algo: `"Planifica: [descripción]"` → agente `planner`
+- Escribo código nuevo: `"Implementa con TDD: [feature]"` → agente `tdd-guide`
+- Terminé de escribir código: `/jedi-review`
 - Código de auth o pagos: `/security-scan` + agente `security-reviewer`
 - Deployo a producción: `/canary-watch URL`
 - El contexto está lleno: `/compact`

@@ -11,14 +11,14 @@ claude-god-mode-template/
 ├── agents/                  ← Fuente de verdad de los 22 agentes (make install los copia a ~/.claude/agents/)
 ├── hooks/
 │   └── session-consolidate.sh  ← Hook de memoria (make install → ~/.claude/hooks/)
-├── skills/                  ← 130 skills organizadas por nombre
+├── skills/                  ← 140 skills organizadas por nombre
 │   ├── laravel-patterns/
 │   │   └── SKILL.md
 │   ├── jedi-review/
 │   │   └── SKILL.md
 │   └── ...
 ├── rules/                   ← 12 reglas universales (fuente de verdad — make install → ~/.claude/rules/common/)
-├── stacks/                  ← 13 tech stacks
+├── stacks/                  ← 15 tech stacks
 │   ├── common/
 │   │   └── workflows/       ← GitHub Actions agnósticos de stack (init-project los copia a .github/workflows/)
 │   │       ├── agent-pr-review.yml

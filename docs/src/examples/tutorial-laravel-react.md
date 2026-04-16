@@ -29,12 +29,12 @@ Cada sección del tutorial cubre un comando diferente. Puedes seguirlo completo 
 
 ---
 
-## Sección 1 — Planificar con `/plan`
+## Sección 1 — Planificar con el agente `planner`
 
 > **Cuándo:** Antes de implementar cualquier feature nueva. Siempre.
 
 ```text
-/plan "Implementa el módulo de tareas: CRUD completo con asignación a usuarios,
+"Planifica: Implementa el módulo de tareas: CRUD completo con asignación a usuarios,
 prioridades (alta/media/baja) y filtrado por estado"
 ```
 
@@ -127,12 +127,12 @@ Contexto liberado: ~8,400 tokens → ~1,200 tokens de resumen
 
 ---
 
-## Sección 3 — Desarrollar con TDD: `/tdd`
+## Sección 3 — Desarrollar con TDD: agente `tdd-guide`
 
 > **Cuándo:** Antes de escribir cualquier línea de código de producción
 
 Las reglas de Laravel TDD (`laravel-tdd`) van embebidas en el agente `tdd-guide`
-del stack `laravel`. Al ejecutar `/tdd`, Claude aplica ese contexto
+del stack `laravel`. Al pedir "Implementa con TDD: ...", Claude aplica ese contexto
 automáticamente.
 
 **Output — Claude confirma las reglas activas:**
@@ -154,10 +154,10 @@ Convenciones Pest para este stack:
   • Cobertura mínima: 80%
 ```
 
-### Paso 3a — Iniciar el ciclo TDD: `/tdd`
+### Paso 3a — Iniciar el ciclo TDD: agente `tdd-guide`
 
 ```text
-/tdd
+"Implementa con TDD: módulo de tareas — CRUD con asignación y prioridades"
 ```
 
 Claude lanza el agente `tdd-guide` para guiarte por el ciclo:
@@ -368,15 +368,15 @@ Claude detecta automáticamente issues en el código ya escrito y te propone las
 
 ---
 
-## Sección 6 — Code review rápido: `/code-review`
+## Sección 6 — Code review: `/jedi-review`
 
 > **Cuándo:** Después de escribir o modificar código, antes de un commit
 
 ```text
-/code-review
+/jedi-review
 ```
 
-El agente `code-reviewer` analiza los cambios recientes y devuelve:
+El agente `code-reviewer` (junto a Kent Beck, Martin Fowler y Mike Acton) analiza los cambios recientes y devuelve:
 
 **Output:**
 

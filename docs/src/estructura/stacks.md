@@ -1,6 +1,6 @@
 # Directorio: `stacks/`
 
-Fuente de verdad de los **13 tech stacks** del template. `make init-project STACK=<nombre>` activa un stack en un proyecto destino, copiando reglas, CLAUDE.md base y generando agentes compilados.
+Fuente de verdad de los **15 tech stacks** del template. `make init-project STACK=<nombre>` activa un stack en un proyecto destino, copiando reglas, CLAUDE.md base y generando agentes compilados.
 
 > Cada stack es un subdirectorio con `stack.yaml`, `rules/*.md` y `CLAUDE.md`. `ops/compile-agents.py` lee `stack.yaml` para saber qué skills incrustar en cada agente.
 
@@ -8,7 +8,7 @@ Los stacks son **puros por capa de negocio** (backend, fullstack, mobile). Para 
 
 ---
 
-## Inventario de los 13 stacks
+## Inventario de los 15 stacks
 
 - cpp: C++20, backend C++, sin frontend/db, tests GoogleTest.
 - flutter: Flutter 3, backend y frontend Dart, tests flutter_test.
@@ -16,6 +16,7 @@ Los stacks son **puros por capa de negocio** (backend, fullstack, mobile). Para 
 - java-springboot: backend Java, db PostgreSQL, tests JUnit 5.
 - kotlin-multiplatform: backend/frontend Kotlin, db PostgreSQL, tests Kotest.
 - laravel: backend PHP (Laravel 13), db MySQL, tests Pest. _(React frontend → usar `LAYERS=react`)_
+- laravel-livewire: backend PHP (Laravel 12, monolito), frontend PHP+JS (Livewire 4 + Alpine.js), db MySQL, tests Pest.
 - ml-pytorch: backend Python, sin frontend/db, tests pytest.
 - nextjs-saas: backend/frontend TypeScript (Next.js), db PostgreSQL, tests Vitest + Playwright.
 - nuxt-saas: backend/frontend TypeScript (Vue 3), db PostgreSQL, tests Vitest + Playwright.
@@ -143,14 +144,14 @@ mcps:
 
 ### Comandos stack-específicos comunes
 
-- `jedi-review` (todos los 14 stacks): review de 3 expertos en paralelo.
-- `workflow-runner` (todos los 14 stacks): pipeline feature/hotfix/refactor.
-- `canary-watch` (todos los 14 stacks): monitoreo post-deploy con Playwright.
-- `benchmark` (todos los 14 stacks): medir rendimiento antes/después de un PR.
-- `codebase-onboarding` (todos los 14 stacks): guía de onboarding al entrar en un repo.
-- `git-workflow` (todos los 14 stacks): recordatorio de commits y PRs.
+- `jedi-review` (todos los 15 stacks): review de 3 expertos en paralelo.
+- `workflow-runner` (todos los 15 stacks): pipeline feature/hotfix/refactor.
+- `canary-watch` (todos los 15 stacks): monitoreo post-deploy con Playwright.
+- `benchmark` (todos los 15 stacks): medir rendimiento antes/después de un PR.
+- `codebase-onboarding` (todos los 15 stacks): guía de onboarding al entrar en un repo.
+- `git-workflow` (todos los 15 stacks): recordatorio de commits y PRs.
 - `design-md` (flutter, nextjs-saas, nuxt-saas, swift-ios, y cuando `LAYERS=react`): identidad visual.
-- `last30days` (laravel, nextjs-saas): validar conocimiento reciente antes de `/plan`.
+- `last30days` (laravel, nextjs-saas): validar conocimiento reciente antes de planificar un feature.
 - `laravel-plugin-discovery` (laravel): buscar paquetes Laravel.
 
 ---

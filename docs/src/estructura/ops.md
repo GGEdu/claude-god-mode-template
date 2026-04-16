@@ -82,7 +82,7 @@ agents:
 
 ## `detect-stack.py`
 
-**Propósito:** Escanea un proyecto y detecta automáticamente cuál de los 13 stacks encaja mejor, usando un sistema de puntuación por marcadores. También detecta layers técnicos (ej. React) y los sugiere como `LAYERS=`.
+**Propósito:** Escanea un proyecto y detecta automáticamente cuál de los 15 stacks encaja mejor, usando un sistema de puntuación por marcadores. También detecta layers técnicos (ej. React) y los sugiere como `LAYERS=`.
 
 ### Uso
 

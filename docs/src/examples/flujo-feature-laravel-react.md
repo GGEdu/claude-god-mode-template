@@ -51,9 +51,9 @@ Claude tiene todo esto en su contexto activo. No necesita que se lo recuerdes.
 
 ---
 
-## Capa 1 — El comando `/plan` activa el agente planner
+## Capa 1 — El agente `planner`
 
-Al escribir `/plan "..."`, Claude Code lanza el agente **planner**.
+Al describir lo que quieres implementar ("Planifica: ..."), Claude Code lanza el agente **planner**.
 
 ```
 Tu sesión principal

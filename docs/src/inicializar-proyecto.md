@@ -23,6 +23,7 @@ Stacks disponibles:
   java-springboot      Java — Spring Boot 3 + PostgreSQL + Maven/Gradle
   kotlin-multiplatform Kotlin — Ktor backend + Compose Multiplatform + Android
   laravel              Laravel 13 (API REST) + MySQL + Sanctum + Pest
+  laravel-livewire     Laravel 12 (monolito) + Livewire 4 + Alpine.js + TailwindCSS
   ml-pytorch           Machine Learning — PyTorch + Python + CUDA
   nextjs-saas          Next.js 15 (App Router) + Supabase + Stripe
   nuxt-saas            Nuxt 4 — Vue 3 + Nitro + PostgreSQL
@@ -69,7 +70,7 @@ Crea en el proyecto:
 - `.claude/agents/` — agentes **compilados** con skills embebidas del stack (y domain si aplica)
 - `.claude/memory/` — directorio de memoria persistente
 - `.claude/CLAUDE.md` — plantilla con `[PLACEHOLDER]` a rellenar
-- `.claude/pipeline.yaml` — workflows orquestables (`/workflow feature`, `/workflow hotfix`)
+- `.claude/pipeline.yaml` — workflows orquestables (`/workflow-runner feature`, `/workflow-runner hotfix`)
 
 Los agentes globales adicionales y el hook de memoria vienen de `~/.claude/` (instalados con `make install`).
 

@@ -86,7 +86,7 @@ Los stacks activan 20 agentes comunes, más 2 agentes dependientes del lenguaje:
 | --- | --- |
 | **typescript-reviewer** | laravel (con `LAYERS=react`), nextjs-saas, nuxt-saas — stacks con frontend TypeScript, o cualquier stack con `LAYERS=react` |
 | **python-reviewer** | odoo, python-api, ml-pytorch (stacks Python) |
-| Resto (20) | Todos los 14 stacks |
+| Resto (20) | Todos los 15 stacks |
 
 ---
 

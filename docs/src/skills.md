@@ -72,7 +72,7 @@ disponibles:
 | --- | --- |
 | `/jedi-review` | Review de 3 expertos en paralelo para cambios críticos. |
 | `/git-workflow` | Recordatorio de commits, branch y PR workflow. |
-| `/workflow <nombre>` | Ejecuta pipelines declarados en `.claude/pipeline.yaml` (`feature`, `hotfix`, `refactor`). |
+| `/workflow-runner <nombre>` | Ejecuta pipelines declarados en `.claude/pipeline.yaml` (`feature`, `hotfix`, `refactor`). |
 | `/canary-watch URL` | Monitoreo post-deploy en staging/producción. |
 | `/laravel-plugin-discovery` | Descubrir y evaluar paquetes Laravel. |
 | `/security-scan` | Auditoría de seguridad de `.claude/` y configuración. |
@@ -140,15 +140,15 @@ Los **agentes** (`.claude/agents/`) son subprocesos autónomos con contexto aisl
 **Flujo típico:**
 
 ```text
-Tú → /tdd             (inicias ciclo RED/GREEN/REFACTOR)
-                       (Claude lanza tdd-guide con laravel-tdd ya embebida)
+Tú → "Implementa con TDD: [feature]"   (Claude lanza tdd-guide con laravel-tdd ya embebida)
+                                         (ciclo RED/GREEN/REFACTOR)
 ```
 
 ---
 
 ## Skills en `skills/` que NO se activan con `laravel` + `LAYERS=react`
 
-Las 130 skills del directorio `skills/` cubren muchos otros stacks y casos.
+Las 140 skills del directorio `skills/` cubren muchos otros stacks y casos.
 Las que no forman parte del stack activo no se mueven a `commands/` y no
 interfieren en tu sesión. Están disponibles si en algún momento las necesitas:
 

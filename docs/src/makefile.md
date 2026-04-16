@@ -236,6 +236,7 @@ Stacks disponibles:
   java-springboot      Java — Spring Boot 3 + PostgreSQL + Maven/Gradle
   kotlin-multiplatform Kotlin — Ktor backend + Compose Multiplatform + Android
   laravel              Laravel 13 (API REST) + MySQL + Sanctum + Pest
+  laravel-livewire     Laravel 12 (monolito) + Livewire 4 + Alpine.js + TailwindCSS
   ml-pytorch           Machine Learning — PyTorch + Python + CUDA
   nextjs-saas          Next.js 15 (App Router) + Supabase + Stripe
   nuxt-saas            Nuxt 4 — Vue 3 + Nitro + PostgreSQL
@@ -392,11 +393,12 @@ make analyze-project NAME=nombre-del-proyecto
 | `make setup` | Configura git hooks del template (una vez) |
 | `make install` | Instala agentes, reglas y comandos en `~/.claude/` (una vez por máquina) |
 | `make check` | Verifica instalación global y local |
-| `make list-stacks` | Lista los 14 stacks disponibles |
+| `make list-stacks` | Lista los 15 stacks disponibles |
+| `make list-layers` | Lista los layers técnicos disponibles |
 | `make list-domains` | Lista los 4 domain overlays disponibles |
 | `make setup-project PROJECT=/ruta` | Auto-detecta stack e inicializa proyecto (modo automático) |
-| `make init-project STACK=x PROJECT=/ruta [DOMAIN=y]` | Inicializa proyecto externo con un stack (+ domain opcional) |
-| `make dev-stack STACK=nombre` | Activa un stack en el template para desarrollo |
+| `make init-project STACK=x PROJECT=/ruta [LAYERS=y] [DOMAIN=z]` | Inicializa proyecto externo con un stack (+ layer y domain opcionales) |
+| `make dev-stack STACK=nombre [LAYERS=react]` | Activa un stack en el template para desarrollo |
 | `make new-project` | Instrucciones para inicializar un proyecto |
 | `make activate-notebooklm` | Activa NotebookLM MCP |
 | `make deactivate-notebooklm` | Desactiva NotebookLM (ahorra ~35 herramientas) |
