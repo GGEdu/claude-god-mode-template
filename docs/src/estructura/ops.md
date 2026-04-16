@@ -11,7 +11,7 @@ Los **scripts y herramientas operacionales** del template. Son herramientas de b
 ### Uso
 
 ```bash
-python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir> [domain.yaml]
+python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir> [overlay.yaml...]
 ```
 
 | Argumento | Descripción |
@@ -20,12 +20,13 @@ python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir
 | `skills_dir` | Directorio base de skills (normalmente `skills/`) |
 | `agents_dir` | Directorio fuente de agentes (normalmente `agents/`) |
 | `output_dir` | Destino de los agentes compilados (`.claude/agents/`) |
-| `domain.yaml` | _(Opcional)_ Overlay de dominio — fusiona skills extra |
+| `overlay.yaml...` | _(Opcional, múltiples)_ Layers o domains — se aplican en orden (layers primero, domain último) |
 
 ### Cómo funciona internamente
 
 1. Lee la sección `agents:` de `stack.yaml` (formato dict con skills por agente)
-2. Si se pasa `domain.yaml`, llama a `merge_domain_skills()` — añade skills del dominio sin reemplazar las del stack
+2. Para cada overlay (layers + domain), llama a `merge_domain_skills()` — añade skills sin reemplazar las del stack
+   - Si el overlay referencia un agente que no existe en el stack (ej. `typescript-reviewer` en `python-api`), lo **crea** con las skills del overlay
 3. Para cada agente: lee `agents/<nombre>.md` + skills asignadas
 4. Strips YAML frontmatter de cada `SKILL.md` antes de incrustar
 5. Añade un bloque `# Embedded Skills Reference` al final del agente
@@ -54,8 +55,10 @@ python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir
 
 - `make install` → compila los 22 agentes sin skills (instalación global)
 - `make dev-stack STACK=x` → compila agentes con skills del stack para este repo
-- `make init-project STACK=x` → compila en el proyecto destino
-- Con domain: `make dev-stack STACK=x DOMAIN=y`
+- `make dev-stack STACK=x LAYERS=react` → stack + layer técnico
+- `make dev-stack STACK=x DOMAIN=y` → stack + domain overlay
+- `make dev-stack STACK=x LAYERS=react DOMAIN=healthcare` → stack + layer + domain (triple composición)
+- `make init-project STACK=x PROJECT=/ruta [LAYERS=...] [DOMAIN=...]` → compila en el proyecto destino
 
 ### Formatos soportados
 
@@ -79,7 +82,7 @@ agents:
 
 ## `detect-stack.py`
 
-**Propósito:** Escanea un proyecto y detecta automáticamente cuál de los 14 stacks encaja mejor, usando un sistema de puntuación por marcadores.
+**Propósito:** Escanea un proyecto y detecta automáticamente cuál de los 15 stacks encaja mejor, usando un sistema de puntuación por marcadores. También detecta layers técnicos (ej. React) y los sugiere como `LAYERS=`.
 
 ### Uso
 
@@ -100,8 +103,8 @@ El script puntúa cada stack buscando archivos o contenido específico:
 | Marcador | Contenido | Stack beneficiado | Puntos |
 |----------|-----------|-------------------|--------|
 | `go.mod` | — | go-api | +10 |
-| `composer.json` | `laravel/framework` | laravel-react | +10 |
-| `artisan` | — | laravel-react | +8 |
+| `composer.json` | `laravel/framework` | laravel | +10 |
+| `artisan` | — | laravel | +8 |
 | `__manifest__.py` | — | odoo | +15 |
 | `manage.py` | — | python-api | +8 |
 | `requirements.txt` | `django` | python-api | +10 |
@@ -110,25 +113,26 @@ El script puntúa cada stack buscando archivos o contenido específico:
 | `supabase/` | — | nextjs-saas | +5 |
 | `.env` | `STRIPE` | nextjs-saas | +3 |
 
-Algunos marcadores también restan puntos a stacks incompatibles (e.g., detectar `"next"` en `package.json` resta 3 puntos a `laravel-react`).
+Además de los marcadores de stack, el script detecta **layer markers**: si encuentra `package.json` con `"react"` (score ≥ 5), sugiere `LAYERS=react` en la salida.
 
 ### Salida humana
 
 ```
-🔍 Stack detectado: laravel-react
-   Laravel 13 (API REST) + React 19 (SPA) + Sanctum
-   Score: 27
+🔍 Stack detectado: laravel
+   Laravel 13 (API REST) + MySQL + Sanctum
+   Score: 22
 
    Evidencia:
      +10 composer.json (contains 'laravel/framework')
      +8  artisan
-     +5  package.json (contains '"react"')
      +4  composer.json (contains 'sanctum')
 
    Alternativas:
      python-api: score 5
 
-STACK=laravel-react
+   Layer detectado: react (package.json contains "react", score: 10)
+
+STACK=laravel LAYERS=react
 ```
 
 ### Cuándo usarlo

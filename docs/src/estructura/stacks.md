@@ -1,19 +1,22 @@
 # Directorio: `stacks/`
 
-Fuente de verdad de los **14 tech stacks** del template. `make init-project STACK=<nombre>` activa un stack en un proyecto destino, copiando reglas, CLAUDE.md base y generando agentes compilados.
+Fuente de verdad de los **15 tech stacks** del template. `make init-project STACK=<nombre>` activa un stack en un proyecto destino, copiando reglas, CLAUDE.md base y generando agentes compilados.
 
 > Cada stack es un subdirectorio con `stack.yaml`, `rules/*.md` y `CLAUDE.md`. `ops/compile-agents.py` lee `stack.yaml` para saber qué skills incrustar en cada agente.
 
+Los stacks son **puros por capa de negocio** (backend, fullstack, mobile). Para añadir un frontend React a un stack backend, usa `LAYERS=react` — ver [Composición con layers](#composición-con-layers).
+
 ---
 
-## Inventario de los 14 stacks
+## Inventario de los 15 stacks
 
 - cpp: C++20, backend C++, sin frontend/db, tests GoogleTest.
 - flutter: Flutter 3, backend y frontend Dart, tests flutter_test.
 - go-api: backend Go, db PostgreSQL, tests go-test.
 - java-springboot: backend Java, db PostgreSQL, tests JUnit 5.
 - kotlin-multiplatform: backend/frontend Kotlin, db PostgreSQL, tests Kotest.
-- laravel-react: backend PHP, frontend TypeScript (React), db MySQL, tests Pest + Vitest.
+- laravel: backend PHP (Laravel 13), db MySQL, tests Pest. _(React frontend → usar `LAYERS=react`)_
+- laravel-livewire: backend PHP (Laravel 12, monolito), frontend PHP+JS (Livewire 4 + Alpine.js), db MySQL, tests Pest.
 - ml-pytorch: backend Python, sin frontend/db, tests pytest.
 - nextjs-saas: backend/frontend TypeScript (Next.js), db PostgreSQL, tests Vitest + Playwright.
 - nuxt-saas: backend/frontend TypeScript (Vue 3), db PostgreSQL, tests Vitest + Playwright.
@@ -22,6 +25,25 @@ Fuente de verdad de los **14 tech stacks** del template. `make init-project STAC
 - python-api: backend Python, db PostgreSQL, tests pytest.
 - rust-api: backend Rust, db PostgreSQL, tests cargo-test.
 - swift-ios: backend/frontend Swift (SwiftUI), sin db, tests XCTest.
+
+---
+
+## Composición con layers
+
+Los **layers** son overlays técnicos composables que se aplican sobre cualquier stack backend. Ejemplo: añadir React a Laravel o Python:
+
+```bash
+# Laravel + React SPA
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta
+
+# Python API + React dashboard
+make init-project STACK=python-api LAYERS=react PROJECT=/ruta
+
+# Laravel + React + dominio healthcare
+make init-project STACK=laravel LAYERS=react DOMAIN=healthcare PROJECT=/ruta
+```
+
+Ver la documentación completa en [`layers/`](./layers.md).
 
 ---
 
@@ -70,19 +92,25 @@ mcps:
 
 ---
 
-## Skills por agente (ejemplo: `laravel-react`)
+## Skills por agente (ejemplo: `laravel` + `LAYERS=react`)
 
-- architect: api-design, laravel-patterns, architecture-decision-records, deployment-patterns, docker-patterns.
+**Stack `laravel` (backend puro):**
+
+- architect: laravel-patterns, architecture-decision-records, deployment-patterns, docker-patterns.
 - planner: laravel-patterns, search-first.
 - tdd-guide: tdd-workflow, laravel-tdd.
 - code-reviewer: laravel-verification, verification-loop.
-- typescript-reviewer: frontend-patterns, coding-standards, design-system.
 - security-reviewer: security-review, laravel-security.
 - database-reviewer: database-migrations.
-- e2e-runner: e2e-testing.
 - loop-operator: safety-guard.
 - docs-lookup: documentation-lookup.
 - resto (12 agentes): sin skills adicionales.
+
+**Con `LAYERS=react` (añadido por el layer):**
+
+- architect: ← añade `api-design`.
+- typescript-reviewer: frontend-patterns, coding-standards, design-system. _(agente nuevo, no existe en el stack puro)_
+- e2e-runner: ← añade `e2e-testing`.
 
 ### Skills universales (todos los stacks)
 
@@ -116,15 +144,15 @@ mcps:
 
 ### Comandos stack-específicos comunes
 
-- `jedi-review` (todos los 14 stacks): review de 3 expertos en paralelo.
-- `workflow-runner` (todos los 14 stacks): pipeline feature/hotfix/refactor.
-- `canary-watch` (todos los 14 stacks): monitoreo post-deploy con Playwright.
-- `benchmark` (todos los 14 stacks): medir rendimiento antes/después de un PR.
-- `codebase-onboarding` (todos los 14 stacks): guía de onboarding al entrar en un repo.
-- `git-workflow` (todos los 14 stacks): recordatorio de commits y PRs.
-- `design-md` (flutter, laravel-react, nextjs-saas, nuxt-saas, swift-ios): identidad visual.
-- `last30days` (laravel-react, nextjs-saas): validar conocimiento reciente antes de `/plan`.
-- `laravel-plugin-discovery` (laravel-react): buscar paquetes Laravel.
+- `jedi-review` (todos los 15 stacks): review de 3 expertos en paralelo.
+- `workflow-runner` (todos los 15 stacks): pipeline feature/hotfix/refactor.
+- `canary-watch` (todos los 15 stacks): monitoreo post-deploy con Playwright.
+- `benchmark` (todos los 15 stacks): medir rendimiento antes/después de un PR.
+- `codebase-onboarding` (todos los 15 stacks): guía de onboarding al entrar en un repo.
+- `git-workflow` (todos los 15 stacks): recordatorio de commits y PRs.
+- `design-md` (flutter, nextjs-saas, nuxt-saas, swift-ios, y cuando `LAYERS=react`): identidad visual.
+- `last30days` (laravel, nextjs-saas): validar conocimiento reciente antes de planificar un feature.
+- `laravel-plugin-discovery` (laravel): buscar paquetes Laravel.
 
 ---
 
@@ -132,10 +160,10 @@ mcps:
 
 Todos los stacks activan 20 agentes comunes, con 2 agentes dependientes del lenguaje:
 
-- typescript-reviewer: laravel-react, nextjs-saas, nuxt-saas (stacks con TypeScript frontend).
+- typescript-reviewer: nextjs-saas, nuxt-saas (stacks con TypeScript frontend integrado); también se activa via `LAYERS=react`.
 - python-reviewer: odoo, python-api, ml-pytorch (stacks Python).
 
-Total instalado: 22 agentes (20 comunes + typescript-reviewer en 3 stacks + python-reviewer en 3 stacks).
+Total instalado: 22 agentes (20 comunes + typescript-reviewer en stacks/layers con TS + python-reviewer en 3 stacks).
 
 ---
 

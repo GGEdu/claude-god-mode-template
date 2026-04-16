@@ -27,13 +27,12 @@ MARKERS = [
     ("go.mod", None, {"go-api": 10}),
     ("go.sum", None, {"go-api": 5}),
     # Laravel + PHP
-    ("composer.json", "laravel/framework", {"laravel-react": 10}),
-    ("composer.json", None, {"laravel-react": 3, "odoo": -2}),
-    ("artisan", None, {"laravel-react": 8}),
-    # React / Frontend JS
-    ("package.json", '"react"', {"laravel-react": 5, "nextjs-saas": 3}),
-    ("package.json", '"next"', {"nextjs-saas": 10, "laravel-react": -3}),
-    ("package.json", '"vue"', {"laravel-react": -2, "nextjs-saas": -2}),
+    ("composer.json", "laravel/framework", {"laravel": 10}),
+    ("composer.json", None, {"laravel": 3, "odoo": -2}),
+    ("artisan", None, {"laravel": 8}),
+    # React / Frontend JS — React itself is now a layer, not a stack differentiator
+    ("package.json", '"next"', {"nextjs-saas": 10}),
+    ("package.json", '"vue"', {"nextjs-saas": -2}),
     # Supabase
     ("supabase/", None, {"nextjs-saas": 5}),
     (".env", "SUPABASE", {"nextjs-saas": 4}),
@@ -55,10 +54,18 @@ MARKERS = [
     ("package.json", "stripe", {"nextjs-saas": 4}),
     (".env", "STRIPE", {"nextjs-saas": 3}),
     # Sanctum (Laravel auth)
-    ("composer.json", "sanctum", {"laravel-react": 4}),
+    ("composer.json", "sanctum", {"laravel": 4}),
     # MySQL vs PostgreSQL
-    (".env", "DB_CONNECTION=mysql", {"laravel-react": 2}),
+    (".env", "DB_CONNECTION=mysql", {"laravel": 2}),
     (".env", "DATABASE_URL.*postgres", {"python-api": 2, "nextjs-saas": 2, "go-api": 2}),
+]
+
+# Layer markers: (file_or_dir, content_pattern, layer_name, weight)
+# Detect which tech layers apply independently of the backend stack.
+LAYER_MARKERS = [
+    ("package.json", '"react"', "react", 10),
+    ("src/", None, "react", 3),           # src/ with package.json is a strong React signal
+    ("tsconfig.json", None, "react", 2),  # TypeScript project with package.json → likely React
 ]
 
 
@@ -70,6 +77,25 @@ def file_contains(filepath, pattern):
         return pattern.lower() in content
     except (OSError, UnicodeDecodeError):
         return False
+
+
+def detect_layers(project_path):
+    """Score each layer based on project markers. Returns list of detected layer names."""
+    # Only detect layers if there's a package.json (frontend indicator)
+    if not os.path.exists(os.path.join(project_path, "package.json")):
+        return []
+
+    scores = {}
+    for marker_path, content_pattern, layer_name, weight in LAYER_MARKERS:
+        full_path = os.path.join(project_path, marker_path)
+        if not os.path.exists(full_path):
+            continue
+        if content_pattern and os.path.isfile(full_path):
+            if not file_contains(full_path, content_pattern):
+                continue
+        scores[layer_name] = scores.get(layer_name, 0) + weight
+
+    return [name for name, score in scores.items() if score >= 5]
 
 
 def detect_stack(project_path, stacks_dir):
@@ -144,11 +170,13 @@ def main():
         sys.exit(1)
 
     best, all_stacks = detect_stack(project_path, stacks_dir)
+    detected_layers = detect_layers(project_path)
 
     # JSON mode for programmatic use
     if "--json" in sys.argv:
         result = {
             "detected": best,
+            "layers": detected_layers,
             "scores": {k: v["score"] for k, v in all_stacks.items()},
         }
         print(json.dumps(result))
@@ -156,7 +184,8 @@ def main():
 
     # Human-readable output
     if best:
-        print(f"🔍 Stack detectado: {best}")
+        layers_str = f" + layers: {', '.join(detected_layers)}" if detected_layers else ""
+        print(f"🔍 Stack detectado: {best}{layers_str}")
         print(f"   {all_stacks[best]['description']}")
         print(f"   Score: {all_stacks[best]['score']}")
         print()
@@ -164,6 +193,8 @@ def main():
             print("   Evidencia:")
             for m in all_stacks[best]["matches"]:
                 print(f"     {m}")
+        if detected_layers:
+            print(f"   Layers detectados: {', '.join(detected_layers)}")
         print()
         # Print ranking
         ranked = sorted(all_stacks.items(), key=lambda x: x[1]["score"], reverse=True)
@@ -177,8 +208,9 @@ def main():
         print("   Usa: make list-stacks  para ver opciones disponibles", file=sys.stderr)
         sys.exit(1)
 
-    # Print just the stack name on the last line for easy parsing
-    print(f"\nSTACK={best}")
+    # Print stack + layers on the last line for easy parsing by setup-project
+    layers_suffix = f" LAYERS={','.join(detected_layers)}" if detected_layers else ""
+    print(f"\nSTACK={best}{layers_suffix}")
 
 
 if __name__ == "__main__":

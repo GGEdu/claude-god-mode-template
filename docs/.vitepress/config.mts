@@ -54,11 +54,21 @@ export default withMermaid(
           text: '⚙️ Stacks',
           collapsed: true,
           items: [
+            { text: 'C++ / CMake', link: '/stacks/cpp' },
+            { text: 'Flutter', link: '/stacks/flutter' },
             { text: 'Go API', link: '/stacks/go-api' },
-            { text: 'Laravel + React', link: '/stacks/laravel-react' },
+            { text: 'Java / Spring Boot', link: '/stacks/java-springboot' },
+            { text: 'Kotlin Multiplatform', link: '/stacks/kotlin-multiplatform' },
+            { text: 'Laravel API', link: '/stacks/laravel' },
+            { text: 'Laravel Livewire', link: '/stacks/laravel-livewire' },
+            { text: 'ML / PyTorch', link: '/stacks/ml-pytorch' },
             { text: 'Next.js SaaS', link: '/stacks/nextjs-saas' },
+            { text: 'Nuxt SaaS', link: '/stacks/nuxt-saas' },
             { text: 'Odoo 19', link: '/stacks/odoo' },
+            { text: 'Perl', link: '/stacks/perl' },
             { text: 'Python API', link: '/stacks/python-api' },
+            { text: 'Rust API', link: '/stacks/rust-api' },
+            { text: 'Swift / iOS', link: '/stacks/swift-ios' },
           ]
         },
         {
@@ -67,6 +77,7 @@ export default withMermaid(
           items: [
             { text: 'agents/', link: '/estructura/agents' },
             { text: 'stacks/', link: '/estructura/stacks' },
+            { text: 'layers/', link: '/estructura/layers' },
             { text: 'domains/', link: '/estructura/domains' },
             { text: 'skills/', link: '/estructura/skills' },
             { text: 'ops/', link: '/estructura/ops' },
@@ -79,11 +90,9 @@ export default withMermaid(
           text: '📋 Ejemplos',
           collapsed: true,
           items: [
-            { text: 'Django REST API', link: '/examples/django-api-CLAUDE' },
-            { text: 'Go Microservicio', link: '/examples/go-microservice-CLAUDE' },
-            { text: 'Next.js SaaS', link: '/examples/saas-nextjs-CLAUDE' },
             { text: 'Flujo Feature Laravel+React', link: '/examples/flujo-feature-laravel-react' },
             { text: 'Tutorial: Laravel+React (TaskFlow)', link: '/examples/tutorial-laravel-react' },
+            { text: 'Orquestación: GitHub Actions + Antigravity', link: '/examples/orquestacion-laravel-react' },
           ]
         },
         {

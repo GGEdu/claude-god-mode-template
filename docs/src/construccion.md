@@ -11,26 +11,33 @@ claude-god-mode-template/
 ├── agents/                  ← Fuente de verdad de los 22 agentes (make install los copia a ~/.claude/agents/)
 ├── hooks/
 │   └── session-consolidate.sh  ← Hook de memoria (make install → ~/.claude/hooks/)
-├── skills/                  ← 130 skills organizadas por nombre
+├── skills/                  ← 140 skills organizadas por nombre
 │   ├── laravel-patterns/
 │   │   └── SKILL.md
 │   ├── jedi-review/
 │   │   └── SKILL.md
 │   └── ...
 ├── rules/                   ← 12 reglas universales (fuente de verdad — make install → ~/.claude/rules/common/)
-├── stacks/                  ← 14 tech stacks
+├── stacks/                  ← 15 tech stacks
 │   ├── common/
 │   │   └── workflows/       ← GitHub Actions agnósticos de stack (init-project los copia a .github/workflows/)
 │   │       ├── agent-pr-review.yml
 │   │       ├── agent-issue-triage.yml
 │   │       └── agent-scheduled-audit.yml
-│   ├── laravel-react/
+│   ├── laravel/
 │   │   ├── stack.yaml       ← Declara agentes con skills, comandos y MCPs
 │   │   ├── CLAUDE.md        ← Plantilla de CLAUDE.md para el proyecto
-│   │   └── rules/           ← Reglas específicas del stack
-│   │       ├── laravel.md
-│   │       └── react.md
+│   │   └── rules/           ← Reglas específicas del stack (solo backend)
+│   │       └── laravel.md
 │   ├── nextjs-saas/
+│   └── ...
+├── layers/                  ← Layers técnicos composables (se aplican sobre cualquier stack)
+│   ├── react/
+│   │   ├── layer.yaml       ← Skills, comandos y reglas del layer
+│   │   ├── CLAUDE-append.md ← Contexto adicional para CLAUDE.md
+│   │   └── rules/           ← Reglas del layer (React/TypeScript)
+│   │       ├── react.md
+│   │       └── ...
 │   └── ...
 ├── domains/                 ← 4 domain overlays (se combinan con cualquier stack)
 │   ├── healthcare/
@@ -97,8 +104,8 @@ skills/
 Declara qué agentes con skills y qué comandos se activan cuando inicializas un proyecto con ese stack:
 
 ```yaml
-name: laravel-react
-description: Laravel 13 (API REST) + React 19 (SPA) + Sanctum
+name: laravel
+description: Laravel 13 (API REST) + MySQL + Sanctum
 
 rules:
   - laravel.md
@@ -133,6 +140,34 @@ mcps:
 ```
 
 **Compilación de agentes:** `ops/compile-agents.py` lee este mapping, toma `agents/<name>.md` como base, y concatena los SKILL.md asignados bajo `# Embedded Skills Reference`. El developer nunca invoca skills manualmente — los agentes ya los conocen.
+
+### `layers/<nombre>/layer.yaml`
+
+Un layer técnico añade un overlay horizontal (frontend, infra) sobre cualquier stack backend. Mismo mecanismo de merge que los domains — pero para tech, no negocio:
+
+```yaml
+name: react
+description: "Frontend React 19 + TypeScript SPA — layer composable"
+
+agent_skills:                    # Se MERGE con los del stack
+  architect:
+    - api-design
+  typescript-reviewer:           # Puede añadir agentes nuevos al stack
+    - frontend-patterns
+    - coding-standards
+  e2e-runner:
+    - e2e-testing
+
+commands:
+  design-md:
+    when: "Al crear componentes React o refactorizar UI"
+
+rules:
+  - react.md
+  - coding-style.md
+```
+
+Al ejecutar `make init-project STACK=laravel LAYERS=react`, el stack Laravel recibe los agentes y skills del layer React. Los layers se pueden combinar: `LAYERS=react,vue`. Los layers se procesan antes que los domains: `LAYERS=react DOMAIN=healthcare`.
 
 ### `domains/<nombre>/domain.yaml`
 
@@ -176,13 +211,16 @@ Skills NO se copian globalmente como comandos activos — se activan por stack c
 
 1. Crea directorios en el proyecto destino: `.claude/rules/stack/`, `.claude/commands/`, `.claude/agents/`, `.claude/memory/`
 2. Copia reglas del stack: `stacks/<STACK>/rules/*.md` → `.claude/rules/stack/`
-3. Si hay `DOMAIN=`, copia también: `domains/<DOMAIN>/rules/*.md` → `.claude/rules/stack/`
-4. **Compila agentes** con skills embebidas: `ops/compile-agents.py` + domain merge si aplica
-5. Copia comandos standalone: `skills/<nombre>/SKILL.md` → `.claude/commands/<nombre>.md`
-6. Copia `pipeline.yaml` y `audit-task.sh` si existen
-7. Copia `stacks/common/workflows/*.yml` → `.github/workflows/` (GitHub Actions agnósticos de stack)
-8. Genera `.claude/CLAUDE.md` desde la plantilla del stack (solo si no existe)
-9. Si hay `DOMAIN=`, appenda `CLAUDE-append.md` al CLAUDE.md
+3. Si hay `LAYERS=`, copia también: `layers/<LAYER>/rules/*.md` → `.claude/rules/stack/` (por cada layer)
+4. Si hay `DOMAIN=`, copia también: `domains/<DOMAIN>/rules/*.md` → `.claude/rules/stack/`
+5. **Compila agentes** con skills embebidas: `ops/compile-agents.py stack.yaml skills agents .claude/agents [layer.yaml...] [domain.yaml]`
+   - Los layers pueden añadir agentes nuevos al stack (ej. `typescript-reviewer` en un stack Python puro)
+6. Copia comandos standalone: `skills/<nombre>/SKILL.md` → `.claude/commands/<nombre>.md`
+7. Copia `pipeline.yaml` y `audit-task.sh` si existen
+8. Copia `stacks/common/workflows/*.yml` → `.github/workflows/` (GitHub Actions agnósticos de stack)
+9. Genera `.claude/CLAUDE.md` desde la plantilla del stack (solo si no existe)
+10. Si hay `LAYERS=`, appenda `CLAUDE-append.md` del layer al CLAUDE.md
+11. Si hay `DOMAIN=`, appenda `CLAUDE-append.md` del domain al CLAUDE.md
 
 ---
 
@@ -192,6 +230,13 @@ Skills NO se copian globalmente como comandos activos — se activan por stack c
 2. Añádelo a los `stack.yaml` de los stacks donde aplique (sección `agents:` con las skills asignadas)
 3. Ejecuta `make dev-stack STACK=x` para recompilar los agentes
 4. Actualiza el conteo en la documentación
+
+## Añadir un nuevo layer técnico
+
+1. Crea `layers/<nombre>/` con: `layer.yaml`, `rules/*.md`, `CLAUDE-append.md` (opcional)
+2. El `layer.yaml` usa el mismo schema que `domain.yaml` pero puede añadir agentes nuevos
+3. Las skills del layer se **merge** con las del stack; los agentes nuevos se crean desde cero
+4. Prueba composición: `make dev-stack STACK=laravel LAYERS=<nombre>` + `make check`
 
 ## Añadir un nuevo stack
 

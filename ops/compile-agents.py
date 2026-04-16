@@ -3,14 +3,15 @@
 Compile agents with their stack-assigned skills embedded.
 
 Usage:
-    python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir> [domain.yaml]
+    python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir> [overlay.yaml...]
 
 Reads the `agents:` section from stack.yaml (dict format with skills mapping),
 reads each agent .md file + assigned skill SKILL.md files, and writes compiled
 agents to output_dir with skill content appended.
 
-If domain.yaml is provided, its `agent_skills:` are merged (appended) onto the
-stack's agent skills — overlays ONLY ADD, never replace.
+Zero or more overlay YAMLs (layers or domains) can be provided after the 4th arg.
+Each overlay's `agent_skills:` are merged (appended) onto the stack agents — overlays
+ONLY ADD, never replace. Overlays can also ADD new agents not present in the stack.
 
 Supports two formats:
   - Legacy (list):  agents: [architect, planner, ...]
@@ -59,17 +60,23 @@ def compile_agent(agent_path, skill_entries):
     return content
 
 
-def merge_domain_skills(agents, domain_yaml_path):
-    """Merge domain agent_skills onto stack agents (append only)."""
-    with open(domain_yaml_path, encoding="utf-8") as f:
-        domain = yaml.safe_load(f)
+def merge_domain_skills(agents, overlay_yaml_path):
+    """Merge overlay agent_skills onto stack agents (append only).
 
-    domain_skills = domain.get("agent_skills", {})
-    if not domain_skills:
+    Overlays (layers or domains) can ADD new agents not present in the stack.
+    This allows e.g. layers/react/ to inject typescript-reviewer into a backend-only stack.
+    """
+    with open(overlay_yaml_path, encoding="utf-8") as f:
+        overlay = yaml.safe_load(f)
+
+    overlay_skills = overlay.get("agent_skills", {})
+    if not overlay_skills:
         return agents
 
-    for agent_name, extra_skills in domain_skills.items():
+    for agent_name, extra_skills in overlay_skills.items():
         if agent_name not in agents:
+            # Layer/domain can ADD new agents (not just extend existing ones)
+            agents[agent_name] = {"skills": list(extra_skills or [])}
             continue
         config = agents[agent_name]
         if not isinstance(config, dict):
@@ -78,7 +85,7 @@ def merge_domain_skills(agents, domain_yaml_path):
         existing = config.get("skills", [])
         # Append without duplicates, preserving order
         seen = set(existing)
-        for skill in extra_skills:
+        for skill in (extra_skills or []):
             if skill not in seen:
                 existing.append(skill)
                 seen.add(skill)
@@ -89,23 +96,25 @@ def merge_domain_skills(agents, domain_yaml_path):
 
 def main():
     if len(sys.argv) < 5:
-        print(f"Usage: {sys.argv[0]} <stack.yaml> <skills_dir> <agents_dir> <output_dir> [domain.yaml]")
+        print(f"Usage: {sys.argv[0]} <stack.yaml> <skills_dir> <agents_dir> <output_dir> [overlay.yaml...]")
         sys.exit(1)
 
     stack_yaml_path = sys.argv[1]
     skills_base = sys.argv[2]
     agents_base = sys.argv[3]
     output_dir = sys.argv[4]
-    domain_yaml_path = sys.argv[5] if len(sys.argv) > 5 else None
+    overlay_paths = sys.argv[5:]  # Zero or more layer/domain overlay YAMLs
 
     with open(stack_yaml_path, encoding="utf-8") as f:
         stack = yaml.safe_load(f)
 
     agents = stack.get("agents", {})
 
-    # Merge domain overlay skills if provided
-    if domain_yaml_path and os.path.exists(domain_yaml_path) and isinstance(agents, dict):
-        agents = merge_domain_skills(agents, domain_yaml_path)
+    # Merge overlay skills in order: layers first, then domain (last overlay wins on conflicts)
+    if isinstance(agents, dict):
+        for overlay_path in overlay_paths:
+            if overlay_path and os.path.exists(overlay_path):
+                agents = merge_domain_skills(agents, overlay_path)
 
     os.makedirs(output_dir, exist_ok=True)
 

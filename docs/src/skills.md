@@ -39,9 +39,9 @@ que esté en `commands/` (nivel 2). Si está solo en `skills/` o `agents/`, no h
 
 ## Qué hace `make dev-stack`
 
-Al ejecutar `make dev-stack STACK=laravel-react`, el comando:
+Al ejecutar `make dev-stack STACK=laravel LAYERS=react`, el comando:
 
-1. Copia `stacks/laravel-react/rules/*.md` → `.claude/rules/stack/` (**Nivel 3**)
+1. Copia `stacks/laravel/rules/*.md` + `layers/react/rules/*.md` → `.claude/rules/stack/` (**Nivel 3**)
    Las convenciones del stack quedan activas en cada sesión sin invocar nada.
 
 2. **Compila** los agentes con skills embebidas → `.claude/agents/` (**Nivel 4**)
@@ -53,7 +53,7 @@ Al ejecutar `make dev-stack STACK=laravel-react`, el comando:
    Solo los declarados en `commands:` del `stack.yaml`. Son herramientas que
    el developer invoca explícitamente (ej: `/jedi-review`, `/git-workflow`).
 
-4. Copia `stacks/laravel-react/CLAUDE.md` → `.claude/CLAUDE.md`
+4. Copia `stacks/laravel/CLAUDE.md` → `.claude/CLAUDE.md` (y appenda `layers/react/CLAUDE-append.md` si hay layer)
    Configura el cerebro del proyecto con los datos del stack.
 
 5. Si se indicó `DOMAIN=`, añade skills del domain a los agentes (merge)
@@ -61,9 +61,9 @@ Al ejecutar `make dev-stack STACK=laravel-react`, el comando:
 
 ---
 
-## Skills activadas para el stack `laravel-react`
+## Skills activadas para el stack `laravel` + `LAYERS=react`
 
-Después de `make dev-stack STACK=laravel-react`, estos slash commands quedan
+Después de `make dev-stack STACK=laravel LAYERS=react`, estos slash commands quedan
 disponibles:
 
 ### Slash commands standalone (comandos reales)
@@ -72,7 +72,7 @@ disponibles:
 | --- | --- |
 | `/jedi-review` | Review de 3 expertos en paralelo para cambios críticos. |
 | `/git-workflow` | Recordatorio de commits, branch y PR workflow. |
-| `/workflow <nombre>` | Ejecuta pipelines declarados en `.claude/pipeline.yaml` (`feature`, `hotfix`, `refactor`). |
+| `/workflow-runner <nombre>` | Ejecuta pipelines declarados en `.claude/pipeline.yaml` (`feature`, `hotfix`, `refactor`). |
 | `/canary-watch URL` | Monitoreo post-deploy en staging/producción. |
 | `/laravel-plugin-discovery` | Descubrir y evaluar paquetes Laravel. |
 | `/security-scan` | Auditoría de seguridad de `.claude/` y configuración. |
@@ -140,15 +140,15 @@ Los **agentes** (`.claude/agents/`) son subprocesos autónomos con contexto aisl
 **Flujo típico:**
 
 ```text
-Tú → /tdd             (inicias ciclo RED/GREEN/REFACTOR)
-                       (Claude lanza tdd-guide con laravel-tdd ya embebida)
+Tú → "Implementa con TDD: [feature]"   (Claude lanza tdd-guide con laravel-tdd ya embebida)
+                                         (ciclo RED/GREEN/REFACTOR)
 ```
 
 ---
 
-## Skills en `skills/` que NO se activan con laravel-react
+## Skills en `skills/` que NO se activan con `laravel` + `LAYERS=react`
 
-Las 130 skills del directorio `skills/` cubren muchos otros stacks y casos.
+Las 140 skills del directorio `skills/` cubren muchos otros stacks y casos.
 Las que no forman parte del stack activo no se mueven a `commands/` y no
 interfieren en tu sesión. Están disponibles si en algún momento las necesitas:
 

@@ -43,7 +43,7 @@ El archivo de instrucciones principal del proyecto. Claude Code lo carga automá
 - Tests: mínimo 80% cobertura
 
 ## Comandos críticos
-- `/plan` — Antes de cualquier feature
+- `"Planifica: [descripción]"` — Antes de cualquier feature (activa agente `planner`)
 - `/jedi-review` — Para código crítico
 
 ## Estructura del proyecto
@@ -112,7 +112,7 @@ Configuración de permisos, modelo y hooks para este proyecto.
 
 ---
 
-## `rules/common/` — Las 11 reglas universales
+## `rules/common/` — Las 12 reglas universales
 
 > **Fuente de verdad:** `rules/common/` en la raíz del repo (no dentro de `.claude/`). `make install` las copia a `~/.claude/rules/common/`. Claude Code las carga automáticamente en todos los proyectos del usuario.
 
@@ -127,6 +127,7 @@ Configuración de permisos, modelo y hooks para este proyecto.
 | `output-efficiency.md` | Sin openers/closers, lead with code, prefer edit over rewrite, reglas para subagentes. |
 | `patterns.md` | Repository Pattern, API Response Format, Skeleton Projects. |
 | `performance.md` | Selección de modelo (Haiku/Sonnet/Opus), gestión de contexto, Extended Thinking. |
+| `orchestration.md` | GitHub Actions, Antigravity triggers, github-orchestrator, modos de ejecución (local/CI/scheduled). |
 | `security.md` | Checklist pre-commit, gestión de secretos, protocolo de respuesta a vulnerabilidades. |
 | `testing.md` | 80% cobertura mínima, flujo TDD (RED-GREEN-REFACTOR), 3 tipos de tests. |
 

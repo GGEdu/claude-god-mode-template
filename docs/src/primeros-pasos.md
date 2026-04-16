@@ -19,13 +19,13 @@ Claude lee `.claude/CLAUDE.md` automáticamente al iniciar.
 
 ---
 
-## Antes de implementar → `/plan`
+## Antes de implementar → agente `planner`
 
 ```text
-/plan "Quiero añadir autenticación con Sanctum a la API"
+"Planifica: quiero añadir autenticación con Sanctum a la API"
 ```
 
-El agente `planner` genera un plan con fases, dependencias y riesgos antes de escribir código.
+El agente `planner` se activa automáticamente y genera un plan con fases, dependencias y riesgos antes de escribir código.
 
 Salida típica:
 
@@ -51,25 +51,19 @@ Riesgos: CORS en SPA, configurar stateful domains para cookies
 
 ---
 
-## Desarrollar con TDD → `/tdd`
+## Desarrollar con TDD → agente `tdd-guide`
 
 ```text
-/tdd
+"Implementa con TDD: endpoint POST /api/login con Sanctum"
 ```
 
-Guía el ciclo RED → GREEN → REFACTOR:
+El agente `tdd-guide` se activa automáticamente y guía el ciclo RED → GREEN → REFACTOR:
 
 1. **RED** — escribe el test primero (debe fallar)
 2. **GREEN** — implementa lo mínimo para que pase
 3. **REFACTOR** — limpia sin romper los tests
 
-Ejemplo real en `blog-api`:
-
-```text
-/tdd "endpoint POST /api/login con Sanctum"
-```
-
-El agente `tdd-guide` te dice exactamente qué test escribir primero:
+El agente te dice exactamente qué test escribir primero:
 
 ```php
 // tests/Feature/Auth/LoginTest.php
@@ -172,8 +166,8 @@ Veredicto: `DEPLOY OK` / `INVESTIGAR` / `ROLLBACK`
 ## Flujo de trabajo completo
 
 ```text
-Planificar:   /plan "descripción del feature"
-Desarrollar:  /tdd  →  escribe tests primero
+Planificar:   "Planifica: [descripción del feature]"   → agente planner
+Desarrollar:  "Implementa con TDD: [feature]"          → agente tdd-guide
 Revisar:      /jedi-review  + /security-scan para código crítico
 Commit:       git add -p && git commit
 Post-deploy:  /canary-watch https://url-produccion
@@ -184,8 +178,8 @@ Memoria:      automática — el Stop hook actualiza .claude/memory/ al terminar
 
 ## Referencia rápida de comandos
 
-- `/plan "descripción"` — Antes de implementar cualquier feature
-- `/tdd` — Desarrollo con test-driven development
+- `"Planifica: [descripción]"` — Antes de implementar cualquier feature (activa agente `planner`)
+- `"Implementa con TDD: [feature]"` — Desarrollo con test-driven development (activa agente `tdd-guide`)
 - `/jedi-review` — Revisión experta del código escrito
 - `/security-scan` — Auditoría de seguridad para código crítico
 - `/canary-watch url` — Post-deploy para verificar producción

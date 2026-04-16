@@ -2,6 +2,7 @@
 
 > Ejemplo real y paso a paso de qué ocurre cuando pides una nueva característica.
 > Stack: Laravel 13 (API) + React 19 (SPA) + Sanctum para autenticación.
+> Inicializado con: `make init-project STACK=laravel LAYERS=react PROJECT=/ruta`
 
 ---
 
@@ -50,9 +51,9 @@ Claude tiene todo esto en su contexto activo. No necesita que se lo recuerdes.
 
 ---
 
-## Capa 1 — El comando `/plan` activa el agente planner
+## Capa 1 — El agente `planner`
 
-Al escribir `/plan "..."`, Claude Code lanza el agente **planner**.
+Al describir lo que quieres implementar ("Planifica: ..."), Claude Code lanza el agente **planner**.
 
 ```
 Tu sesión principal

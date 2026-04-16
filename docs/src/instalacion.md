@@ -45,7 +45,7 @@ Copia a `~/.claude/` de una vez:
 - `settings.json` con modelo, tokens y permisos preconfigurados
 
 ::: tip Skills por proyecto, no globales
-Las 130 skills (slash commands) **no se instalan globalmente**. Se activan por stack cuando inicializas un proyecto: `make init-project STACK=laravel-react PROJECT=/ruta`. Los agentes se **compilan** con skills embebidas del stack — el developer no necesita invocar skills manualmente.
+Las 140 skills (slash commands) **no se instalan globalmente**. Se activan por stack cuando inicializas un proyecto: `make init-project STACK=laravel PROJECT=/ruta`. Los agentes se **compilan** con skills embebidas del stack — el developer no necesita invocar skills manualmente.
 :::
 
 ::: tip settings.json ya existe
@@ -119,10 +119,13 @@ make list-stacks
 make list-domains
 
 # Inicializar un proyecto existente
-make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto
+make init-project STACK=laravel PROJECT=/ruta/al/proyecto
+
+# Con layer frontend (ej: React SPA)
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 
 # Con domain overlay (ej: healthcare para apps médicas)
-make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta/al/proyecto
+make init-project STACK=laravel LAYERS=react DOMAIN=healthcare PROJECT=/ruta/al/proyecto
 ```
 
 ::: warning Rutas con espacios
@@ -138,7 +141,7 @@ Stacks disponibles más habituales:
 
 | Stack | Descripción |
 | --- | --- |
-| `laravel-react` | Laravel (API REST) + React 19 (SPA) + Sanctum |
+| `laravel` + `LAYERS=react` | Laravel (API REST) + React 19 (SPA) + Sanctum |
 | `laravel-livewire` | Laravel (monolito) + Livewire 4 + Alpine.js + TailwindCSS |
 | `nextjs-saas` | Next.js 15 (App Router) + Supabase + Stripe |
 | `python-api` | Django REST Framework o FastAPI + PostgreSQL |
@@ -147,7 +150,7 @@ Stacks disponibles más habituales:
 Salida:
 
 ```text
-Inicializando stack 'laravel-react' en /ruta/al/proyecto...
+Inicializando stack 'laravel' + layer 'react' en /ruta/al/proyecto...
   ✅ Stack rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   Compilando agentes con skills embebidas...
   ✅ Agentes compilados (22 agentes con skills del stack)
@@ -196,7 +199,7 @@ Claude lee `.claude/CLAUDE.md` automáticamente al iniciar. Si hay error de cont
 | --- | --- |
 | Instalación global | `make check` desde el template |
 | Claude Code arranca | `claude` en el proyecto |
-| Comandos disponibles | `/plan` o `/jedi-review` dentro de Claude Code |
+| Comandos disponibles | `/jedi-review` o `"Planifica: [feature]"` dentro de Claude Code |
 | Agentes disponibles | "Usa el agente planner para..." |
 | Hook activo | Termina la sesión → revisa `.claude/memory/` |
 | Stack configurado | El CLAUDE.md no tiene `[PLACEHOLDER]` sin rellenar |

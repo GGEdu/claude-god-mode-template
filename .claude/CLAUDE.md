@@ -11,23 +11,28 @@
 Sistema de configuración para Claude Code. No es una app — es un conjunto de archivos
 que se instalan en `~/.claude/` (global) o en `.claude/` del proyecto (local).
 
-Tres capas:
+Cuatro capas:
 1. **Global** (`~/.claude/`) — `make install` — agents, common rules, hooks, settings
 2. **Stack** (`.claude/rules/stack/`, `.claude/commands/`, `.claude/agents/`) — `make init-project` — gitignored, generado
-3. **Proyecto** (`.claude/CLAUDE.md`, `.claude/memory/`) — el usuario lo rellena
+3. **Layer** (`layers/*/`) — overlays técnicos composables (frontend, infra) — se aplican con `LAYERS=`
+4. **Proyecto** (`.claude/CLAUDE.md`, `.claude/memory/`) — el usuario lo rellena
 
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `refactor:`, `docs:`)
 - `agents/` es la fuente de verdad — nunca editar solo `.claude/agents/`
 - `stacks/*/stack.yaml` declara qué se activa — `ops/compile-agents.py` compila agentes con skills embebidas
 - Los skills NO van globalmente — solo por stack vía `init-project`
-- `domains/*/domain.yaml` añade skills extra a los agentes del tech stack (merge, no reemplazo)
+- `domains/*/domain.yaml` añade skills de negocio (healthcare, ai-agent...) — merge, no reemplazo
+- `layers/*/layer.yaml` añade skills técnicos (frontend, infra) — mismo mecanismo que domains
+- Los layers pueden añadir agentes nuevos al stack (ej. `typescript-reviewer` en un stack Python)
 
 ## Comandos críticos para este repo
 - `make check` — verifica instalación global y sincronización de agentes
 - `make list-stacks` — stacks disponibles
+- `make list-layers` — layers técnicos disponibles
 - `make list-domains` — domain overlays disponibles
 - `make dev-stack STACK=x` — activa un stack en ESTE repo para desarrollarlo
+- `make dev-stack STACK=x LAYERS=react` — stack + layer técnico
 - `make dev-stack STACK=x DOMAIN=y` — stack + domain overlay
 - `make install` — instala todo globalmente en `~/.claude/`
 
@@ -36,7 +41,8 @@ Tres capas:
 ```text
 claude-god-mode-template/
 ├── agents/           ← FUENTE DE VERDAD — 21 agentes
-├── stacks/           ← 14 tech stacks (cada uno con stack.yaml, rules/, CLAUDE.md)
+├── stacks/           ← 13 tech stacks (cada uno con stack.yaml, rules/, CLAUDE.md)
+├── layers/           ← Layers técnicos composables (react, ...)
 ├── domains/          ← 4 domain overlays (healthcare, ai-agent, content-creator, supply-chain)
 ├── skills/           ← 130 skills (se activan por stack)
 ├── rules/common/     ← 11 reglas universales (fuente de verdad — make install las copia a ~/.claude/)

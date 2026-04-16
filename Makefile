@@ -2,7 +2,7 @@
 # Claude God Mode Template — Panel de Control
 # ============================================================
 
-.PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-unused-skills activate-notebooklm deactivate-notebooklm \
+.PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-layers list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
         triggers-setup triggers-list setup-labels workflows-status
@@ -55,7 +55,7 @@ install: ## Instala config global en ~/.claude/ (una vez por maquina)
 	@echo "Instalacion global completa."
 	@echo "Reinicia Claude Code para activar los cambios."
 	@echo ""
-	@echo "Para inicializar un proyecto: make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto"
+	@echo "Para inicializar un proyecto: make init-project STACK=laravel PROJECT=/ruta/al/proyecto"
 
 # ---- STACK ----
 
@@ -84,7 +84,8 @@ list-stacks: ## Lista los stacks disponibles
 		printf "  \033[36m%-20s\033[0m %s\n" "$$name" "$$desc"; \
 	done
 	@echo ""
-	@echo "Uso: make dev-stack STACK=laravel-react"
+	@echo "Uso: make dev-stack STACK=laravel"
+	@echo "     make dev-stack STACK=laravel LAYERS=react"
 
 list-domains: ## Lista los domain overlays disponibles
 	@echo "Domain overlays disponibles:"
@@ -95,19 +96,38 @@ list-domains: ## Lista los domain overlays disponibles
 		printf "  \033[35m%-20s\033[0m %s\n" "$$name" "$$desc"; \
 	done
 	@echo ""
-	@echo "Uso: make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta"
+	@echo "Uso: make init-project STACK=laravel DOMAIN=healthcare PROJECT=/ruta"
+	@echo "     make init-project STACK=laravel LAYERS=react PROJECT=/ruta"
 
-dev-stack: ## Activa un stack en este repo para desarrollarlo (ej: make dev-stack STACK=laravel-react)
-	$(MAKE) init-stack STACK=$(STACK)
+list-layers: ## Lista los layers tecnicos disponibles (frontend/infra composables)
+	@echo "Layers tecnicos disponibles:"
+	@echo ""
+	@for dir in layers/*/; do \
+		[ -f "$$dir/layer.yaml" ] || continue; \
+		name=$$(basename $$dir); \
+		desc=$$(python3 -c "import yaml; d=yaml.safe_load(open('$$dir/layer.yaml')); print(d.get('description',''))" 2>/dev/null || echo ""); \
+		printf "  \033[33m%-20s\033[0m %s\n" "$$name" "$$desc"; \
+	done
+	@echo ""
+	@echo "Uso: make init-project STACK=python-api LAYERS=react PROJECT=/ruta"
+	@echo "     make dev-stack STACK=laravel LAYERS=react"
+
+dev-stack: ## Activa un stack en este repo para desarrollarlo (ej: make dev-stack STACK=laravel [LAYERS=react])
+	$(MAKE) init-stack STACK=$(STACK) LAYERS=$(LAYERS) DOMAIN=$(DOMAIN)
 
 init-stack: ## [deprecado] Usar dev-stack en su lugar
-	@[ -n "$(STACK)" ] || (echo "❌ Indica el stack: make init-stack STACK=laravel-react" && exit 1)
+	@[ -n "$(STACK)" ] || (echo "❌ Indica el stack: make init-stack STACK=laravel" && exit 1)
 	@[ -d "stacks/$(STACK)" ] || (echo "❌ Stack '$(STACK)' no encontrado. Usa: make list-stacks" && exit 1)
 	@if [ -n "$(DOMAIN)" ] && [ ! -d "domains/$(DOMAIN)" ]; then \
 		echo "❌ Domain '$(DOMAIN)' no encontrado. Usa: make list-domains"; \
 		exit 1; \
 	fi
-	@echo "Inicializando stack: $(STACK)$(if $(DOMAIN), + domain: $(DOMAIN),)"
+	@if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			[ -d "layers/$$layer" ] || (echo "❌ Layer '$$layer' no encontrado. Usa: make list-layers" && exit 1); \
+		done; \
+	fi
+	@echo "Inicializando stack: $(STACK)$(if $(LAYERS), + layers: $(LAYERS),)$(if $(DOMAIN), + domain: $(DOMAIN),)"
 	@echo ""
 	@# 1. Copiar rules del stack a .claude/rules/stack/ (siempre activas)
 	@mkdir -p .claude/rules/stack
@@ -116,7 +136,16 @@ init-stack: ## [deprecado] Usar dev-stack en su lugar
 		echo "✅ Rules (siempre activas):"; \
 		for f in .claude/rules/stack/*.md; do echo "   - $$f"; done; \
 	fi
-	@# 1b. Copiar rules del domain si se indicó
+	@# 1b. Copiar rules de cada layer
+	@if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			if [ -d "layers/$$layer/rules" ]; then \
+				cp layers/$$layer/rules/*.md .claude/rules/stack/ 2>/dev/null || true; \
+				echo "✅ Layer rules copiadas ($$layer)"; \
+			fi; \
+		done; \
+	fi
+	@# 1c. Copiar rules del domain si se indicó
 	@if [ -n "$(DOMAIN)" ] && [ -d "domains/$(DOMAIN)/rules" ]; then \
 		cp domains/$(DOMAIN)/rules/*.md .claude/rules/stack/ 2>/dev/null || true; \
 		echo "✅ Domain rules copiadas"; \
@@ -125,20 +154,30 @@ init-stack: ## [deprecado] Usar dev-stack en su lugar
 	@# 2. Compilar agentes con skills embebidas (.claude/agents/)
 	@mkdir -p .claude/agents
 	@echo "✅ Agentes compilados con skills embebidas:"
-	@if [ -n "$(DOMAIN)" ]; then \
-		python3 ops/compile-agents.py stacks/$(STACK)/stack.yaml skills agents .claude/agents domains/$(DOMAIN)/domain.yaml; \
-	else \
-		python3 ops/compile-agents.py stacks/$(STACK)/stack.yaml skills agents .claude/agents; \
-	fi
+	@OVERLAY_ARGS=""; \
+	if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			OVERLAY_ARGS="$$OVERLAY_ARGS layers/$$layer/layer.yaml"; \
+		done; \
+	fi; \
+	if [ -n "$(DOMAIN)" ]; then \
+		OVERLAY_ARGS="$$OVERLAY_ARGS domains/$(DOMAIN)/domain.yaml"; \
+	fi; \
+	python3 ops/compile-agents.py stacks/$(STACK)/stack.yaml skills agents .claude/agents $$OVERLAY_ARGS
 	@echo ""
 	@# 3. Activar comandos standalone (.claude/commands/)
 	@mkdir -p .claude/commands
 	@echo "✅ Comandos standalone activados:"
-	@if [ -n "$(DOMAIN)" ]; then \
-		python3 ops/copy-commands.py "$$PWD" stacks/$(STACK)/stack.yaml domains/$(DOMAIN)/domain.yaml; \
-	else \
-		python3 ops/copy-commands.py "$$PWD" stacks/$(STACK)/stack.yaml; \
-	fi
+	@OVERLAY_ARGS=""; \
+	if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			OVERLAY_ARGS="$$OVERLAY_ARGS layers/$$layer/layer.yaml"; \
+		done; \
+	fi; \
+	if [ -n "$(DOMAIN)" ]; then \
+		OVERLAY_ARGS="$$OVERLAY_ARGS domains/$(DOMAIN)/domain.yaml"; \
+	fi; \
+	python3 ops/copy-commands.py "$$PWD" stacks/$(STACK)/stack.yaml $$OVERLAY_ARGS
 	@echo ""
 	@# 3b. Distribuir agentes a Antigravity (.agent/skills/) y Copilot (.github/prompts/)
 	@echo "✅ Agentes distribuidos a Antigravity y Copilot:"
@@ -155,10 +194,18 @@ init-stack: ## [deprecado] Usar dev-stack en su lugar
 		cp stacks/common/workflows/*.yml .github/workflows/; \
 		echo "✅ GitHub Actions copiados a .github/workflows/ — añade ANTHROPIC_API_KEY en Settings → Secrets"; \
 	fi
-	@# 5. Copiar CLAUDE.md del stack + append domain
+	@# 5. Copiar CLAUDE.md del stack + append layers + append domain
 	@if [ -f "stacks/$(STACK)/CLAUDE.md" ]; then \
 		cp stacks/$(STACK)/CLAUDE.md .claude/CLAUDE.md; \
 		echo "✅ CLAUDE.md actualizado — edita los [PLACEHOLDER]"; \
+	fi
+	@if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			if [ -f "layers/$$layer/CLAUDE-append.md" ]; then \
+				cat layers/$$layer/CLAUDE-append.md >> .claude/CLAUDE.md; \
+				echo "✅ Layer context appended to CLAUDE.md ($$layer)"; \
+			fi; \
+		done; \
 	fi
 	@if [ -n "$(DOMAIN)" ] && [ -f "domains/$(DOMAIN)/CLAUDE-append.md" ]; then \
 		cat domains/$(DOMAIN)/CLAUDE-append.md >> .claude/CLAUDE.md; \
@@ -170,39 +217,63 @@ init-stack: ## [deprecado] Usar dev-stack en su lugar
 	@echo "Reinicia Claude Code para que los agentes queden disponibles."
 	@echo "Ejecuta 'make check' para verificar la configuración."
 
-init-project: ## Inicializa un proyecto externo con un stack: make init-project STACK=laravel-react PROJECT=/ruta [DOMAIN=healthcare]
-	@[ -n "$(STACK)" ] || (echo "❌ Indica el stack: make init-project STACK=laravel-react PROJECT=/ruta" && exit 1)
-	@[ -n "$(PROJECT)" ] || (echo "❌ Indica la ruta: make init-project STACK=laravel-react PROJECT=/ruta" && exit 1)
+init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel PROJECT=/ruta [LAYERS=react] [DOMAIN=healthcare]
+	@[ -n "$(STACK)" ] || (echo "❌ Indica el stack: make init-project STACK=laravel PROJECT=/ruta" && exit 1)
+	@[ -n "$(PROJECT)" ] || (echo "❌ Indica la ruta: make init-project STACK=laravel PROJECT=/ruta" && exit 1)
 	@[ -d "stacks/$(STACK)" ] || (echo "❌ Stack '$(STACK)' no encontrado. Usa: make list-stacks" && exit 1)
 	@if [ -n "$(DOMAIN)" ] && [ ! -d "domains/$(DOMAIN)" ]; then \
 		echo "❌ Domain '$(DOMAIN)' no encontrado. Usa: make list-domains"; \
 		exit 1; \
 	fi
-	@echo "Inicializando stack '$(STACK)'$(if $(DOMAIN), + domain '$(DOMAIN)',) en $(PROJECT)..."
+	@if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			[ -d "layers/$$layer" ] || (echo "❌ Layer '$$layer' no encontrado. Usa: make list-layers" && exit 1); \
+		done; \
+	fi
+	@echo "Inicializando stack '$(STACK)'$(if $(LAYERS), + layers '$(LAYERS)',)$(if $(DOMAIN), + domain '$(DOMAIN)',) en $(PROJECT)..."
 	@mkdir -p "$(PROJECT)/.claude/rules/stack" "$(PROJECT)/.claude/commands" "$(PROJECT)/.claude/agents" "$(PROJECT)/.claude/memory"
 	@# 1. Copiar rules del stack (siempre activas)
 	@if [ -d "stacks/$(STACK)/rules" ]; then \
 		cp stacks/$(STACK)/rules/*.md "$(PROJECT)/.claude/rules/stack/"; \
 		echo "  ✅ Stack rules copiadas a $(PROJECT)/.claude/rules/stack/"; \
 	fi
-	@# 1b. Copiar rules del domain si se indicó
+	@# 1b. Copiar rules de cada layer
+	@if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			if [ -d "layers/$$layer/rules" ]; then \
+				cp layers/$$layer/rules/*.md "$(PROJECT)/.claude/rules/stack/"; \
+				echo "  ✅ Layer rules copiadas ($$layer)"; \
+			fi; \
+		done; \
+	fi
+	@# 1c. Copiar rules del domain si se indicó
 	@if [ -n "$(DOMAIN)" ] && [ -d "domains/$(DOMAIN)/rules" ]; then \
 		cp domains/$(DOMAIN)/rules/*.md "$(PROJECT)/.claude/rules/stack/"; \
 		echo "  ✅ Domain rules copiadas a $(PROJECT)/.claude/rules/stack/"; \
 	fi
-	@# 2. Compilar agentes con skills embebidas (+ domain merge si aplica)
+	@# 2. Compilar agentes con skills embebidas (+ layers + domain merge si aplica)
 	@echo "  Compilando agentes con skills embebidas..."
-	@if [ -n "$(DOMAIN)" ]; then \
-		python3 ops/compile-agents.py stacks/$(STACK)/stack.yaml skills agents "$(PROJECT)/.claude/agents" domains/$(DOMAIN)/domain.yaml; \
-	else \
-		python3 ops/compile-agents.py stacks/$(STACK)/stack.yaml skills agents "$(PROJECT)/.claude/agents"; \
-	fi
-	@# 3. Copiar comandos standalone al proyecto (stack + domain)
-	@if [ -n "$(DOMAIN)" ]; then \
-		python3 ops/copy-commands.py "$(PROJECT)" stacks/$(STACK)/stack.yaml domains/$(DOMAIN)/domain.yaml; \
-	else \
-		python3 ops/copy-commands.py "$(PROJECT)" stacks/$(STACK)/stack.yaml; \
-	fi
+	@OVERLAY_ARGS=""; \
+	if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			OVERLAY_ARGS="$$OVERLAY_ARGS layers/$$layer/layer.yaml"; \
+		done; \
+	fi; \
+	if [ -n "$(DOMAIN)" ]; then \
+		OVERLAY_ARGS="$$OVERLAY_ARGS domains/$(DOMAIN)/domain.yaml"; \
+	fi; \
+	python3 ops/compile-agents.py stacks/$(STACK)/stack.yaml skills agents "$(PROJECT)/.claude/agents" $$OVERLAY_ARGS
+	@# 3. Copiar comandos standalone al proyecto (stack + layers + domain)
+	@OVERLAY_ARGS=""; \
+	if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			OVERLAY_ARGS="$$OVERLAY_ARGS layers/$$layer/layer.yaml"; \
+		done; \
+	fi; \
+	if [ -n "$(DOMAIN)" ]; then \
+		OVERLAY_ARGS="$$OVERLAY_ARGS domains/$(DOMAIN)/domain.yaml"; \
+	fi; \
+	python3 ops/copy-commands.py "$(PROJECT)" stacks/$(STACK)/stack.yaml $$OVERLAY_ARGS
 	@# 3b. Distribuir agentes a Antigravity (.agent/skills/) y Copilot (.github/prompts/)
 	@echo "  Distribuyendo agentes a Antigravity y Copilot..."
 	@python3 ops/distribute-agents.py stacks/$(STACK)/stack.yaml agents "$(PROJECT)"
@@ -222,12 +293,20 @@ init-project: ## Inicializa un proyecto externo con un stack: make init-project 
 	@cp ops/audit-task.sh "$(PROJECT)/ops/audit-task.sh"
 	@chmod +x "$(PROJECT)/ops/audit-task.sh"
 	@echo "  ✅ Script de auditoria copiado"
-	@# 6. CLAUDE.md solo si no existe (+ domain append)
+	@# 6. CLAUDE.md solo si no existe (+ layer appends + domain append)
 	@if [ ! -f "$(PROJECT)/.claude/CLAUDE.md" ]; then \
 		cp stacks/$(STACK)/CLAUDE.md "$(PROJECT)/.claude/CLAUDE.md"; \
 		echo "  ✅ CLAUDE.md creado — edita los [PLACEHOLDER] con el contexto del proyecto"; \
 	else \
 		echo "  ⚠️  .claude/CLAUDE.md ya existe — no sobreescrito"; \
+	fi
+	@if [ -n "$(LAYERS)" ]; then \
+		for layer in $$(echo "$(LAYERS)" | tr ',' ' '); do \
+			if [ -f "layers/$$layer/CLAUDE-append.md" ]; then \
+				cat layers/$$layer/CLAUDE-append.md >> "$(PROJECT)/.claude/CLAUDE.md"; \
+				echo "  ✅ Layer context appended to CLAUDE.md ($$layer)"; \
+			fi; \
+		done; \
 	fi
 	@if [ -n "$(DOMAIN)" ] && [ -f "domains/$(DOMAIN)/CLAUDE-append.md" ]; then \
 		cat domains/$(DOMAIN)/CLAUDE-append.md >> "$(PROJECT)/.claude/CLAUDE.md"; \
@@ -247,6 +326,7 @@ init-project: ## Inicializa un proyecto externo con un stack: make init-project 
 	@echo "Proyecto listo."
 	@echo "  Agentes: skills embebidas (el developer no necesita invocar skills manualmente)"
 	@echo "  Workflows: /workflow feature | /workflow hotfix | /workflow refactor"
+	@echo "  Layers disponibles: make list-layers"
 	@echo "  Domains disponibles: make list-domains"
 	@echo "  Los agentes globales adicionales vienen de ~/.claude/ (make install)."
 
@@ -256,24 +336,29 @@ setup-project: ## Flujo unificado: auto-detecta stack + confirma + inicializa pr
 	@echo "🔍 Analizando proyecto en $(PROJECT)..."
 	@RESULT=$$(python3 ops/detect-stack.py "$(PROJECT)"); \
 	echo "$$RESULT" | head -n -1; \
-	DETECTED=$$(echo "$$RESULT" | tail -1 | sed 's/STACK=//'); \
-	if [ "$$DETECTED" = "unknown" ]; then \
+	LAST_LINE=$$(echo "$$RESULT" | tail -1); \
+	DETECTED_STACK=$$(echo "$$LAST_LINE" | grep -o 'STACK=[^ ]*' | sed 's/STACK=//'); \
+	DETECTED_LAYERS=$$(echo "$$LAST_LINE" | grep -o 'LAYERS=[^ ]*' | sed 's/LAYERS=//' || echo ""); \
+	if [ -z "$$DETECTED_STACK" ] || [ "$$DETECTED_STACK" = "unknown" ]; then \
 		echo ""; \
 		echo "No se pudo detectar el stack automaticamente."; \
 		echo "Stacks disponibles:"; \
 		for d in stacks/*/; do echo "  - $$(basename $$d)"; done; \
-		read -p "Selecciona stack: " DETECTED; \
+		read -p "Selecciona stack: " DETECTED_STACK; \
+		DETECTED_LAYERS=""; \
 	else \
 		echo ""; \
-		read -p "¿Usar stack '$$DETECTED'? [Y/n] " CONFIRM; \
+		LAYERS_HINT=$$([ -n "$$DETECTED_LAYERS" ] && echo " LAYERS=$$DETECTED_LAYERS" || echo ""); \
+		read -p "¿Usar stack '$$DETECTED_STACK'$$LAYERS_HINT? [Y/n] " CONFIRM; \
 		if [ "$$CONFIRM" = "n" ] || [ "$$CONFIRM" = "N" ]; then \
 			echo "Stacks disponibles:"; \
 			for d in stacks/*/; do echo "  - $$(basename $$d)"; done; \
-			read -p "Selecciona stack: " DETECTED; \
+			read -p "Selecciona stack: " DETECTED_STACK; \
+			DETECTED_LAYERS=""; \
 		fi; \
 	fi; \
 	echo ""; \
-	$(MAKE) init-project STACK=$$DETECTED PROJECT=$(PROJECT)
+	$(MAKE) init-project STACK=$$DETECTED_STACK LAYERS=$$DETECTED_LAYERS PROJECT=$(PROJECT)
 
 # ---- MCPs ----
 
@@ -331,10 +416,13 @@ new-project: ## Instrucciones para inicializar un proyecto existente con el god-
 	@echo "      make setup-project PROJECT=/ruta/al/proyecto"
 	@echo ""
 	@echo "  2b. Modo manual (stack explicito):"
-	@echo "      make init-project STACK=laravel-react PROJECT=/ruta/al/proyecto"
+	@echo "      make init-project STACK=laravel PROJECT=/ruta/al/proyecto"
 	@echo ""
-	@echo "  2c. Con domain overlay (opcional):"
-	@echo "      make init-project STACK=laravel-react DOMAIN=healthcare PROJECT=/ruta"
+	@echo "  2c. Con layer tecnico (ej: frontend React):"
+	@echo "      make init-project STACK=laravel LAYERS=react PROJECT=/ruta"
+	@echo ""
+	@echo "  2d. Con layer + domain overlay:"
+	@echo "      make init-project STACK=laravel LAYERS=react DOMAIN=healthcare PROJECT=/ruta"
 	@echo ""
 	@echo "  3. Personalizar el contexto del proyecto:"
 	@echo "     Edita /ruta/al/proyecto/.claude/CLAUDE.md"
