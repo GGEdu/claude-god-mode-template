@@ -35,6 +35,7 @@ agents:
     - frontend-patterns
     - nuxt4-patterns
     - coding-standards
+    - ui-ux-pro-max
   security-reviewer:
     skills:
     - security-review
@@ -45,6 +46,9 @@ agents:
     skills: []
   refactor-cleaner:
     skills: []
+  ui-refactor:
+    skills:
+    - ui-ux-pro-max
   e2e-runner:
     skills:
     - e2e-testing

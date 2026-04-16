@@ -12,6 +12,9 @@ agent_skills:
     - frontend-patterns
     - coding-standards
     - design-system
+    - ui-ux-pro-max
+  ui-refactor:
+    - ui-ux-pro-max
   e2e-runner:
     - e2e-testing
 

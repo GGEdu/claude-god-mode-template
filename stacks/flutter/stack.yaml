@@ -23,6 +23,7 @@ agents:
   code-reviewer:
     skills:
     - flutter-dart-code-review
+    - ui-ux-pro-max
     - verification-loop
   security-reviewer:
     skills:
@@ -34,6 +35,9 @@ agents:
     skills: []
   refactor-cleaner:
     skills: []
+  ui-refactor:
+    skills:
+    - ui-ux-pro-max
   e2e-runner:
     skills: []
   doc-updater:

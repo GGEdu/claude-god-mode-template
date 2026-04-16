@@ -37,6 +37,7 @@ agents:
     - nextjs-turbopack
     - coding-standards
     - design-system
+    - ui-ux-pro-max
   security-reviewer:
     skills:
     - security-review
@@ -49,6 +50,9 @@ agents:
     skills: []
   refactor-cleaner:
     skills: []
+  ui-refactor:
+    skills:
+    - ui-ux-pro-max
   e2e-runner:
     skills:
     - e2e-testing

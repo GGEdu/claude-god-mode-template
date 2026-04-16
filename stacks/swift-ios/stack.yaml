@@ -29,6 +29,7 @@ agents:
     - swift-concurrency-6-2
     - swiftui-patterns
     - liquid-glass-design
+    - ui-ux-pro-max
     - verification-loop
   security-reviewer:
     skills:
@@ -40,6 +41,9 @@ agents:
     skills: []
   refactor-cleaner:
     skills: []
+  ui-refactor:
+    skills:
+    - ui-ux-pro-max
   e2e-runner:
     skills: []
   doc-updater:

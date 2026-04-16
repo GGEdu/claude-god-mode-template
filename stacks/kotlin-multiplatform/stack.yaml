@@ -33,6 +33,7 @@ agents:
     - kotlin-patterns
     - kotlin-coroutines-flows
     - compose-multiplatform-patterns
+    - ui-ux-pro-max
     - verification-loop
   security-reviewer:
     skills:
@@ -45,6 +46,9 @@ agents:
     skills: []
   refactor-cleaner:
     skills: []
+  ui-refactor:
+    skills:
+    - ui-ux-pro-max
   e2e-runner:
     skills: []
   doc-updater:
