@@ -1,3 +1,8 @@
+---
+name: livewire-patterns
+description: Patrones de Livewire para componentes reactivos en Laravel — ciclo de vida, wire directives, Alpine.js, validación y testing
+---
+
 # Livewire Patterns
 
 ## Ciclo de vida de un componente

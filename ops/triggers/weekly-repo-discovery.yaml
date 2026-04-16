@@ -1,0 +1,78 @@
+name: weekly-repo-discovery
+description: "Descubre repos de GitHub con potencial para el sistema claude-god-mode-template. Screening con Haiku de 12-15 candidatos usando queries temáticas. Produce lista de candidatos para deep-dive manual el lunes."
+schedule: "0 9 * * 0"   # Domingos 09:00 UTC
+model: haiku
+output: ops/sessions/weekly-repo-discovery-$(date +%Y%m%d).md
+tags: [scheduled, discovery, weekly]
+prompt: |
+  Eres un agente de descubrimiento de repositorios para el sistema claude-god-mode-template.
+  Tu objetivo: encontrar repos externos que puedan aportar skills, agents o patterns nuevos.
+
+  ## Paso 1: Leer evaluaciones previas
+
+  Lee ops/sessions/repo-evaluations.md para conocer qué repos ya fueron evaluados.
+  No evaluar repos que ya estén en el log.
+
+  ## Paso 2: Ejecutar búsquedas en GitHub
+
+  Ejecuta estas queries con gh search repos (máximo 3 resultados por query):
+
+  ```bash
+  gh search repos "is:public stars:>100 topic:claude-code" --limit 3 --json fullName,description,stargazersCount,updatedAt
+  gh search repos "is:public stars:>200 topic:llm-agents" --limit 3 --json fullName,description,stargazersCount,updatedAt
+  gh search repos "is:public stars:>100 topic:ai-agent pushed:>2024-06-01" --limit 3 --json fullName,description,stargazersCount,updatedAt
+  gh search repos "is:public stars:>300 topic:prompt-engineering" --limit 3 --json fullName,description,stargazersCount,updatedAt
+  gh search repos "is:public stars:>100 topic:mcp-server" --limit 3 --json fullName,description,stargazersCount,updatedAt
+  ```
+
+  ## Paso 3: Screening Haiku (Fase 1) por cada repo nuevo
+
+  Para cada repo no evaluado previamente:
+  1. Fetch metadata: gh repo view <owner/repo> --json stargazerCount,updatedAt,licenseInfo,isArchived
+  2. Leer las primeras 50 líneas del README: gh api repos/<owner>/<repo>/readme --jq '.content' | base64 -d | head -50
+  3. Si isArchived=true: tier=SKIP, score=0, pasar al siguiente
+  4. Puntuar dimensiones de scoring del skill repo-eval:
+     - Relevancia (0-25): ¿gap real en los 130 skills del sistema?
+     - Calidad (0-35): stars, actividad, docs
+     - Extractabilidad (0-20): claridad de patrones, licencia
+     - Coste integración (0-20): esfuerzo estimado
+  5. Calcular total y asignar tier
+
+  ## Paso 4: Guardar todas las evaluaciones en memoria
+
+  Añadir cada repo evaluado (incluso SKIP) a ops/sessions/repo-evaluations.md con el formato:
+
+  ```
+  ### <Nombre> — https://github.com/<owner>/<repo>
+  - Date: <hoy>
+  - Score: X/100 (Relevancia: N, Calidad: N, Extractabilidad: N, Coste: N)
+  - Tier: INCLUDE | REVIEW | WATCH | SKIP
+  - Reason: [razón en 1 línea]
+  - Discovered via: weekly-repo-discovery
+  - Status: Proposed | Watchlist | Skip
+  ```
+
+  ## Paso 5: Generar reporte semanal
+
+  Escribir el output en ops/sessions/weekly-repo-discovery-YYYYMMDD.md:
+
+  ```markdown
+  # Weekly Repo Discovery — <fecha>
+
+  ## Candidatos para deep-dive (score ≥ 50)
+  - [ ] https://github.com/<owner>/<repo> — Score X/100 — <razón en 1 línea>
+
+  ## Watchlist (score 30-49)
+  - https://github.com/<owner>/<repo> — Score X/100 — <razón>
+
+  ## Descartados (score <30)
+  - https://github.com/<owner>/<repo> — <razón>
+
+  ## Queries más productivas esta semana
+  - <query> → N candidatos relevantes
+
+  ## Sugerencias para próxima semana
+  - <ajuste de query si alguna no dio buenos resultados>
+  ```
+
+  Output final: solo el reporte markdown. Sin narrativa adicional.
