@@ -13,7 +13,7 @@ agent_skills:
     - coding-standards
     - design-system
     - ui-ux-pro-max
-  ui-refactor:
+  ui-engineer:
     - ui-ux-pro-max
   e2e-runner:
     - e2e-testing

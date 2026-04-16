@@ -14,7 +14,7 @@ Located in `~/.claude/agents/`:
 | build-error-resolver | Fix build errors | When build fails |
 | e2e-runner | E2E testing | Critical user flows |
 | refactor-cleaner | Dead code cleanup | Code maintenance |
-| ui-refactor | UI/UX rewrite applying design rules | Improving component quality |
+| ui-engineer | Build new UI features + refactor existing ones with design rules | Creating or improving UI components |
 | doc-updater | Documentation | Updating docs |
 | repo-reviewer | Evaluate GitHub repos for reuse | Before reimplementing existing patterns |
 

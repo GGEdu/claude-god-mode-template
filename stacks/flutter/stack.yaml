@@ -35,7 +35,7 @@ agents:
     skills: []
   refactor-cleaner:
     skills: []
-  ui-refactor:
+  ui-engineer:
     skills:
     - ui-ux-pro-max
   e2e-runner:
