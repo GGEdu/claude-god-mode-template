@@ -25,7 +25,21 @@ Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por 
 4. **Paralelización aislada:** El trabajo paralelo o complejo debe realizarse bajo supervisión estricta y en entornos aislados (worktrees o ramas independientes).
 5. **Guardarraíles inteligentes:** Usar el modo automático (Auto Mode) para tareas rutinarias, pero requiriendo validación humana (pruebas, linting) antes de fusionar cualquier código.
 6. **Autovalidación como prioridad máxima:** Incluir en cada prompt tests, outputs esperados o criterios de verificación para que Claude pueda comprobar su propio trabajo. Es la acción de mayor apalancamiento disponible.
+   - **Estándar senior:** Antes de marcar cualquier tarea como completada, preguntarse: "¿Un staff engineer aprobaría esto?" No basta con que el código "se vea bien" — demostrar corrección con diffs, logs y evidencia.
 7. **Nunca usar `--dangerously-skip-permissions`:** Usar `allow` en settings.json para comandos rutinarios específicos. Mismo efecto, sin riesgo de ejecución destructiva accidental.
+8. **Self-Improvement Loop (Lecciones persistentes):**
+   - Después de CADA corrección del usuario → registrar el patrón en un archivo de lecciones (ej: `tasks/lessons.md` o `.planning/lessons.md`).
+   - Escribir reglas que prevengan el mismo error.
+   - Revisar lecciones al inicio de cada sesión.
+   - Las lecciones que se confirman como permanentes se **promueven** a CLAUDE.md o a `rules/`. Así CLAUDE.md se mantiene lean.
+9. **Elegancia balanceada:**
+   - En cambios no triviales: pausar y preguntar "¿hay una forma más elegante?"
+   - Si el fix se siente hacky: reimplementar la solución elegante con todo el conocimiento acumulado.
+   - Para fixes simples y obvios: NO sobre-ingenierar. Aplicar y seguir.
+10. **Bug fixing autónomo:**
+    - Ante un bug report: diagnosticar y resolver sin pedir ayuda al usuario.
+    - Investigar logs, errores, tests fallidos de forma independiente.
+    - Cero cambio de contexto requerido del usuario.
 
 ---
 
@@ -71,6 +85,7 @@ Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseña
 #### 1. Ritual de Mañana (10 minutos de Setup)
 * **Tú:** Abres la rama, revisas el `CLAUDE.md` para refrescar las reglas del proyecto.
 * **Claude:** Se le exige **explorar → planificar → ejecutar**. Primero investigar el contexto (puede incluir otros LLMs), luego planificar en Plan Mode (etapas, archivos, riesgos, criterios de aceptación), después ejecutar en modo normal.
+   - **Si algo se tuerce, PARAR y re-planificar inmediatamente.** No seguir empujando sobre un plan roto. Los LLMs tienden a "parchear hacia adelante" — esta regla lo previene.
 * **Tú:** Decides si la tarea requiere una sesión simple o múltiples *worktrees* paralelos.
 * **Claude:** Inicias bucles de verificación automáticos. Ejemplo: `/loop "corre los tests y resume los fallos" cada 30 min`.
 
@@ -87,6 +102,7 @@ Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseña
 #### 3. Ritual de Fin de Día (Cierre y Traspaso)
 * **Claude:** Ejecuta una limpieza de cabos sueltos, código duplicado o notas a medias.
 * **Tú:** Actualizas el `CLAUDE.md` o el sistema de `/memory` con cualquier regla nueva, convención o fricción descubierta hoy. *El `CLAUDE.md` es un contrato vivo.*
+* **Claude:** Actualiza el archivo de lecciones con patrones de errores corregidos durante la sesión.
 * **Tú:** Cierras bucles, matas sesiones ruidosas y dejas un "handoff" (traspaso) claro para la sesión de mañana.
 
 ---
