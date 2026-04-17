@@ -294,6 +294,34 @@ init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel
 	@cp ops/audit-task.sh "$(PROJECT)/ops/audit-task.sh"
 	@chmod +x "$(PROJECT)/ops/audit-task.sh"
 	@echo "  ✅ Script de auditoria copiado"
+	@# 5b. Crear docs/ con VitePress si no existe
+	@TEMPLATE_DIR="$$(cd "$$(dirname $(MAKEFILE_LIST))" && pwd)/stacks/common/docs-template"; \
+	WIKI_TEMPLATES="$$(cd "$$(dirname $(MAKEFILE_LIST))" && pwd)/skills/project-wiki/templates"; \
+	PROJECT_NAME=$$(basename "$(PROJECT)"); \
+	if [ ! -d "$(PROJECT)/docs" ]; then \
+		cp -r "$$TEMPLATE_DIR" "$(PROJECT)/docs"; \
+		mkdir -p "$(PROJECT)/docs/src/wiki/sources"; \
+		if [ -d "$$WIKI_TEMPLATES" ]; then \
+			cp "$$WIKI_TEMPLATES"/*.md "$(PROJECT)/docs/src/wiki/"; \
+		fi; \
+		find "$(PROJECT)/docs" -type f \( -name '*.json' -o -name '*.mts' -o -name '*.md' \) \
+			-exec sed -i "s/__PROJECT_NAME__/$$PROJECT_NAME/g" {} +; \
+		find "$(PROJECT)/docs" -type f \( -name '*.json' -o -name '*.mts' -o -name '*.md' \) \
+			-exec sed -i "s/__PROJECT_DESCRIPTION__/Documentación de $$PROJECT_NAME/g" {} +; \
+		find "$(PROJECT)/docs" -type f -name '*.mts' \
+			-exec sed -i "s/__GITHUB_USER__/YOUR_USER/g" {} +; \
+		echo "  ✅ docs/ creado con VitePress + wiki templates — ejecuta cd docs && npm install"; \
+	elif [ ! -d "$(PROJECT)/docs/src/wiki" ]; then \
+		mkdir -p "$(PROJECT)/docs/src/wiki/sources"; \
+		if [ -d "$$WIKI_TEMPLATES" ]; then \
+			cp "$$WIKI_TEMPLATES"/*.md "$(PROJECT)/docs/src/wiki/"; \
+			find "$(PROJECT)/docs/src/wiki" -type f -name '*.md' \
+				-exec sed -i "s/__PROJECT_NAME__/$$PROJECT_NAME/g" {} +; \
+		fi; \
+		echo "  ✅ docs/src/wiki/ creado con templates — docs/ existente no modificado"; \
+	else \
+		echo "  ✅ docs/ ya existe con wiki — no modificado"; \
+	fi
 	@# 6. CLAUDE.md solo si no existe (+ layer appends + domain append)
 	@if [ ! -f "$(PROJECT)/.claude/CLAUDE.md" ]; then \
 		cp stacks/$(STACK)/CLAUDE.md "$(PROJECT)/.claude/CLAUDE.md"; \
