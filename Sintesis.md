@@ -42,6 +42,7 @@ Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por 
    - Escribir reglas que prevengan el mismo error.
    - Revisar lecciones al inicio de cada sesión.
    - Las lecciones que se confirman como permanentes se **promueven** a CLAUDE.md o a `rules/`. Así CLAUDE.md se mantiene lean.
+   - **Backward propagation (plan ↔ realidad):** Cuando la implementación diverge del plan (dependencia incompatible, esquema conflictivo, regla contradictoria), Claude debe proponer la actualización del plan/CLAUDE.md **antes** de continuar con la nueva dirección. No basta con registrar la lección post-hoc — el plan vivo debe reflejar la realidad actual para que la siguiente sesión arranque desde verdad, no ficción.
 9. **Elegancia balanceada:**
    - En cambios no triviales: pausar y preguntar "¿hay una forma más elegante?"
    - Si el fix se siente hacky: reimplementar la solución elegante con todo el conocimiento acumulado.
@@ -102,6 +103,7 @@ Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseña
 * **Tú:** Abres la rama, revisas el `CLAUDE.md` para refrescar las reglas del proyecto.
 * **Claude:** Se le exige **explorar → planificar → ejecutar**. Primero investigar el contexto (puede incluir otros LLMs), luego planificar en Plan Mode (etapas, archivos, riesgos, criterios de aceptación), después ejecutar en modo normal.
    - **Commitment checkpoint:** Antes de escribir código, Claude debe declarar explícitamente qué enfoque/skill usará, por qué aplica, y los pasos concretos que seguirá. Este compromiso público crea un ancla psicológica que dificulta abandonar el plan mid-task. Desviarse del plan declarado requiere aprobación explícita del usuario.
+   - **Non-goals explícitos:** Al planificar, declarar qué NO se va a construir. Sin non-goals, Claude "ayuda" scaffoldeando funcionalidad no solicitada (auth, admin UI, notificaciones). Cada hora podando código no pedido es hora perdida. Los non-goals son la forma más barata de prevenir scope creep de la IA.
    - **Si algo se tuerce, PARAR y re-planificar inmediatamente.** No seguir empujando sobre un plan roto. Los LLMs tienden a "parchear hacia adelante" — esta regla lo previene.
 * **Tú:** Decides si la tarea requiere una sesión simple o múltiples *worktrees* paralelos.
 * **Claude:** Inicias bucles de verificación automáticos. Ejemplo: `/loop "corre los tests y resume los fallos" cada 30 min`.
