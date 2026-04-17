@@ -9,15 +9,23 @@ Aquí tienes el resumen estructurado de las partes más importantes del artícul
 Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por un **modelo de 5 partes**:
 
 1. **Contexto siempre activo reducido:** El archivo CLAUDE.md debe contener solo el contexto "siempre activo" y reglas inmutables del proyecto. No debe ser un basurero de prompts.
-   - **Límite ~200 líneas.** Más de eso diluye la atención de Claude y empeora resultados.
+   - **Límite ~200 líneas.** Más de eso diluye la atención de Claude y empeora resultados. Un CLAUDE.md sobre-especificado hace que Claude **ignore reglas importantes** porque se pierden en el ruido.
+   - **Poda agresiva:** Si Claude ya hace algo correctamente sin la instrucción, eliminarla del CLAUDE.md o convertirla en un hook.
    - **Solo el "qué", no el "por qué":** Comandos build/test, decisiones de arquitectura, gotchas no obvios, convenciones de naming/imports.
    - **No incluir:** lo que el linter ya cubre, dumps de documentación completa, ni explicaciones teóricas de decisiones.
    - **Tres niveles de merge automático:** `~/.claude/CLAUDE.md` (global personal) → `CLAUDE.md` en raíz del proyecto (equipo) → `CLAUDE.md` en subdirectorios (scoped). Claude lee y fusiona los tres.
    - **Overrides personales:** `CLAUDE.local.md` en la raíz del proyecto — se gitignora automáticamente. Preferencias personales sin afectar al equipo.
+   - **Asumir contexto cero:** Redactar CLAUDE.md como si Claude no supiera NADA del proyecto. No dar nada por implícito.
 2. **Procedimientos repetitivos = Skills:** Cualquier tarea que se repita más de dos veces debe convertirse en un "skill", un comando o una regla explícita en el repositorio.
+   - **Crear skills desde ejemplos:** Pegar un output excelente a Claude y pedirle que lo convierta en skill reutilizable. También funciona con screenshots.
+   - **Versionado de skills:** Duplicar y versionar skills al refinarlos, en vez de editar el activo. Previene regresiones.
 3. **Higiene de sesión estricta:** La sesión principal debe mantenerse libre de código basura o conversaciones secundarias.
+   - **Separar proyectos no relacionados** en sesiones distintas para evitar context bleed.
+   - **Podar periódicamente** memory, archivos e instrucciones para evitar drift acumulado.
 4. **Paralelización aislada:** El trabajo paralelo o complejo debe realizarse bajo supervisión estricta y en entornos aislados (worktrees o ramas independientes).
 5. **Guardarraíles inteligentes:** Usar el modo automático (Auto Mode) para tareas rutinarias, pero requiriendo validación humana (pruebas, linting) antes de fusionar cualquier código.
+6. **Autovalidación como prioridad máxima:** Incluir en cada prompt tests, outputs esperados o criterios de verificación para que Claude pueda comprobar su propio trabajo. Es la acción de mayor apalancamiento disponible.
+7. **Nunca usar `--dangerously-skip-permissions`:** Usar `allow` en settings.json para comandos rutinarios específicos. Mismo efecto, sin riesgo de ejecución destructiva accidental.
 
 ---
 
@@ -52,6 +60,8 @@ proyecto/
 
 **Regla de precedencia:** Claude fusiona global → proyecto → subdirectorio. Lo más específico gana.
 
+**Claude Interviews:** Para proyectos grandes o nuevos, iniciar con un prompt mínimo y pedir a Claude que te entreviste usando `AskUserQuestion`. Claude pregunta lo que necesita saber antes de actuar.
+
 ---
 
 ### �📝 Estructura del Flujo de Trabajo Diario (Para ti y para Claude)
@@ -60,7 +70,7 @@ Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseña
 
 #### 1. Ritual de Mañana (10 minutos de Setup)
 * **Tú:** Abres la rama, revisas el `CLAUDE.md` para refrescar las reglas del proyecto.
-* **Claude:** Se le exige **planificar antes de escribir**. Debe listar etapas, archivos a tocar, riesgos y criterios de aceptación.
+* **Claude:** Se le exige **explorar → planificar → ejecutar**. Primero investigar el contexto (puede incluir otros LLMs), luego planificar en Plan Mode (etapas, archivos, riesgos, criterios de aceptación), después ejecutar en modo normal.
 * **Tú:** Decides si la tarea requiere una sesión simple o múltiples *worktrees* paralelos.
 * **Claude:** Inicias bucles de verificación automáticos. Ejemplo: `/loop "corre los tests y resume los fallos" cada 30 min`.
 
@@ -69,6 +79,8 @@ Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseña
 * **Consultas rápidas:** Usa el comando `/btw` para preguntas rápidas que no requieren leer archivos nuevos ni modificar código (no ensucia el historial).
 * **Exploración de alternativas:** Usa `/fork` para crear bifurcaciones de la sesión y probar ideas sin contaminar la sesión principal.
 * **Corrección de errores:** Si la IA toma un mal camino, usa `/rewind` (o doble Esc) para borrar ese contexto fallido de inmediato en lugar de discutir el error.
+* **Regla de los 2 intentos:** Después de 2 correcciones fallidas → `/clear` y reescribir el prompt inicial incorporando lo aprendido. No seguir corrigiendo sobre contexto contaminado.
+* **Investigaciones acotadas:** Nunca pedir "investiga X" sin scope — Claude leerá cientos de archivos y llenará el contexto. Acotar el alcance o delegar a subagentes.
 * **Refactorización/Revisión:** Usa `/simplify` para invocar agentes que revisen duplicidad, bugs y eficiencia.
 * **Tareas Masivas:** Usa `/batch` para delegar migraciones grandes. Claude dividirá el trabajo en unidades independientes en distintos *worktrees*.
 
@@ -234,6 +246,32 @@ Eres un revisor senior enfocado en corrección y mantenibilidad.
 6. **Skills y Agents** — Añadir cuando un workflow complejo se repita. No antes.
 
 > **Regla del 95%:** Los pasos 1-5 cubren el 95% de las necesidades. Skills y agents son optimización avanzada.
+
+---
+
+### 🪝 Hooks — Acciones Automáticas Sin Excepción
+
+Los hooks son diferentes a rules y skills: se ejecutan **siempre**, antes o después de una acción de herramienta, sin variación ni juicio de Claude.
+
+- **PreToolUse:** Validación antes de ejecutar (ej: lint antes de commit)
+- **PostToolUse:** Acción después de ejecutar (ej: format después de write)
+- **Stop:** Verificación al cerrar sesión
+
+**Cuándo usar hook vs rule:** Si la acción debe ocurrir el 100% de las veces sin excepción → hook. Si depende del contexto → rule o skill.
+
+---
+
+### 📐 Estructura de Prompts Efectivos
+
+Fórmula base para prompts a Claude Code:
+
+```
+[Rol] + [Tarea] + [Contexto]
+```
+
+- **Front-load lo importante:** La instrucción más crítica va al inicio del prompt.
+- **Ser específico:** Claude solo puede inferir contexto — cuanto más preciso, mejor resultado.
+- **Incluir verificación:** Tests, outputs esperados o criterios de éxito para que Claude se auto-valide.
 
 ---
 
