@@ -13,7 +13,7 @@ Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por 
    - **Poda agresiva:** Si Claude ya hace algo correctamente sin la instrucción, eliminarla del CLAUDE.md o convertirla en un hook.
    - **Solo el "qué", no el "por qué":** Comandos build/test, decisiones de arquitectura, gotchas no obvios, convenciones de naming/imports.
    - **No incluir:** lo que el linter ya cubre, dumps de documentación completa, ni explicaciones teóricas de decisiones.
-   - **Tres niveles de merge automático:** `~/.claude/CLAUDE.md` (global personal) → `CLAUDE.md` en raíz del proyecto (equipo) → `CLAUDE.md` en subdirectorios (scoped). Claude lee y fusiona los tres.
+   - **Cuatro niveles de carga al inicio de sesión:** Org policy (si existe) → `~/.claude/CLAUDE.md` (global personal) → `CLAUDE.md` en raíz del proyecto (equipo) → `CLAUDE.md` en subdirectorios (scoped) + primeras 200 líneas de `MEMORY.md`. Claude fusiona todos; lo más específico gana.
    - **Overrides personales:** `CLAUDE.local.md` en la raíz del proyecto — se gitignora automáticamente. Preferencias personales sin afectar al equipo.
    - **Asumir contexto cero:** Redactar CLAUDE.md como si Claude no supiera NADA del proyecto. No dar nada por implícito.
 2. **Procedimientos repetitivos = Skills:** Cualquier tarea que se repita más de dos veces debe convertirse en un "skill", un comando o una regla explícita en el repositorio.
@@ -23,6 +23,7 @@ Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por 
    - **Separar proyectos no relacionados** en sesiones distintas para evitar context bleed.
    - **Podar periódicamente** memory, archivos e instrucciones para evitar drift acumulado.
 4. **Paralelización aislada:** El trabajo paralelo o complejo debe realizarse bajo supervisión estricta y en entornos aislados (worktrees o ramas independientes).
+   - **Memoria por worktree:** Cada Git worktree tiene su propio directorio de auto-memory separado. Las notas de un worktree no contaminan otro.
 5. **Guardarraíles inteligentes:** Usar el modo automático (Auto Mode) para tareas rutinarias, pero requiriendo validación humana (pruebas, linting) antes de fusionar cualquier código.
 6. **Autovalidación como prioridad máxima:** Incluir en cada prompt tests, outputs esperados o criterios de verificación para que Claude pueda comprobar su propio trabajo. Es la acción de mayor apalancamiento disponible.
    - **Estándar senior:** Antes de marcar cualquier tarea como completada, preguntarse: "¿Un staff engineer aprobaría esto?" No basta con que el código "se vea bien" — demostrar corrección con diffs, logs y evidencia.
@@ -69,10 +70,16 @@ proyecto/
 ├── commands/                  # Slash commands personales → /user:nombre
 ├── skills/                    # Skills personales (todos los proyectos)
 ├── agents/                    # Agentes personales (todos los proyectos)
-└── projects/                  # Historial de sesiones + auto-memory
+└── projects/<proyecto>/       # Historial de sesiones + auto-memory
+    └── memory/
+        ├── MEMORY.md          # Índice auto-gestionado por Claude (≤200 líneas cargadas al inicio)
+        ├── debugging.md       # Archivos topic creados on-demand por Claude
+        └── ...                # Otros archivos topic según necesidad
 ```
 
-**Regla de precedencia:** Claude fusiona global → proyecto → subdirectorio. Lo más específico gana.
+**MEMORY.md vs CLAUDE.md:** `CLAUDE.md` es donde tú escribes instrucciones. `MEMORY.md` es el scratchpad de Claude — él lo crea y actualiza automáticamente con patrones del proyecto, soluciones de debugging, preferencias detectadas y notas de sesiones anteriores. Solo las primeras 200 líneas se cargan al inicio; el resto se lee on-demand durante la sesión. Cuando crece demasiado, Claude mueve detalles a archivos topic (`debugging.md`, `api-conventions.md`, etc.).
+
+**Regla de precedencia:** Claude fusiona org policy → global → proyecto → subdirectorio → MEMORY.md. Lo más específico gana.
 
 **Claude Interviews:** Para proyectos grandes o nuevos, iniciar con un prompt mínimo y pedir a Claude que te entreviste usando `AskUserQuestion`. Claude pregunta lo que necesita saber antes de actuar.
 
@@ -250,6 +257,11 @@ Eres un revisor senior enfocado en corrección y mantenibilidad.
 **`$schema`** habilita autocompletado y validación en VS Code.
 **`settings.local.json`** para overrides personales (gitignored automáticamente).
 
+**Control de auto-memory:**
+- `"autoMemoryEnabled": false` en `settings.json` del proyecto (desactiva solo ese proyecto) o en `~/.claude/settings.json` (desactiva globalmente).
+- Variable de entorno `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` para forzar desactivación en CI/CD — sobreescribe cualquier configuración de settings.json.
+- Toggle rápido en sesión: `/memory` → seleccionar `Auto-memory: on/off`.
+
 ---
 
 ### 🚀 Orden de Setup Progresivo (De Cero a Productivo)
@@ -285,6 +297,7 @@ Inspirado en el patrón "LLM Wiki" (Karpathy): un directorio de documentos Markd
 | Sistema | Ubicación | Persistencia | Propósito |
 |---|---|---|---|
 | `memory/` | `.claude/memory/` | Efímera (gitignored) | Contexto de sesión, decisiones tentativas, WIP |
+| `auto-memory` | `~/.claude/projects/<proj>/memory/` | Semi-persistente (local) | MEMORY.md auto-gestionado por Claude + archivos topic on-demand |
 | `wiki/` | `docs/src/wiki/` | Permanente (committed) | Conocimiento confirmado del proyecto |
 
 **Flujo de conocimiento:**
