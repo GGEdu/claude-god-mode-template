@@ -98,7 +98,8 @@ Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseña
 
 #### 2. Durante el Día (Ejecución e Higiene de Contexto)
 * **Regla de Oro:** Mantén el hilo principal limpio. No mezcles debates teóricos con la ejecución del código.
-* **Consultas rápidas:** Usa el comando `/btw` para preguntas rápidas que no requieren leer archivos nuevos ni modificar código (no ensucia el historial).
+* **Consultas rápidas:** Usa el comando `/btw` para preguntas rápidas que no requieren leer archivos nuevos ni modificar código (no ensucia el historial). También disponible `Cmd+;` (Mac) / `Ctrl+;` (Windows/Linux) para abrir un **side chat** — hilo transient que desaparece al cerrarlo, ideal para preguntar sobre un diff o output sin contaminar la sesión principal.
+* **Multi-pane (Desktop):** La app desktop permite arrastrar panes para ver diffs de routines completadas, sesiones activas y ejecuciones en curso en paralelo. Útil para monitorear trabajo autónomo mientras desarrollas.
 * **Exploración de alternativas:** Usa `/fork` para crear bifurcaciones de la sesión y probar ideas sin contaminar la sesión principal.
 * **Corrección de errores:** Si la IA toma un mal camino, usa `/rewind` (o doble Esc) para borrar ese contexto fallido de inmediato en lugar de discutir el error.
 * **Regla de los 2 intentos:** Después de 2 correcciones fallidas → `/clear` y reescribir el prompt inicial incorporando lo aprendido. No seguir corrigiendo sobre contexto contaminado.
@@ -289,7 +290,56 @@ Los hooks son diferentes a rules y skills: se ejecutan **siempre**, antes o desp
 
 ---
 
-### � Wiki de Proyecto — Memoria Permanente Acumulativa
+### ⏰ Routines — Ejecución Autónoma en la Nube
+
+Una routine es una configuración guardada (prompt + repositorio GitHub + connectors) que se ejecuta de forma autónoma en infraestructura de Anthropic. No requiere terminal abierto ni sesión activa.
+
+**Modelo de ejecución:**
+- Anthropic levanta una VM fresca, clona el repo y ejecuta el prompt con acceso a los connectors configurados.
+- Cada ejecución es una **sesión discreta** — comienza limpia, hace su trabajo y termina. Sin estado entre ejecuciones, lo que previene drift de contexto.
+- Variable `CLAUDE_CODE_REMOTE=true` disponible para que scripts de setup detecten ejecución cloud y ajusten comportamiento (evitar instalaciones pesadas locales).
+
+**Tres tipos de trigger:**
+
+| Trigger | Configuración | Caso de uso |
+|---|---|---|
+| **Schedule** | Cron via CLI (`/schedule`) o web UI | Mantenimiento nocturno: doc drift, stale issues, dependency checks |
+| **API** | Endpoint HTTP + bearer token | Webhooks de Sentry/Datadog/PagerDuty → diagnóstico automático |
+| **GitHub** | Eventos: `pull_request.opened`, `release`, tags | PR review automático, release notes |
+
+Se pueden combinar múltiples triggers en una misma routine.
+
+**Branch protection (crítico):**
+- Por defecto, routines solo pueden pushear a branches con prefijo `claude/`.
+- **Nunca** habilitar push directo a main. La routine crea branch + PR; un humano revisa y mergea.
+
+**Scope de connectors:**
+- Aplicar **least privilege**: solo conectar Slack, Linear, GitHub, etc. si la routine los necesita.
+- Menos connectors = menor radio de impacto ante errores de prompt.
+
+**Límites diarios:**
+
+| Plan | Routines/día |
+|---|---|
+| Pro | 5 |
+| Max | 15 |
+| Team/Enterprise | 25 |
+
+**Tres patrones prácticos para empezar:**
+1. **Nightly Issue Groomer** (schedule): Asigna labels, identifica equipo responsable, publica resumen en Slack.
+2. **PR Review Bot** (GitHub trigger): Prompt adversarial que busca edge cases, concurrencia y lógica — ignora estilo (el linter lo cubre).
+3. **Deploy Verifier** (API trigger): Post-deploy smoke checks + scan de error logs + trace al commit responsable.
+
+**Limitaciones actuales (research preview):**
+- Intervalo mínimo de schedule: 1 hora. Para polling más frecuente, usar `/loop` en sesión activa.
+- API triggers y GitHub webhooks solo configurables vía web console (requieren OAuth).
+- Sin encadenamiento nativo de routines. Workaround: la routine A llama al API endpoint de la routine B como paso final.
+
+**Regla de arranque:** Empezar con UNA routine schedule de bajo riesgo (stale TODOs, doc drift). Observar output una semana antes de escalar.
+
+---
+
+### 📚 Wiki de Proyecto — Memoria Permanente Acumulativa
 
 Inspirado en el patrón "LLM Wiki" (Karpathy): un directorio de documentos Markdown que crece con cada sesión y persiste como documentación committable del proyecto.
 
@@ -341,6 +391,10 @@ Fórmula base para prompts a Claude Code:
 - **Front-load lo importante:** La instrucción más crítica va al inicio del prompt.
 - **Ser específico:** Claude solo puede inferir contexto — cuanto más preciso, mejor resultado.
 - **Incluir verificación:** Tests, outputs esperados o criterios de éxito para que Claude se auto-valide.
+
+**Prompts interactivos vs prompts para Routines:**
+- **Interactivo:** Puede pedir clarificación mid-session. Tolera ambigüedad porque hay un humano presente.
+- **Routine (autónomo):** Debe ser **completamente determinista**. Cubrir cada punto de decisión, qué hacer si no encuentra resultados, formato exacto de output, y acción alternativa ante fallos. No hay humano para resolver ambigüedades.
 
 ---
 
