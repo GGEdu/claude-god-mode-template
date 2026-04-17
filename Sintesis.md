@@ -25,6 +25,7 @@ Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por 
 4. **Paralelización aislada:** El trabajo paralelo o complejo debe realizarse bajo supervisión estricta y en entornos aislados (worktrees o ramas independientes).
    - **Memoria por worktree:** Cada Git worktree tiene su propio directorio de auto-memory separado. Las notas de un worktree no contaminan otro.
 5. **Guardarraíles inteligentes:** Usar el modo automático (Auto Mode) para tareas rutinarias, pero requiriendo validación humana (pruebas, linting) antes de fusionar cualquier código.
+   - **Minimizar decision latency del humano:** Con IA, el cuello de botella ya no es la ejecución — es cada punto donde Claude espera aprobación humana. Cada decisión recurrente que se pueda codificar en una rule, un hook o un `allow` en settings.json = latencia eliminada permanentemente. Reservar intervención humana solo para decisiones genuinamente nuevas o de alto riesgo.
 6. **Autovalidación como prioridad máxima:** Incluir en cada prompt tests, outputs esperados o criterios de verificación para que Claude pueda comprobar su propio trabajo. Es la acción de mayor apalancamiento disponible.
    - **Estándar senior:** Antes de marcar cualquier tarea como completada, preguntarse: "¿Un staff engineer aprobaría esto?" No basta con que el código "se vea bien" — demostrar corrección con diffs, logs y evidencia.
    - **Tablas de racionalización:** Los LLMs generan excusas fluidas para saltarse pasos ("es un cambio pequeño", "ya lo probé manualmente", "añado tests después"). Catalogar en el CLAUDE.md o rules las excusas recurrentes con rebuttals explícitos:
@@ -413,6 +414,7 @@ Fórmula base para prompts a Claude Code:
 - **Simplicity First:** Cada cambio debe ser lo más simple posible. Impactar el mínimo código.
 - **No Laziness:** Buscar la causa raíz. Nunca fixes temporales. Estándar de desarrollador senior.
 - **Minimal Impact:** Los cambios solo tocan lo necesario. Evitar introducir bugs colaterales.
+- **Kill Process, Don't Optimize It:** En desarrollo con IA, el proceso que no aporta valor = latencia pura. Eliminar ceremonia, no optimizarla. Si un paso existe solo por inercia organizacional y no previene un fallo concreto, eliminarlo. Sprints, estimation y standups son scaffolding para limitaciones humanas de ejecución — con IA, la ejecución es abundante y el cuello de botella se mueve a decisiones y governance.
 
 ---
 
