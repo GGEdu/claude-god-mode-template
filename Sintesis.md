@@ -27,6 +27,14 @@ Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por 
 5. **Guardarraíles inteligentes:** Usar el modo automático (Auto Mode) para tareas rutinarias, pero requiriendo validación humana (pruebas, linting) antes de fusionar cualquier código.
 6. **Autovalidación como prioridad máxima:** Incluir en cada prompt tests, outputs esperados o criterios de verificación para que Claude pueda comprobar su propio trabajo. Es la acción de mayor apalancamiento disponible.
    - **Estándar senior:** Antes de marcar cualquier tarea como completada, preguntarse: "¿Un staff engineer aprobaría esto?" No basta con que el código "se vea bien" — demostrar corrección con diffs, logs y evidencia.
+   - **Tablas de racionalización:** Los LLMs generan excusas fluidas para saltarse pasos ("es un cambio pequeño", "ya lo probé manualmente", "añado tests después"). Catalogar en el CLAUDE.md o rules las excusas recurrentes con rebuttals explícitos:
+     | Si el agente piensa... | La realidad es... |
+     |---|---|
+     | "Es demasiado simple para testear" | Código simple también rompe. El test tarda 30 segundos. |
+     | "Añado tests después" | Tests-after verifican lo construido, no lo necesitado. Se pierde la prueba de que el test detecta el fallo. |
+     | "Ya lo probé manualmente" | Testing manual no es sistemático, no es repetible, no es confiable. |
+     | "Este cambio no necesita review" | Sesgo de confianza. Si toca lógica de negocio, necesita review. |
+   - Cuando el agente detecte que su razonamiento coincide con una excusa catalogada, debe **detenerse y seguir el protocolo** en vez de racionalizar.
 7. **Nunca usar `--dangerously-skip-permissions`:** Usar `allow` en settings.json para comandos rutinarios específicos. Mismo efecto, sin riesgo de ejecución destructiva accidental.
 8. **Self-Improvement Loop (Lecciones persistentes):**
    - Después de CADA corrección del usuario → registrar el patrón en un archivo de lecciones (ej: `tasks/lessons.md` o `.planning/lessons.md`).
@@ -92,6 +100,7 @@ Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseña
 #### 1. Ritual de Mañana (10 minutos de Setup)
 * **Tú:** Abres la rama, revisas el `CLAUDE.md` para refrescar las reglas del proyecto.
 * **Claude:** Se le exige **explorar → planificar → ejecutar**. Primero investigar el contexto (puede incluir otros LLMs), luego planificar en Plan Mode (etapas, archivos, riesgos, criterios de aceptación), después ejecutar en modo normal.
+   - **Commitment checkpoint:** Antes de escribir código, Claude debe declarar explícitamente qué enfoque/skill usará, por qué aplica, y los pasos concretos que seguirá. Este compromiso público crea un ancla psicológica que dificulta abandonar el plan mid-task. Desviarse del plan declarado requiere aprobación explícita del usuario.
    - **Si algo se tuerce, PARAR y re-planificar inmediatamente.** No seguir empujando sobre un plan roto. Los LLMs tienden a "parchear hacia adelante" — esta regla lo previene.
 * **Tú:** Decides si la tarea requiere una sesión simple o múltiples *worktrees* paralelos.
 * **Claude:** Inicias bucles de verificación automáticos. Ejemplo: `/loop "corre los tests y resume los fallos" cada 30 min`.
@@ -391,6 +400,7 @@ Fórmula base para prompts a Claude Code:
 - **Front-load lo importante:** La instrucción más crítica va al inicio del prompt.
 - **Ser específico:** Claude solo puede inferir contexto — cuanto más preciso, mejor resultado.
 - **Incluir verificación:** Tests, outputs esperados o criterios de éxito para que Claude se auto-valide.
+- **Authority language en reglas críticas:** Las restricciones importantes deben usar lenguaje imperativo (MUST, non-negotiable, no exceptions) en vez de sugerencias ("sería bueno", "considera"). Los LLMs exhiben compliance significativamente mayor ante framing autoritativo que ante recomendaciones suaves. Reservar este tono solo para reglas verdaderamente críticas — si todo es "non-negotiable", nada lo es.
 
 **Prompts interactivos vs prompts para Routines:**
 - **Interactivo:** Puede pedir clarificación mid-session. Tolera ambigüedad porque hay un humano presente.
