@@ -24,6 +24,8 @@ agents:
     skills:
     - frontend-patterns
     - search-first
+    - council
+    - agent-introspection-debugging
   tdd-guide:
     skills:
     - tdd-workflow
@@ -31,6 +33,7 @@ agents:
     skills:
     - backend-patterns
     - verification-loop
+    - santa-method
   typescript-reviewer:
     skills:
     - frontend-patterns
@@ -78,6 +81,10 @@ agents:
     skills: []
   github-orchestrator:
     skills: []
+  harness-optimizer:
+    skills:
+    - hookify-rules
+    - context-budget
 commands:
   jedi-review:
     when: Para código crítico — review de 3 expertos en paralelo
@@ -125,6 +132,12 @@ commands:
     when: Compone equipos de agentes para tareas
   rules-distill:
     when: Extrae principios cross-cutting → rules
+  council:
+    when: Decisiones ambiguas con múltiples caminos válidos — 4 voces adversariales
+  santa-method:
+    when: Verificación adversarial pre-ship — 2 revisores independientes
+  agent-introspection-debugging:
+    when: Cuando un agente falla en loop o sin progreso
 mcps:
   notebooklm: false
   n8n: false

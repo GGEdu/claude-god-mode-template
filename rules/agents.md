@@ -11,12 +11,27 @@ Located in `~/.claude/agents/`:
 | tdd-guide | Test-driven development | New features, bug fixes |
 | code-reviewer | Code review | After writing code |
 | security-reviewer | Security analysis | Before commits |
-| build-error-resolver | Fix build errors | When build fails |
+| build-error-resolver | Fix build errors (generic) | When build fails (no stack-specific resolver) |
 | e2e-runner | E2E testing | Critical user flows |
 | refactor-cleaner | Dead code cleanup | Code maintenance |
 | ui-engineer | Build new UI features + refactor existing ones with design rules | Creating or improving UI components |
 | doc-updater | Documentation | Updating docs |
 | repo-reviewer | Evaluate GitHub repos for reuse | Before reimplementing existing patterns |
+| harness-optimizer | Analyze and improve agent harness config | Cuando el sistema muestra baja calidad, alto coste o comportamiento inesperado |
+| **Language Reviewers** | | |
+| go-reviewer | Go idiomatic review, concurrency, security | After writing Go code |
+| java-reviewer | Java/Spring Boot layered arch, JPA, security | After writing Java code |
+| kotlin-reviewer | Kotlin/Android/KMP coroutines, Compose, clean arch | After writing Kotlin code |
+| python-reviewer | Python PEP8, type hints, security | After writing Python code |
+| cpp-reviewer | C++ memory safety, modern C++20 idioms | After writing C++ code |
+| csharp-reviewer | C# .NET async patterns, nullable types | After writing C# code |
+| flutter-reviewer | Flutter/Dart widgets, state management | After writing Flutter code |
+| **Build Resolvers** | | |
+| go-build-resolver | Go build, vet, module errors | When Go build fails |
+| java-build-resolver | Java/Maven/Gradle compilation errors | When Java build fails |
+| kotlin-build-resolver | Kotlin/Gradle build errors | When Kotlin build fails |
+| cpp-build-resolver | C++ CMake, linker, template errors | When C++ build fails |
+| dart-build-resolver | Dart/Flutter build, pub, build_runner | When Flutter/Dart build fails |
 
 ## Immediate Agent Usage
 

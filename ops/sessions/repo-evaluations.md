@@ -4,8 +4,8 @@
 <!-- NO editar manualmente — el agente gestiona este archivo -->
 
 ## Stats
-- Total evaluados: 1
-- INCLUDE: 1 | REVIEW: 0 | WATCH: 0 | SKIP: 0
+- Total evaluados: 3
+- INCLUDE: 2 | REVIEW: 1 | WATCH: 0 | SKIP: 0
 
 ---
 
@@ -20,6 +20,26 @@
 - **Extracted:** skills: ui-ux-pro-max (search engine, design system gen, 11 domains, 10 tech stacks)
 - **Status:** Proposed
 - **Notes:** Complements existing design-system/banner-design/brand skills (narrower scope). Large dataset requires integration care. No external dependencies. Medium effort (8-12h).
+
+### Everything Claude Code — https://github.com/affaan-m/everything-claude-code
+- **Date:** 2026-04-16
+- **Score:** 82/100 (Relevancia: 24/25, Calidad: 33/35, Extractabilidad: 16/20, Coste: 9/20)
+- **Tier:** INCLUDE
+- **Reason:** Evolución paralela del mismo concepto (158k stars, Anthropic Hackathon Winner) con 183 skills / 48 agents en estructura SKILL.md compatible. 50+ skills únicos de alto valor no presentes en el template.
+- **Discovered via:** manual
+- **Extracted:** skills: [agent-introspection-debugging, council, santa-method, hookify-rules], agents: [harness-optimizer, go-reviewer, java-reviewer, kotlin-reviewer, python-reviewer, cpp-reviewer, csharp-reviewer, flutter-reviewer, go-build-resolver, java-build-resolver, kotlin-build-resolver, cpp-build-resolver, dart-build-resolver]
+- **Status:** Integrated
+- **Notes:** Solapamiento masivo (~60% de skills con nombres idénticos). ECC tiene más amplitud, este template tiene más arquitectura (stacks/layers/compile-agents). Prioridad de extracción: (1) agent-introspection-debugging, (2) council, (3) santa-method, (4) harness-optimizer agent, (5) language-specific reviewers por batch. Algunos skills tienen `origin: ECC` con dependencias a su ecosistema — verificar antes de integrar. MIT licensed.
+
+### LightRAG — https://github.com/HKUDS/LightRAG
+- **Date:** 2026-04-16
+- **Score:** 62/100 (Relevancia: 14/25, Calidad: 30/35, Extractabilidad: 10/20, Coste: 8/20)
+- **Tier:** REVIEW
+- **Reason:** Knowledge-graph-enhanced RAG de alta calidad (33k stars, paper EMNLP2025) pero bajo overlap con el sistema actual — jcodemunch+context7+memory ya cubren sus casos de uso principales.
+- **Discovered via:** manual
+- **Extracted:** skills: [], agents: [], rules: []
+- **Status:** Watchlist
+- **Notes:** Valor real solo si hay colecciones de documentos privados a gran escala (+10k docs). 10x más barato que GraphRAG. Reconsiderar si Maya DMS necesita RAG sobre docs clínicos/legales. MIT licensed. Python package `lightrag-hku`.
 
 <!-- Formato por entrada:
 
