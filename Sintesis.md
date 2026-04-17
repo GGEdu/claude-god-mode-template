@@ -107,7 +107,7 @@ status: active            # active | promoted | archived | superseded
 
 > `last_referenced` se actualiza automáticamente — no depende de que Claude recuerde.
 
-**Enforcement de `last_referenced`:** El hook `session-consolidate` (Stop hook) escanea el historial de herramientas de la sesión buscando lecturas de archivos de lessons (`read_file` sobre paths en `lessons/`). Actualiza `last_referenced` de TODAS las entries que aparecieron en el contexto. No depende de acción manual de Claude.
+**Enforcement de `last_referenced`:** El hook `session-consolidate` (Stop hook) lee `.claude/session-reads.log` (generado por `session-read-logger`, §10.1) y actualiza `last_referenced` de TODAS las entries que aparecieron en la sesión. No depende de acción manual de Claude.
 
 **Criterios de promoción (lesson → rule):**
 - **Señal explícita:** Usuario ejecuta `/promote <lesson-id>`
@@ -523,7 +523,7 @@ Encuentra la causa raíz, corrígelo, y escribe un test que lo habría detectado
 - timestamp: "2026-04-17T10:30:00Z"
   skill: "security-review"
   trigger_text: "fragmento que disparó la activación"
-  confidence: high | medium | low
+  match_type: exact | partial | fuzzy   # Tipo de coincidencia con description
   confirmed: true | false     # si el usuario confirmó
   false_positive: false        # marcado post-hoc si fue innecesario
 ```
@@ -535,8 +535,8 @@ Encuentra la causa raíz, corrígelo, y escribe un test que lo habría detectado
 | Impacto del skill | Threshold | Comportamiento |
 |---|---|---|
 | **Bajo** (formatting, linting) | Cualquier match | Auto-activa silenciosamente |
-| **Medio** (code-review, testing) | Medium+ confidence | Auto-activa + notifica al usuario |
-| **Alto** (security, deploy, delete) | High confidence + confirmación | Propone activación, espera confirmación explícita |
+| **Medio** (code-review, testing) | `exact` o `partial` match | Auto-activa + notifica al usuario |
+| **Alto** (security, deploy, delete) | Solo `exact` match + confirmación | Propone activación, espera confirmación explícita |
 
 El impacto se declara en el frontmatter del skill:
 ```yaml
@@ -1146,3 +1146,22 @@ Fórmula: `[Rol] + [Tarea] + [Contexto]`
 8. **Circuit breakers** → Configurar antes de habilitar cualquier loop/routine.
 
 > **Regla del 95%:** Los pasos 1-6 cubren el 95% de las necesidades.
+
+### 17.1 Adopción progresiva en proyectos existentes
+
+Este sistema no requiere instalación "big bang". Adoptar incrementalmente:
+
+| Fase | Qué instalar | Esfuerzo | Valor |
+|---|---|---|---|
+| **0. Mínimo** | CLAUDE.md (~20 líneas) + settings.json (allow/deny) | 5 min | Alto — contexto + seguridad básica |
+| **1. Observar** | `session-read-logger` (PostToolUse) + `auto-format` (PostToolUse) | 10 min | Medio — datos sin disruption |
+| **2. Guardrails suaves** | `tdd-gate` en modo `warn` + `plan-drift-detector` | 15 min | Alto — visibilidad sin bloqueo |
+| **3. Enforcement** | `plan-gate` + `commit-checklist` + `non-goal-guard` | 30 min | Alto — gates activos |
+| **4. Memoria** | MEMORY.md estructura + `session-consolidate` | 20 min | Medio — persistencia |
+| **5. Autonomía** | Circuit breakers + branching policy + crash recovery | 30 min | Para routines/loops |
+
+**Regla:** No avanzar a la siguiente fase hasta que la actual funcione sin fricción durante 1 semana.
+
+**Para proyectos legacy sin tests:** Empezar con `tdd-gate.mode: "off"` e ir subiendo a `"warn"` cuando exista cobertura en módulos nuevos.
+
+**Para equipos:** Un miembro instala las fases 0-2. El equipo evalúa durante 1 sprint. Si hay consenso → fases 3-5.

@@ -790,3 +790,309 @@ Las pasadas anteriores resolvieron coherencia interna pero no validaron contra l
 3. `tdd-gate` configurable por proyecto (P3-3) — sin esto, bloquea trabajo legítimo
 4. `PostToolUse(Read)` logger para session-consolidate (P3-4) — sin esto, el learning loop no funciona
 5. Ubicación canónica de PLAN.md (P3-5) — sin esto, ambigüedad estructural
+
+---
+---
+
+## Pasada 4
+
+**Fecha:** 2026-04-17
+**Auditor:** Arquitecto Zero-Trust (Opus 4.6 — auditoría de ejecución real)
+**Scope:** Timing, concurrencia, bootstrap, y mecanismos sin implementación definida. Audita lo que las pasadas 1-3 introdujeron como correcciones y lo que sigue ausente.
+
+---
+
+### 1. Veredicto de Viabilidad
+
+El documento ha madurado de manifiesto a especificación técnica. La state machine, los gates, y el `plan-gate.py` son avances reales. Sin embargo, esta pasada encuentra **15 fallos** en la capa de ejecución real: hooks que se auto-bloquean, heurísticas que miden en el momento incorrecto, estado compartido sin coordinación, y mecanismos definidos conceptualmente pero sin ruta de implementación. El sistema es internamente coherente en papel pero colapsaría en los primeros 5 minutos de uso real.
+
+---
+
+### 2. Vulnerabilidades de Timing, Concurrencia y Bootstrap
+
+#### CRÍTICO-P4-1: FAST_PATH heuristic mide en el momento incorrecto
+
+§10.2 `plan-gate.py` línea ~789: `is_trivial_change()` usa `git diff --cached --stat` para determinar si el cambio es trivial.
+
+**Problema:** plan-gate es un hook `PreToolUse(Write)` — se ejecuta ANTES de que el archivo se escriba. En ese instante:
+- `git diff --cached` muestra lo que estaba staged ANTES de esta operación
+- El archivo que se está a punto de escribir NO está staged aún
+- La primera escritura de cualquier sesión siempre tiene staged vacío → `is_trivial_change()` retorna True → FAST_PATH siempre pasa
+
+**Consecuencia:** Una tarea compleja de 20 archivos pasa FAST_PATH en su primera escritura. Cada escritura individual evalúa solo el staged acumulado, no el total planeado. La heurística es retroactiva, no predictiva.
+
+**Solución:**
+1. Evaluar FAST_PATH una sola vez al inicio de la tarea (cuando se decide si crear PLAN.md), NO en cada write
+2. Persistir la decisión en state.yaml: `mode: fast_path | full_path`. Una vez decidido, no re-evaluar
+3. Si no hay PLAN.md y no hay `mode` en state.yaml → evaluar. El resultado se persiste y es definitivo para la tarea
+
+---
+
+#### CRÍTICO-P4-2: state.yaml race condition — múltiples hooks escriben concurrentemente
+
+§2.6: "Cada hook lee state.yaml al inicio y lo escribe al final si cambió el estado."
+
+Un evento `Write` dispara: plan-gate (PreToolUse), tdd-gate (PreToolUse), plan-drift-detector (PostToolUse), non-goal-guard (PostToolUse), auto-format (PostToolUse).
+
+**Problema:** Si PostToolUse hooks ejecutan en paralelo (comportamiento no documentado en Claude Code), state.yaml se corrompe:
+1. Hook A lee state.yaml: `{current_state: EXECUTE, replan_count: 0}`
+2. Hook B lee state.yaml: `{current_state: EXECUTE, replan_count: 0}`
+3. Hook A escribe: `{current_state: EXECUTE, replan_count: 0, last_gate_passed: GATE-2}`
+4. Hook B sobrescribe: `{current_state: EXECUTE, replan_count: 0}` ← pierde `last_gate_passed`
+
+**Solución:** Designar un ÚNICO hook escritor por tipo de evento:
+- PreToolUse: solo `plan-gate` escribe state.yaml
+- PostToolUse: solo `plan-drift-detector` escribe state.yaml
+- Los demás hooks leen pero NO escriben state.yaml
+
+---
+
+#### CRÍTICO-P4-3: hook-health-check bootstrap paradox
+
+§10.3 + §2.6: hook-health-check es PreToolUse y es responsable de crear state.yaml si no existe. Pero hook-health-check TAMBIÉN lee state.yaml para saber si debe ejecutarse (`last_health_check`).
+
+**Secuencia de fallo:**
+1. Sesión nueva, state.yaml no existe
+2. Primer tool use (ej: Read) → dispara PreToolUse hooks
+3. hook-health-check intenta leer state.yaml → FileNotFoundError
+4. Exit code 2 (error) → fail-closed → BLOCK
+5. TODAS las operaciones bloqueadas — ni siquiera se puede leer un archivo
+
+**Consecuencia:** Sesión completamente inutilizable hasta que alguien cree state.yaml manualmente.
+
+**Solución:** hook-health-check DEBE tener un bootstrap path explícito:
+```python
+def main():
+    state_path = ".claude/state.yaml"
+    if not os.path.exists(state_path):
+        create_initial_state(state_path)  # Bootstrap, no error
+        # Continuar con health check normal
+    state = read_state(state_path)
+    # ... rest of health check
+```
+Regla: ausencia de state.yaml es condición normal (primera sesión), NO un error. NUNCA exit 2 por este motivo.
+
+---
+
+#### CRÍTICO-P4-4: non-goal-guard rollback sin mecanismo definido
+
+§2.5: "Match con non-goal → bloqueo + log + rollback del archivo."
+
+non-goal-guard es PostToolUse(Write/Edit) — el archivo YA fue escrito cuando el hook ejecuta.
+
+**Problema:** "Rollback del archivo" no tiene implementación:
+- Si el archivo existía antes → ¿`git checkout -- file`? Solo funciona si estaba en el último commit
+- Si el archivo era nuevo → ¿`rm file`? Operación destructiva
+- Si fue Edit (no Write) → ¿revertir solo la edición? Imposible sin estado previo
+- Claude Code no proporciona el estado previo del archivo al hook PostToolUse
+
+**Consecuencia:** El hook detecta violaciones pero no puede revertirlas. El daño ya está hecho.
+
+**Solución:** Cambiar estrategia fundamentalmente:
+1. Mover non-goal-guard a **PreToolUse** — evaluar ANTES de escribir. El hook recibe `file_path` en el evento y compara contra non_goals. Si match → BLOCK → archivo NUNCA se escribe → no necesita rollback.
+2. Mantener un PostToolUse como safety net secundario: si detecta violación (edge case) → log de advertencia + entry en `error_log` de state.yaml. NO intentar rollback automático.
+
+---
+
+### 3. Vulnerabilidades de Implementación
+
+#### ALTO-P4-5: plan-gate.py valida PLAN.md por text search, no por YAML parsing
+
+§10.2 línea ~778: `missing = [field for field in PLAN_REQUIRED_FIELDS if field not in content]`
+
+**Problema:** Busca la CADENA `"plan_id"` en el contenido completo del archivo. Pasa con falsos positivos:
+- Comentario: `# Recuerda definir plan_id`
+- Code block: `` ```yaml plan_id: ... ``` ``
+- Prosa: `"El campo plan_id es obligatorio"`
+
+Además: `PLAN_REQUIRED_FIELDS = ["plan_id", "files_affected", "acceptance_criteria"]` — falta `approach`, que §2.3 lista como campo obligatorio mínimo.
+
+**Solución:** Parsear YAML real. `yaml` está en stdlib de Python 3.10+. Verificar keys del dict parseado, no texto.
+
+---
+
+#### ALTO-P4-6: session-read-logger añade ~10s de overhead por sesión
+
+§10.1: PostToolUse(Read) hook que registra cada lectura de archivo.
+
+**Cálculo:** Sesión típica: 50-200 lecturas. Cada hook: Python startup ~40ms + I/O ~5ms = ~45ms. Total: 200 × 45ms = **9 segundos** de overhead puro por sesión.
+
+**Solución:** Implementar en bash (startup ~5ms):
+```bash
+#!/bin/bash
+echo "$(date -Iseconds) $(echo "$1" | jq -r '.tool_input.file_path')" >> .claude/session-reads.log
+```
+Reduce overhead a ~200 × 10ms = **2 segundos**. Aceptable.
+
+---
+
+#### ALTO-P4-7: Lesson storage location never specified
+
+§1.8 define el schema YAML de lessons con 11 campos, pero NUNCA dice dónde se almacenan. session-consolidate referencia "entries" genéricamente.
+
+**Consecuencia:** Schema sin storage = modelo de datos sin base de datos.
+
+**Solución:** Ubicación canónica:
+```
+.claude/memory/
+├── lessons/
+│   ├── lesson-2026-04-17-001.yaml
+│   ├── lesson-2026-04-17-002.yaml
+│   └── archive/                       # TTL expirado
+├── MEMORY.md
+└── session-reads.log
+```
+Una lesson por archivo YAML. Permite grep, es atómico, y session-consolidate procesa con `glob("lessons/*.yaml")`.
+
+---
+
+#### ALTO-P4-8: GATE-1 (EXPLORE → PLAN) sin hook ni precondición definida
+
+§2.2: "GATE-1: Existe artefacto de exploración (archivos leídos, contexto documentado)."
+
+**Problema:**
+- "Artefacto de exploración" no definido (¿archivo? ¿log entry? ¿cuántas lecturas?)
+- No hay hook implementado — la tabla §10.1 no lista hook para GATE-1
+- GATE-2 y GATE-3 tienen hooks (plan-gate, commit-checklist). GATE-1 es textual.
+- Sin enforcement, Claude puede planificar sin explorar → plan basado en alucinaciones
+
+**Solución recomendada:** Eliminar GATE-1 como gate formal. Redefinir como CONVENTION. Un gate programático débil (ej: "≥3 archivos leídos") da falsa sensación de seguridad — 3 lecturas de README no sustituyen exploración real. La exploración se valida indirectamente: plan sin contexto → falla en EXECUTE → RE-PLAN con exploración real.
+
+---
+
+#### ALTO-P4-9: Agent-plan integration undefined
+
+§8: "Cada agente recibe solo el output de sus dependencias."
+§2: PLAN.md es artefacto central de la state machine.
+
+**Problema:** No se especifica cómo los agentes acceden al plan:
+- ¿code-reviewer lee `.claude/plans/PLAN.md` directamente?
+- ¿tdd-guide recibe `acceptance_criteria` extraídos?
+- ¿El pipeline architect → coder → tester → reviewer comparte plan completo o extractos?
+
+**Solución:** Contrato de integración:
+- Agentes dentro de la state machine reciben `plan_path` en su prompt
+- Ejemplo: "Lee el plan en `.claude/plans/PLAN.md`. Verifica que el diff cumple `acceptance_criteria` y no viola `non_goals`."
+- Esto es una convención de prompt, no un mecanismo técnico — coherente con el modelo de agentes de Claude Code.
+
+---
+
+#### ALTO-P4-10: `sessions_without_repeat` no tiene mecanismo de tracking confiable
+
+§1.8: `sessions_without_repeat: 0` — se incrementa cada sesión donde el trigger NO se repite.
+§14.4: Promoción implícita cuando `sessions_without_repeat >= 5`.
+
+**Problema:** session-consolidate (Stop hook) necesita saber "¿el trigger de esta lesson ocurrió en esta sesión?" Pero:
+- No tiene acceso al historial de errores/correcciones de la sesión
+- session-reads.log solo registra LECTURAS, no correcciones del usuario
+- Sin esta información, `sessions_without_repeat` siempre se incrementa → todas las lessons se promueven eventualmente
+
+**Solución pragmática:** `sessions_without_repeat` se incrementa automáticamente SIEMPRE en session-consolidate. El reset a 0 solo ocurre por señal explícita: `/lesson-fail <id>`. Convierte mecanismo automático impreciso en semi-manual confiable.
+
+---
+
+### 4. Coherencia y Gaps Funcionales
+
+#### MEDIO-P4-11: Wiki archival by time removes architecture decisions
+
+§14.3: `_index.yaml` archiva entries con `last_updated > 90 días`.
+
+ADRs ("elegimos PostgreSQL sobre MongoDB") raramente se actualizan pero son siempre relevantes. Archival por tiempo los elimina.
+
+**Solución:** Campo `category` en entries: `decision` (nunca archivado por TTL), `concept` (archival normal), `incident` (archival agresivo: 30 días).
+
+---
+
+#### MEDIO-P4-12: §12.4 `git reset --hard` no aparece en deny ni allow list
+
+§12.4: "Error de diseño → `git reset --hard pre-<plan_id>`"
+§9: deny list incluye `rm -rf` pero no `git reset --hard`.
+
+En modo autónomo sin usuario → operación en zona gris → pendiente indefinidamente.
+
+**Solución:** Allow list restringido: `"Bash(git reset --hard pre-plan-*)"` — permite rollback a tags del plan, no arbitrario.
+
+---
+
+#### MEDIO-P4-13: Inter-hook evaluation order undocumented
+
+§10.1: 8 hooks. Un Write dispara 5 de ellos. Si plan-gate ALLOWS pero tdd-gate BLOCKS, ¿cuál gana?
+
+Claude Code ejecuta PreToolUse hooks secuencialmente (primer BLOCK gana — short-circuit AND). Esto no está documentado en Sintesis.md.
+
+**Solución:** Documentar: "PreToolUse: secuencial, primer BLOCK cancela. PostToolUse: todos ejecutan independientemente (no cancelan operación completada)."
+
+---
+
+#### MEDIO-P4-14: Sintesis.md tiene 1149 líneas — viola su propio principio de atención
+
+§1.1: "Límite ~200 líneas. Más diluye la atención."
+
+Sintesis.md es la meta-definición de CLAUDE.md. Un implementador sufre la misma dilución.
+
+**Solución:** Separar en dos documentos:
+- `Sintesis.md` → referencia normativa completa (como está)
+- `Sintesis-quickstart.md` → extracto de ~200 líneas: state machine, tabla de hooks, schemas, setup progresivo
+
+---
+
+#### MEDIO-P4-15: `cost_ceiling_usd` estimation formula undefined
+
+§2.3: "El hook estima coste basándose en iteraciones × coste medio por iteración (configurable)."
+
+"Coste medio por iteración" no tiene valor default ni ubicación de configuración.
+
+**Solución:** Default en settings.json:
+```yaml
+circuit_breaker:
+  avg_cost_per_iteration_usd: 0.15  # Estimación Sonnet 4.6
+  # cost_estimate = iterations × avg_cost_per_iteration_usd
+```
+Con disclaimer: "Estimación grosera. Para control real, usar API de billing de Anthropic."
+
+---
+
+### Resumen de severidades — Pasada 4
+
+| ID | Severidad | Descripción | Tipo |
+|---|---|---|---|
+| CRÍTICO-P4-1 | 🔴 | FAST_PATH heuristic mide antes del write — siempre trivial la primera vez | Timing |
+| CRÍTICO-P4-2 | 🔴 | state.yaml race condition — múltiples hooks escriben sin coordinación | Concurrencia |
+| CRÍTICO-P4-3 | 🔴 | hook-health-check bootstrap paradox — no puede crear lo que necesita para ejecutar | Bootstrap |
+| CRÍTICO-P4-4 | 🔴 | non-goal-guard PostToolUse no puede hacer rollback — archivo ya escrito | Timing |
+| ALTO-P4-5 | 🟠 | plan-gate.py valida por text search, no YAML parsing + falta campo `approach` | Implementación |
+| ALTO-P4-6 | 🟠 | session-read-logger añade ~10s overhead por sesión (Python startup) | Performance |
+| ALTO-P4-7 | 🟠 | Lesson storage location never specified — schema sin storage | Especificación |
+| ALTO-P4-8 | 🟠 | GATE-1 sin hook ni definición de "artefacto de exploración" | Especificación |
+| ALTO-P4-9 | 🟠 | Agent-plan integration undefined — agentes no saben cómo acceder al plan | Especificación |
+| ALTO-P4-10 | 🟠 | `sessions_without_repeat` no tiene tracking confiable cross-session | Implementación |
+| MEDIO-P4-11 | 🟡 | Wiki archival by TTL elimina architecture decisions vigentes | Diseño |
+| MEDIO-P4-12 | 🟡 | `git reset --hard` en zona gris del permission model | Coherencia |
+| MEDIO-P4-13 | 🟡 | Inter-hook evaluation order no documentado | Especificación |
+| MEDIO-P4-14 | 🟡 | Documento de 1149 líneas viola su propio principio de ~200 líneas | Auto-coherencia |
+| MEDIO-P4-15 | 🟡 | `cost_ceiling_usd` sin fórmula ni default definido | Especificación |
+
+---
+
+### Conclusión de Pasada 4
+
+**4 CRÍTICAS, 6 ALTAS, 5 MEDIAS.**
+
+Las pasadas anteriores resolvieron problemas conceptuales (P1), de implementabilidad (P2), y de viabilidad operativa (P3). Esta pasada 4 revela que **el sistema colapsaría en ejecución real** por problemas de timing y coordinación:
+
+1. **Los hooks miden en el momento incorrecto.** FAST_PATH evalúa ANTES del write (siempre trivial). non-goal-guard evalúa DESPUÉS (no puede revertir). Solución: mover non-goal-guard a PreToolUse y persistir la decisión FAST_PATH.
+
+2. **El estado compartido no tiene coordinación.** state.yaml es leído/escrito por 5+ hooks sin locking. Solución: un único escritor por tipo de evento.
+
+3. **El sistema no puede arrancar desde cero.** hook-health-check falla si state.yaml no existe, pero es responsable de crearlo. Solución: bootstrap path explícito con condición `if not exists → create`.
+
+4. **Mecanismos definidos sin ruta de implementación.** Lessons sin storage, GATE-1 sin hook, agent-plan sin contrato, sessions_without_repeat sin tracking. Cada uno es individualmente resoluble, pero juntos representan ~30% del sistema sin implementación.
+
+**Acumulado total (Pasadas 1-4): ~56 issues identificados (14 CRÍTICOS, 24 ALTOS, 18 MEDIOS)**
+
+**Prioridad de corrección para Pasada 4:**
+1. Mover non-goal-guard a PreToolUse (P4-4) — sin esto, non-goals no se protegen
+2. Bootstrap path en hook-health-check (P4-3) — sin esto, primera sesión muere
+3. Persistir FAST_PATH en state.yaml (P4-1) — sin esto, heurística rota
+4. Único escritor de state.yaml por tipo de evento (P4-2) — sin esto, estado corrupto
+5. Lesson storage location (P4-7) — sin esto, learning loop no tiene dónde escribir
