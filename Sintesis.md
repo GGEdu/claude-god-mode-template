@@ -291,6 +291,14 @@ Fórmula base para prompts a Claude Code:
 
 ---
 
+### 🧭 Principios Core de Ingeniería
+
+- **Simplicity First:** Cada cambio debe ser lo más simple posible. Impactar el mínimo código.
+- **No Laziness:** Buscar la causa raíz. Nunca fixes temporales. Estándar de desarrollador senior.
+- **Minimal Impact:** Los cambios solo tocan lo necesario. Evitar introducir bugs colaterales.
+
+---
+
 ### 🤖 Prompt sugerido para entregarle a la otra IA
 
 Puedes copiar y pegar este bloque directamente a la IA que te ayudará a configurar tu repositorio:
