@@ -66,7 +66,42 @@ Si la misma decisión aparece en múltiples archivos, mantén solo la más recie
 - Advertencias sobre código peligroso
 - Integraciones configuradas actualmente
 
-### Paso 4 — Actualizar índice
+### Paso 4 — Promover al wiki del proyecto
+
+**Antes de comprimir o archivar**, evalúa si la entrada debe promoverse al wiki del proyecto (`docs/src/wiki/`).
+
+```bash
+# Verificar si el wiki existe
+ls docs/src/wiki/index.md 2>/dev/null
+```
+
+**Si el wiki existe**, para cada entrada madura (>30 días) o decisión confirmada:
+
+| Tipo de entrada en memory/ | Destino en wiki |
+|---|---|
+| Decisión de arquitectura confirmada | Nueva página o actualización de existente |
+| Regla de dominio/negocio estable | `docs/src/wiki/glossary.md` o página concept |
+| Integración configurada y funcionando | Página entity |
+| Convención de naming/código adoptada | `docs/src/wiki/glossary.md` |
+
+**Flujo de promoción:**
+1. Leer `docs/src/wiki/index.md` para saber qué páginas existen
+2. Si la información encaja en una página existente → actualizar esa página
+3. Si es un concepto/entidad nuevo → crear nueva página con frontmatter VitePress
+4. Actualizar `docs/src/wiki/index.md` con las nuevas páginas
+5. Añadir entrada en `docs/src/wiki/log.md`
+6. **Después de promover**, marcar la entrada en memory/ como archivada:
+   ```
+   <!-- [YYYY-MM-DD] PROMOVIDO A WIKI: docs/src/wiki/<página>.md -->
+   ```
+
+**NO promover:**
+- Workarounds temporales
+- Bugs en progreso
+- Notas de debugging
+- Información tentativa sin confirmar
+
+### Paso 5 — Actualizar índice
 
 Si existe un archivo `index.md` o `README.md` en `.claude/memory/`, actualizarlo con la lista de archivos y una línea de descripción cada uno.
 
@@ -105,4 +140,8 @@ Cambios:
 
 Información preservada sin cambios:
 - [lista de decisiones críticas que se mantuvieron intactas]
+
+Promoción a wiki:
+- [página]: creada / actualizada con [resumen]
+- (o "No se promovió nada — wiki no existe o no había entradas elegibles")
 ```

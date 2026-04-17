@@ -19,6 +19,7 @@ agents:
     - deployment-patterns
     - docker-patterns
     - livewire-patterns
+    - project-wiki
   planner:
     skills:
     - laravel-patterns
@@ -26,6 +27,7 @@ agents:
     - livewire-patterns
     - council
     - agent-introspection-debugging
+    - project-wiki
   tdd-guide:
     skills:
     - tdd-workflow
@@ -58,9 +60,11 @@ agents:
     skills:
     - e2e-testing
   doc-updater:
-    skills: []
+    skills:
+    - project-wiki
   memory-consolidator:
-    skills: []
+    skills:
+    - project-wiki
   silent-failure-hunter:
     skills: []
   code-simplifier:

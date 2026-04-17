@@ -75,6 +75,42 @@ REGLAS DE ESCRITURA (para controlar el crecimiento):
 Máximo 4 archivos creados o actualizados por sesión." \
     2>>"$HOME/.claude/hooks/session-consolidate.log" || true
 
+# ── Promoción a wiki del proyecto ──────────────────────────────────────────────
+# Si el proyecto tiene docs/src/wiki/, promueve decisiones permanentes al wiki.
+if [ -d "docs/src/wiki" ] && [ -f "docs/src/wiki/index.md" ]; then
+    claude --print \
+        --model claude-haiku-4-5-20251001 \
+        --max-turns 5 \
+        "Eres un agente de promoción de conocimiento al wiki del proyecto.
+
+WIKI DEL PROYECTO: docs/src/wiki/
+
+TU TAREA:
+1. Lee los archivos recién actualizados en .claude/memory/
+2. Lee docs/src/wiki/index.md para conocer las páginas existentes
+3. Evalúa qué información de memory/ es PERMANENTE y merece estar en el wiki
+
+CRITERIOS DE PROMOCIÓN (solo promover si cumple):
+- Decisiones de arquitectura confirmadas (no tentativas)
+- Reglas de dominio/negocio que no cambiarán entre sesiones
+- Convenciones de código o naming adoptadas por el equipo
+- Integraciones configuradas y funcionando
+- NO promover: workarounds temporales, bugs en progreso, notas de sesión
+
+OPERACIONES:
+- Actualizar páginas existentes del wiki si la info es relevante
+- Crear nuevas páginas solo para conceptos/entidades importantes
+- Actualizar docs/src/wiki/glossary.md con términos nuevos
+- Actualizar docs/src/wiki/index.md con páginas nuevas
+- Añadir entrada en docs/src/wiki/log.md con fecha y resumen
+
+FORMATO: Respetar el frontmatter VitePress existente en cada página.
+Si no hay nada que promover, NO escribir nada. Es preferible no actuar a contaminar el wiki.
+
+Máximo 3 páginas actualizadas o creadas." \
+        2>>"$HOME/.claude/hooks/session-consolidate.log" || true
+fi
+
 # Rotar log si supera 200 líneas (evita crecimiento indefinido)
 LOG="$HOME/.claude/hooks/session-consolidate.log"
 if [ -f "$LOG" ] && [ "$(wc -l < "$LOG")" -gt 200 ]; then

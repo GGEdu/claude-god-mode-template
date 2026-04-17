@@ -18,12 +18,14 @@ agents:
     - architecture-decision-records
     - deployment-patterns
     - docker-patterns
+    - project-wiki
   planner:
     skills:
     - golang-patterns
     - search-first
     - council
     - agent-introspection-debugging
+    - project-wiki
   tdd-guide:
     skills:
     - tdd-workflow
@@ -44,9 +46,11 @@ agents:
   refactor-cleaner:
     skills: []
   doc-updater:
-    skills: []
+    skills:
+    - project-wiki
   memory-consolidator:
-    skills: []
+    skills:
+    - project-wiki
   build-error-resolver:
     skills: []
   e2e-runner:

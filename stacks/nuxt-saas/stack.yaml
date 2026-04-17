@@ -19,12 +19,14 @@ agents:
     - docker-patterns
     - nuxt4-patterns
     - bun-runtime
+    - project-wiki
   planner:
     skills:
     - frontend-patterns
     - search-first
     - council
     - agent-introspection-debugging
+    - project-wiki
   tdd-guide:
     skills:
     - tdd-workflow
@@ -56,9 +58,11 @@ agents:
     skills:
     - e2e-testing
   doc-updater:
-    skills: []
+    skills:
+    - project-wiki
   memory-consolidator:
-    skills: []
+    skills:
+    - project-wiki
   build-error-resolver:
     skills: []
   loop-operator:

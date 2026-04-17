@@ -277,7 +277,47 @@ Los hooks son diferentes a rules y skills: se ejecutan **siempre**, antes o desp
 
 ---
 
-### 📐 Estructura de Prompts Efectivos
+### � Wiki de Proyecto — Memoria Permanente Acumulativa
+
+Inspirado en el patrón "LLM Wiki" (Karpathy): un directorio de documentos Markdown que crece con cada sesión y persiste como documentación committable del proyecto.
+
+**Dos sistemas complementarios:**
+| Sistema | Ubicación | Persistencia | Propósito |
+|---|---|---|---|
+| `memory/` | `.claude/memory/` | Efímera (gitignored) | Contexto de sesión, decisiones tentativas, WIP |
+| `wiki/` | `docs/src/wiki/` | Permanente (committed) | Conocimiento confirmado del proyecto |
+
+**Flujo de conocimiento:**
+```
+Sesión de trabajo → .claude/memory/ (captura rápida)
+                         ↓ (promoción automática o manual)
+                   docs/src/wiki/ (conocimiento permanente)
+```
+
+**Tipos de páginas wiki:**
+- **Overview** (`_overview.md`): Propósito, stack, decisiones fundacionales
+- **Entity** (`entities/*.md`): Modelos, servicios, módulos del sistema
+- **Concept** (`concepts/*.md`): Patrones, convenciones, reglas de negocio
+- **Decision** (`decisions/*.md`): ADRs — decisiones con contexto y alternativas
+- **Glossary** (`glossary.md`): Términos del dominio
+- **Log** (`log.md`): Registro cronológico de cambios al wiki
+
+**Criterios de promoción (memory → wiki):**
+- ✅ Decisiones de arquitectura confirmadas
+- ✅ Reglas de negocio estables
+- ✅ Convenciones adoptadas por el equipo
+- ❌ Workarounds temporales
+- ❌ Bugs en progreso
+- ❌ Información tentativa
+
+**Integración automática:**
+- El hook `session-consolidate.sh` promueve conocimiento elegible al wiki al cerrar sesión
+- El agente `memory-consolidator` marca entradas promovidas como archivadas antes de comprimir
+- Los agentes `planner`, `architect`, `doc-updater` consultan y actualizan el wiki durante el trabajo
+
+---
+
+### �📐 Estructura de Prompts Efectivos
 
 Fórmula base para prompts a Claude Code:
 

@@ -16,12 +16,14 @@ agents:
     - docker-patterns
     - springboot-patterns
     - jpa-patterns
+    - project-wiki
   planner:
     skills:
     - springboot-patterns
     - search-first
     - council
     - agent-introspection-debugging
+    - project-wiki
   tdd-guide:
     skills:
     - tdd-workflow
@@ -47,9 +49,11 @@ agents:
   e2e-runner:
     skills: []
   doc-updater:
-    skills: []
+    skills:
+    - project-wiki
   memory-consolidator:
-    skills: []
+    skills:
+    - project-wiki
   build-error-resolver:
     skills: []
   loop-operator:

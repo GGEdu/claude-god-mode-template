@@ -20,12 +20,14 @@ agents:
     - architecture-decision-records
     - deployment-patterns
     - docker-patterns
+    - project-wiki
   planner:
     skills:
     - frontend-patterns
     - search-first
     - council
     - agent-introspection-debugging
+    - project-wiki
   tdd-guide:
     skills:
     - tdd-workflow
@@ -60,9 +62,11 @@ agents:
     skills:
     - e2e-testing
   doc-updater:
-    skills: []
+    skills:
+    - project-wiki
   memory-consolidator:
-    skills: []
+    skills:
+    - project-wiki
   code-simplifier:
     skills: []
   silent-failure-hunter:
