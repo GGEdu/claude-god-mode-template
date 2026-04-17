@@ -235,6 +235,7 @@ Eres un revisor senior enfocado en corrección y mantenibilidad.
 - `tools:` — restricción deliberada de permisos. Un auditor de seguridad solo debe leer, no escribir.
 - **Contexto separado:** el agente trabaja aislado, condensa sus hallazgos y devuelve un resumen a la sesión principal. No infla el contexto del hilo principal.
 - **Aislamiento de contexto en pipelines:** Cuando el mismo contexto planifica, implementa y revisa, la revisión es cosmética — el mismo "cerebro" se auto-aprueba. En pipelines de agentes (architect → coder → tester → reviewer), cada agente debe recibir **solo el output de los pasos declarados como dependencia**, no todo el contexto acumulado. El architect planifica sin detalles de implementación. El tester testea sin saber qué el coder consideró "fine". El reviewer revisa sin el sesgo optimista del implementador. Aislamiento crea accountability.
+- **Agente ≠ upgrade de un workflow:** Si cada paso tiene una sola acción correcta y el path está completamente definido, usar un script, un command o un hook — no un agente. Los agentes añaden latencia, coste y no-determinismo. Reservarlos para problemas donde la decisión intermedia requiere razonamiento: múltiples paths posibles, outputs variables, o necesidad de adaptarse a resultados inesperados.
 - **Personal:** `~/.claude/agents/` aplica a todos los proyectos.
 
 ---
