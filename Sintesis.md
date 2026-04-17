@@ -1,135 +1,297 @@
-Es una excelente iniciativa. Tratar a Claude Code como un sistema operativo y no como un simple "autocompletado" es exactamente lo que separa a los usuarios promedio de los desarrolladores de alto rendimiento. 
 
-Aquí tienes el resumen estructurado de las partes más importantes del artículo, diseñado específicamente para que puedas leérselo a otra IA y para que tengas claro tu flujo de trabajo diario.
+## 1. Filosofía Central (El Modelo Operativo)
+
+El repositorio se rige por un **modelo de 5 capas + 3 sistemas de enforcement**:
+
+### 1.1 Contexto siempre activo reducido
+
+El archivo CLAUDE.md contiene solo contexto "siempre activo" y reglas inmutables.
+
+- **Límite ~200 líneas.** Más diluye la atención y empeora resultados.
+- **Poda agresiva:** Si Claude ya lo hace bien sin la instrucción → eliminar o convertir en hook.
+- **Solo el "qué":** Comandos build/test, decisiones de arquitectura, gotchas no obvios, convenciones.
+- **No incluir:** lo que el linter ya cubre, dumps de documentación, explicaciones teóricas.
+- **Cuatro niveles de carga:** Org policy → `~/.claude/CLAUDE.md` (global) → `CLAUDE.md` (proyecto) → `CLAUDE.md` en subdirectorios + primeras 200 líneas de `MEMORY.md`. Lo más específico gana.
+- **Overrides personales:** `CLAUDE.local.md` en la raíz (gitignored automáticamente).
+- **Asumir contexto cero:** Redactar como si Claude no supiera NADA del proyecto.
+
+### 1.2 Procedimientos repetitivos = Skills
+
+Cualquier tarea repetida >2 veces → skill, comando o regla explícita.
+- Crear skills desde ejemplos: pegar output excelente y pedir conversión a skill reutilizable.
+- **Versionado de skills:** Duplicar al refinar, no editar el activo. Previene regresiones.
+
+### 1.3 Higiene de sesión estricta
+
+- Separar proyectos no relacionados en sesiones distintas (evitar context bleed).
+- Podar periódicamente memory, archivos e instrucciones (evitar drift acumulado).
+- **Memoria por worktree:** Cada Git worktree tiene su propio directorio de auto-memory. Las notas de un worktree no contaminan otro.
+
+### 1.4 Paralelización aislada
+
+Trabajo paralelo o complejo → worktrees o ramas independientes con supervisión estricta.
+
+### 1.5 Guardarraíles inteligentes
+
+Auto Mode para tareas rutinarias + validación programática obligatoria antes de fusionar.
+- **Minimizar decision latency:** Cada decisión recurrente codificada en rule/hook/allow = latencia eliminada permanentemente. Reservar intervención humana para decisiones genuinamente nuevas o de alto riesgo.
+
+### 1.6 Autovalidación con enforcement programático
+
+> **[FIX CRÍTICO-3 + Guardrails de alucinación]** La autovalidación NO depende de auto-reflexión del modelo. Se implementa con hooks programáticos.
+
+- **TDD estricto enforced por hook:** Un hook `PreToolUse` sobre `Write`/`Edit` verifica que existan tests para el módulo ANTES de permitir escribir código de implementación. Si los tests se crean DESPUÉS del código → hook fuerza revisión por agente independiente con prompt adversarial.
+- **Validación factual obligatoria:** Antes de afirmar que un archivo/función/API existe o tiene cierto comportamiento, Claude MUST ejecutar `grep`/`read_file` para verificar. Nunca afirmar de memoria. Esto es una regla non-negotiable en CLAUDE.md.
+- **Checklist programático pre-commit** (hook `PreToolUse` sobre `Bash(git commit*)`):
+  1. ¿Existen tests para los archivos modificados?
+  2. ¿Los tests fallan sin la implementación? (prueba de que el test detecta el fallo)
+  3. ¿El diff incluye solo archivos declarados en el plan?
+  4. Si alguna respuesta es NO → bloquear commit + registrar razón.
+- **Tabla de racionalización como DENY list programática:**
+
+  | Si el agente intenta... | El hook hace... |
+  |---|---|
+  | Commit sin tests | Bloquea. Mensaje: "Tests requeridos. Crear tests primero." |
+  | Marcar tarea completa sin verificación | Bloquea. Ejecuta test suite automáticamente. |
+  | Modificar archivo fuera del plan | Warning + log. Requiere justificación persistida. |
+  | Skip de code review | Bloquea. Invoca agente `code-reviewer` automáticamente. |
+
+### 1.7 Nunca usar `--dangerously-skip-permissions`
+
+Usar `allow` en settings.json para comandos rutinarios específicos. Mismo efecto, sin riesgo destructivo.
+
+### 1.8 Self-Improvement Loop con enforcement cerrado
+
+> **[FIX CRÍTICO-A + CRÍTICO-B + ALTO-C + ALTO-D]** El loop de mejora tiene criterios objetivos, detección de contradicciones, TTL y promoción basada en evidencia.
+
+**Protocolo de registro de lecciones:**
+
+Después de CADA corrección del usuario → registrar con schema estructurado:
+
+```yaml
+# Lesson entry — schema obligatorio
+id: lesson-YYYY-MM-DD-NNN
+date: 2026-04-17
+trigger: "Qué causó el error (acción concreta)"
+pattern: "Qué hacía mal (patrón reconocible)"
+fix: "Qué debe hacer en su lugar (acción correctiva)"
+rule_created: false
+sessions_without_repeat: 0
+last_referenced: 2026-04-17
+supersedes: null          # ID de lesson anterior que esta reemplaza
+superseded_by: null       # ID de lesson que reemplaza esta
+status: active            # active | promoted | archived | superseded
+```
+
+**Detección de contradicciones:** Al escribir una nueva lesson, buscar entries existentes con keywords solapantes. Si se detecta contradicción → marcar la anterior como `status: superseded` + `superseded_by: <new_id>` + registrar en log de cambios.
+
+**Criterios de promoción (lesson → rule):**
+- **Señal explícita:** Usuario ejecuta `/promote <lesson-id>`
+- **Señal implícita:** `sessions_without_repeat >= 5` Y `status == active`
+- **Señal de consenso:** 2+ agentes referencian la misma lección en sesiones distintas
+- Al promover: crear/actualizar rule en `.claude/rules/` + actualizar `rule_created: true` + `status: promoted`
+
+**Garbage collection (TTL):**
+- Campo `last_referenced` se actualiza cada vez que la lesson es consultada.
+- **Routine semanal:** Entries con `last_referenced` > 30 días Y `status == active` → `status: archived` + mover a `lessons/archive/`.
+- Entries `superseded` se archivan inmediatamente.
+
+**Detección de corrección vs cambio de opinión:**
+- **Corrección** = usuario revierte un cambio de Claude O dice explícitamente "eso está mal/incorrecto/no funciona".
+- **Cambio de opinión** = usuario pide una dirección diferente sin indicar error. No genera lesson.
+
+**Backward propagation:** Cuando la implementación diverge del plan → Claude MUST proponer actualización del plan/CLAUDE.md ANTES de continuar con la nueva dirección. El plan vivo debe reflejar la realidad actual.
+
+### 1.9 Elegancia balanceada
+
+- Cambios no triviales: pausar → "¿hay una forma más elegante?"
+- Fix hacky: reimplementar con conocimiento acumulado.
+- Fixes simples y obvios: NO sobre-ingenierar.
+
+### 1.10 Bug fixing autónomo
+
+- Diagnosticar y resolver sin pedir ayuda al usuario.
+- Investigar logs, errores, tests fallidos de forma independiente.
+- Cero cambio de contexto requerido del usuario.
 
 ---
 
-### 🧠 Filosofía Central para la IA (El Modelo Operativo)
+## 2. Máquina de Estados para Operación Autónoma
 
-Para generar el `CLAUDE.md`, la IA debe entender que el repositorio se rige por un **modelo de 5 partes**:
+> **[FIX CRÍTICO-1 + CRÍTICO-2]** El flujo de trabajo ya no es una directiva textual — es un autómata con estados, transiciones y gates obligatorios.
 
-1. **Contexto siempre activo reducido:** El archivo CLAUDE.md debe contener solo el contexto "siempre activo" y reglas inmutables del proyecto. No debe ser un basurero de prompts.
-   - **Límite ~200 líneas.** Más de eso diluye la atención de Claude y empeora resultados. Un CLAUDE.md sobre-especificado hace que Claude **ignore reglas importantes** porque se pierden en el ruido.
-   - **Poda agresiva:** Si Claude ya hace algo correctamente sin la instrucción, eliminarla del CLAUDE.md o convertirla en un hook.
-   - **Solo el "qué", no el "por qué":** Comandos build/test, decisiones de arquitectura, gotchas no obvios, convenciones de naming/imports.
-   - **No incluir:** lo que el linter ya cubre, dumps de documentación completa, ni explicaciones teóricas de decisiones.
-   - **Cuatro niveles de carga al inicio de sesión:** Org policy (si existe) → `~/.claude/CLAUDE.md` (global personal) → `CLAUDE.md` en raíz del proyecto (equipo) → `CLAUDE.md` en subdirectorios (scoped) + primeras 200 líneas de `MEMORY.md`. Claude fusiona todos; lo más específico gana.
-   - **Overrides personales:** `CLAUDE.local.md` en la raíz del proyecto — se gitignora automáticamente. Preferencias personales sin afectar al equipo.
-   - **Asumir contexto cero:** Redactar CLAUDE.md como si Claude no supiera NADA del proyecto. No dar nada por implícito.
-2. **Procedimientos repetitivos = Skills:** Cualquier tarea que se repita más de dos veces debe convertirse en un "skill", un comando o una regla explícita en el repositorio.
-   - **Crear skills desde ejemplos:** Pegar un output excelente a Claude y pedirle que lo convierta en skill reutilizable. También funciona con screenshots.
-   - **Versionado de skills:** Duplicar y versionar skills al refinarlos, en vez de editar el activo. Previene regresiones.
-3. **Higiene de sesión estricta:** La sesión principal debe mantenerse libre de código basura o conversaciones secundarias.
-   - **Separar proyectos no relacionados** en sesiones distintas para evitar context bleed.
-   - **Podar periódicamente** memory, archivos e instrucciones para evitar drift acumulado.
-4. **Paralelización aislada:** El trabajo paralelo o complejo debe realizarse bajo supervisión estricta y en entornos aislados (worktrees o ramas independientes).
-   - **Memoria por worktree:** Cada Git worktree tiene su propio directorio de auto-memory separado. Las notas de un worktree no contaminan otro.
-5. **Guardarraíles inteligentes:** Usar el modo automático (Auto Mode) para tareas rutinarias, pero requiriendo validación humana (pruebas, linting) antes de fusionar cualquier código.
-   - **Minimizar decision latency del humano:** Con IA, el cuello de botella ya no es la ejecución — es cada punto donde Claude espera aprobación humana. Cada decisión recurrente que se pueda codificar en una rule, un hook o un `allow` en settings.json = latencia eliminada permanentemente. Reservar intervención humana solo para decisiones genuinamente nuevas o de alto riesgo.
-6. **Autovalidación como prioridad máxima:** Incluir en cada prompt tests, outputs esperados o criterios de verificación para que Claude pueda comprobar su propio trabajo. Es la acción de mayor apalancamiento disponible.
-   - **Estándar senior:** Antes de marcar cualquier tarea como completada, preguntarse: "¿Un staff engineer aprobaría esto?" No basta con que el código "se vea bien" — demostrar corrección con diffs, logs y evidencia.
-   - **Tablas de racionalización:** Los LLMs generan excusas fluidas para saltarse pasos ("es un cambio pequeño", "ya lo probé manualmente", "añado tests después"). Catalogar en el CLAUDE.md o rules las excusas recurrentes con rebuttals explícitos:
-     | Si el agente piensa... | La realidad es... |
-     |---|---|
-     | "Es demasiado simple para testear" | Código simple también rompe. El test tarda 30 segundos. |
-     | "Añado tests después" | Tests-after verifican lo construido, no lo necesitado. Se pierde la prueba de que el test detecta el fallo. |
-     | "Ya lo probé manualmente" | Testing manual no es sistemático, no es repetible, no es confiable. |
-     | "Este cambio no necesita review" | Sesgo de confianza. Si toca lógica de negocio, necesita review. |
-   - Cuando el agente detecte que su razonamiento coincide con una excusa catalogada, debe **detenerse y seguir el protocolo** en vez de racionalizar.
-7. **Nunca usar `--dangerously-skip-permissions`:** Usar `allow` en settings.json para comandos rutinarios específicos. Mismo efecto, sin riesgo de ejecución destructiva accidental.
-8. **Self-Improvement Loop (Lecciones persistentes):**
-   - Después de CADA corrección del usuario → registrar el patrón en un archivo de lecciones (ej: `tasks/lessons.md` o `.planning/lessons.md`).
-   - Escribir reglas que prevengan el mismo error.
-   - Revisar lecciones al inicio de cada sesión.
-   - Las lecciones que se confirman como permanentes se **promueven** a CLAUDE.md o a `rules/`. Así CLAUDE.md se mantiene lean.
-   - **Backward propagation (plan ↔ realidad):** Cuando la implementación diverge del plan (dependencia incompatible, esquema conflictivo, regla contradictoria), Claude debe proponer la actualización del plan/CLAUDE.md **antes** de continuar con la nueva dirección. No basta con registrar la lección post-hoc — el plan vivo debe reflejar la realidad actual para que la siguiente sesión arranque desde verdad, no ficción.
-9. **Elegancia balanceada:**
-   - En cambios no triviales: pausar y preguntar "¿hay una forma más elegante?"
-   - Si el fix se siente hacky: reimplementar la solución elegante con todo el conocimiento acumulado.
-   - Para fixes simples y obvios: NO sobre-ingenierar. Aplicar y seguir.
-10. **Bug fixing autónomo:**
-    - Ante un bug report: diagnosticar y resolver sin pedir ayuda al usuario.
-    - Investigar logs, errores, tests fallidos de forma independiente.
-    - Cero cambio de contexto requerido del usuario.
+### 2.1 Estados y transiciones
+
+```
+                              ┌─────────────────────────────────────────┐
+                              │                                         │
+INIT → EXPLORE → [GATE-1] → PLAN → [GATE-2] → EXECUTE → [GATE-3] → VERIFY → DONE
+         │                     │                   │                    │
+         │                     │                   │                    │
+         ↓ (fail)              ↓ (fail, max 2)     ↓ (fail)            ↓ (fail)
+       BLOCKED              RE-PLAN              ROLLBACK            ROLLBACK
+                               ↑                   │                    │
+                               └───────────────────┘                    │
+                               ↑                                        │
+                               └────────────────────────────────────────┘
+```
+
+### 2.2 Gates obligatorios (implementados como hooks)
+
+| Gate | Tipo | Precondición | Si falla |
+|---|---|---|---|
+| **GATE-1** (Explore→Plan) | PreToolUse(Write) | Existe artefacto de exploración (archivos leídos, contexto documentado) | Bloquea escritura de plan. Volver a EXPLORE. |
+| **GATE-2** (Plan→Execute) | PreToolUse(Write/Edit) | Existe `PLAN.md` con: archivos_afectados, non_goals, criterios_aceptacion, tests_requeridos | Bloquea escritura de código. Volver a PLAN. |
+| **GATE-3** (Execute→Verify) | PreToolUse(Bash:git commit) | Tests pasan + diff solo incluye archivos declarados en plan | Bloquea commit. Si tests fallan → ROLLBACK. |
+
+### 2.3 Artefacto de plan (schema obligatorio)
+
+```yaml
+# PLAN.md — schema mínimo obligatorio
+plan_id: plan-YYYY-MM-DD-NNN
+status: draft | approved | executing | completed | failed
+approach: "Descripción del enfoque elegido"
+skill_used: "nombre-del-skill (si aplica)"
+files_affected:
+  - path: "src/services/auth.ts"
+    action: create | modify | delete
+    reason: "Por qué se toca este archivo"
+non_goals:
+  - pattern: "**/admin/**"
+    reason: "No se construye UI de admin en esta tarea"
+  - pattern: "**/notifications/**"
+    reason: "Sistema de notificaciones fuera de scope"
+acceptance_criteria:
+  - "Los tests de auth pasan"
+  - "No hay regresiones en test suite existente"
+tests_required:
+  - "tests/auth.test.ts — login flow"
+  - "tests/auth.test.ts — token refresh"
+rollback_tag: "pre-plan-YYYY-MM-DD-NNN"
+max_iterations: 3          # Para loops autónomos
+timeout_minutes: 60        # Tiempo máximo
+cost_ceiling_usd: 5.00    # Presupuesto máximo de tokens
+```
+
+### 2.4 Commitment checkpoint en modo autónomo
+
+> En sesión interactiva: desviarse del plan requiere aprobación explícita del usuario.
+> **En modo autónomo (routines/loops):** El commitment se valida programáticamente:
+
+- Hook `PostToolUse` sobre `Write`/`Edit` compara archivos modificados vs `files_affected` del plan.
+- Si el diff toca un archivo NO declarado en el plan:
+  1. Log: `{timestamp, file, reason: "unplanned_write"}`
+  2. Si el archivo coincide con un patrón de `non_goals` → **BLOQUEAR** inmediatamente + ROLLBACK
+  3. Si no coincide con non_goals → **WARNING** + continuar + registrar para revisión post-ejecución
+
+### 2.5 Non-goals con enforcement
+
+> **[FIX MEDIO-7]** Los non-goals se persisten como patrones glob en el plan y se validan automáticamente.
+
+- Non-goals se declaran en `PLAN.md` como patrones glob (ver schema arriba).
+- Hook `PostToolUse(Write/Edit)` compara cada archivo escrito contra los patrones.
+- Match con non-goal → bloqueo + log + rollback del archivo.
+- Al finalizar la tarea, el agente `code-reviewer` verifica que ningún non-goal fue violado en el diff total.
 
 ---
 
-### � Anatomía del Repositorio de Claude Code
+## 3. Anatomía del Repositorio
 
-Existen **dos directorios** que forman el sistema operativo de Claude:
+### 3.1 Proyecto (`.claude/` — committed, compartido)
 
-#### Proyecto (`.claude/` — committed, compartido con el equipo)
 ```
 proyecto/
-├── CLAUDE.md                  # Reglas del equipo (committed)
-├── CLAUDE.local.md            # Overrides personales (gitignored auto)
+├── CLAUDE.md                  # Reglas del equipo (~200 líneas máx)
+├── CLAUDE.local.md            # Overrides personales (gitignored)
 └── .claude/
-    ├── settings.json          # Permisos y config (committed)
-    ├── settings.local.json    # Permisos personales (gitignored auto)
+    ├── settings.json          # Permisos y config
+    ├── settings.local.json    # Permisos personales (gitignored)
     ├── rules/                 # Reglas modulares por tema
-    ├── commands/              # Slash commands del equipo → /project:nombre
-    ├── skills/                # Workflows auto-invocados por contexto
-    └── agents/                # Sub-agentes especializados
+    ├── commands/              # Slash commands → /project:nombre
+    ├── skills/                # Workflows auto-invocados
+    ├── agents/                # Sub-agentes especializados
+    └── hooks/                 # Hooks programáticos (enforcement)
 ```
 
-#### Global (`~/.claude/` — personal, aplica a todos los repos)
+### 3.2 Global (`~/.claude/` — personal)
+
 ```
 ~/.claude/
-├── CLAUDE.md                  # Preferencias globales (estilo, principios)
+├── CLAUDE.md                  # Preferencias globales
 ├── settings.json              # Permisos globales
-├── commands/                  # Slash commands personales → /user:nombre
-├── skills/                    # Skills personales (todos los proyectos)
-├── agents/                    # Agentes personales (todos los proyectos)
-└── projects/<proyecto>/       # Historial de sesiones + auto-memory
+├── commands/                  # → /user:nombre
+├── skills/
+├── agents/
+└── projects/<proyecto>/
     └── memory/
-        ├── MEMORY.md          # Índice auto-gestionado por Claude (≤200 líneas cargadas al inicio)
-        ├── debugging.md       # Archivos topic creados on-demand por Claude
-        └── ...                # Otros archivos topic según necesidad
+        ├── MEMORY.md          # Índice auto-gestionado (≤200 líneas al inicio)
+        ├── debugging.md       # Archivos topic on-demand
+        └── ...
 ```
 
-**MEMORY.md vs CLAUDE.md:** `CLAUDE.md` es donde tú escribes instrucciones. `MEMORY.md` es el scratchpad de Claude — él lo crea y actualiza automáticamente con patrones del proyecto, soluciones de debugging, preferencias detectadas y notas de sesiones anteriores. Solo las primeras 200 líneas se cargan al inicio; el resto se lee on-demand durante la sesión. Cuando crece demasiado, Claude mueve detalles a archivos topic (`debugging.md`, `api-conventions.md`, etc.).
+**MEMORY.md vs CLAUDE.md:** `CLAUDE.md` es donde tú escribes instrucciones. `MEMORY.md` es el scratchpad de Claude — lo crea y actualiza automáticamente.
 
-**Regla de precedencia:** Claude fusiona org policy → global → proyecto → subdirectorio → MEMORY.md. Lo más específico gana.
+**Regla de precedencia:** Org policy → global → proyecto → subdirectorio → MEMORY.md. Lo más específico gana.
 
-**Claude Interviews:** Para proyectos grandes o nuevos, iniciar con un prompt mínimo y pedir a Claude que te entreviste usando `AskUserQuestion`. Claude pregunta lo que necesita saber antes de actuar.
+**MEMORY.md — política de priorización de las 200 líneas:**
 
----
+> **[FIX Token waste #2]** Las primeras 200 líneas de MEMORY.md siguen esta estructura fija:
 
-### �📝 Estructura del Flujo de Trabajo Diario (Para ti y para Claude)
+```markdown
+# MEMORY.md — Estructura obligatoria
 
-Este es el ciclo que debes seguir día a día. Tu `CLAUDE.md` debe estar diseñado para facilitar este flujo.
+## CRITICAL (líneas 1-50) — Nunca desplazado
+<!-- Decisiones de arquitectura vigentes, reglas de negocio activas, gotchas confirmados -->
 
-#### 1. Ritual de Mañana (10 minutos de Setup)
-* **Tú:** Abres la rama, revisas el `CLAUDE.md` para refrescar las reglas del proyecto.
-* **Claude:** Se le exige **explorar → planificar → ejecutar**. Primero investigar el contexto (puede incluir otros LLMs), luego planificar en Plan Mode (etapas, archivos, riesgos, criterios de aceptación), después ejecutar en modo normal.
-   - **Commitment checkpoint:** Antes de escribir código, Claude debe declarar explícitamente qué enfoque/skill usará, por qué aplica, y los pasos concretos que seguirá. Este compromiso público crea un ancla psicológica que dificulta abandonar el plan mid-task. Desviarse del plan declarado requiere aprobación explícita del usuario.
-   - **Non-goals explícitos:** Al planificar, declarar qué NO se va a construir. Sin non-goals, Claude "ayuda" scaffoldeando funcionalidad no solicitada (auth, admin UI, notificaciones). Cada hora podando código no pedido es hora perdida. Los non-goals son la forma más barata de prevenir scope creep de la IA.
-   - **Si algo se tuerce, PARAR y re-planificar inmediatamente.** No seguir empujando sobre un plan roto. Los LLMs tienden a "parchear hacia adelante" — esta regla lo previene.
-* **Tú:** Decides si la tarea requiere una sesión simple o múltiples *worktrees* paralelos.
-* **Claude:** Inicias bucles de verificación automáticos. Ejemplo: `/loop "corre los tests y resume los fallos" cada 30 min`.
+## ACTIVE (líneas 51-150) — Lecciones activas ordenadas por last_referenced desc
+<!-- Lessons con status:active, más recientes primero -->
 
-#### 2. Durante el Día (Ejecución e Higiene de Contexto)
-* **Regla de Oro:** Mantén el hilo principal limpio. No mezcles debates teóricos con la ejecución del código.
-* **Consultas rápidas:** Usa el comando `/btw` para preguntas rápidas que no requieren leer archivos nuevos ni modificar código (no ensucia el historial). También disponible `Cmd+;` (Mac) / `Ctrl+;` (Windows/Linux) para abrir un **side chat** — hilo transient que desaparece al cerrarlo, ideal para preguntar sobre un diff o output sin contaminar la sesión principal.
-* **Multi-pane (Desktop):** La app desktop permite arrastrar panes para ver diffs de routines completadas, sesiones activas y ejecuciones en curso en paralelo. Útil para monitorear trabajo autónomo mientras desarrollas.
-* **Exploración de alternativas:** Usa `/fork` para crear bifurcaciones de la sesión y probar ideas sin contaminar la sesión principal.
-* **Corrección de errores:** Si la IA toma un mal camino, usa `/rewind` (o doble Esc) para borrar ese contexto fallido de inmediato en lugar de discutir el error.
-* **Regla de los 2 intentos:** Después de 2 correcciones fallidas → `/clear` y reescribir el prompt inicial incorporando lo aprendido. No seguir corrigiendo sobre contexto contaminado.
-* **Investigaciones acotadas:** Nunca pedir "investiga X" sin scope — Claude leerá cientos de archivos y llenará el contexto. Acotar el alcance o delegar a subagentes.
-* **Refactorización/Revisión:** Usa `/simplify` para invocar agentes que revisen duplicidad, bugs y eficiencia.
-* **Tareas Masivas:** Usa `/batch` para delegar migraciones grandes. Claude dividirá el trabajo en unidades independientes en distintos *worktrees*.
+## RECENT (líneas 151-200) — Buffer de sesión
+<!-- Notas de la última sesión, pendientes de clasificar -->
 
-#### 3. Ritual de Fin de Día (Cierre y Traspaso)
-* **Claude:** Ejecuta una limpieza de cabos sueltos, código duplicado o notas a medias.
-* **Tú:** Actualizas el `CLAUDE.md` o el sistema de `/memory` con cualquier regla nueva, convención o fricción descubierta hoy. *El `CLAUDE.md` es un contrato vivo.*
-* **Claude:** Actualiza el archivo de lecciones con patrones de errores corregidos durante la sesión.
-* **Tú:** Cierras bucles, matas sesiones ruidosas y dejas un "handoff" (traspaso) claro para la sesión de mañana.
+## OVERFLOW (línea 201+) — Solo accesible on-demand
+<!-- Todo lo demás, cargado solo cuando Claude lo necesita explícitamente -->
+```
+
+- Entradas que se confirman como permanentes → promueven de ACTIVE a CRITICAL.
+- Entradas no referenciadas en 30+ días → bajan a OVERFLOW o se archivan.
 
 ---
 
-### 📏 Rules — Reglas Modulares con Scoping
+## 4. Flujo de Trabajo Diario
 
-Cuando CLAUDE.md crece demasiado, se fragmenta en `.claude/rules/`:
+### 4.1 Ritual de Mañana (10 minutos)
+
+* **Tú:** Abres la rama, revisas CLAUDE.md.
+* **Claude:** Ejecuta la state machine: EXPLORE → PLAN → (espera aprobación o auto-valida) → EXECUTE → VERIFY.
+  - Commitment checkpoint obligatorio (ver §2.4).
+  - Non-goals explícitos y persistidos como glob patterns (ver §2.5).
+  - **Si algo se tuerce → PARAR → estado RE-PLAN** (no parchear hacia adelante). Máximo 2 re-planes antes de escalar a humano.
+* **Tú:** Decides sesión simple o worktrees paralelos.
+
+### 4.2 Durante el Día
+
+* **Hilo principal limpio.** No mezclar debates con ejecución.
+* **Consultas rápidas:** `/btw` o `Ctrl+;` (side chat transient).
+* **Exploración de alternativas:** `/fork` para bifurcar sin contaminar.
+* **Corrección:** `/rewind` (doble Esc) para borrar contexto fallido.
+* **Regla de los 2 intentos:** 2 correcciones fallidas → `/clear` + reescribir incorporando lo aprendido.
+* **Investigaciones acotadas:** Nunca "investiga X" sin scope. Acotar o delegar a subagentes.
+* **Refactorización:** `/simplify` para invocar agentes de revisión.
+* **Tareas masivas:** `/batch` para dividir en worktrees independientes.
+
+### 4.3 Ritual de Fin de Día
+
+* **Claude:** Limpieza de cabos sueltos + actualización de lessons (schema §1.8).
+* **Tú:** Actualizas CLAUDE.md o `/memory` con reglas nuevas.
+* **Claude:** Ejecuta detección de contradicciones (§1.8) sobre todas las entries del día.
+* **Tú:** Cierras bucles, matas sesiones ruidosas, dejas handoff claro.
+
+---
+
+## 5. Rules — Reglas Modulares con Scoping
+
+Cuando CLAUDE.md crece demasiado → fragmentar en `.claude/rules/`:
 
 ```
 .claude/rules/
@@ -139,8 +301,8 @@ Cuando CLAUDE.md crece demasiado, se fragmenta en `.claude/rules/`:
 └── security.md
 ```
 
-- **Sin frontmatter `paths:`** → la regla se carga en TODAS las sesiones.
-- **Con frontmatter `paths:`** → solo se carga cuando Claude toca archivos que coinciden:
+- **Sin frontmatter `paths:`** → se carga en TODAS las sesiones.
+- **Con frontmatter `paths:`** → solo cuando Claude toca archivos que coinciden:
 
 ```yaml
 ---
@@ -153,20 +315,20 @@ paths:
 - Validación con zod en cada handler
 ```
 
-**Beneficio:** Claude no ve reglas de API cuando está editando un componente React. Contexto limpio = mejores resultados.
+Contexto limpio = mejores resultados.
 
 ---
 
-### ⚡ Slash Commands — Automatización de Workflows
+## 6. Slash Commands
 
-Un archivo `.md` en `.claude/commands/` se convierte automáticamente en un slash command:
+Un archivo `.md` en `.claude/commands/` → slash command automático:
 
 - `review.md` → `/project:review`
 - `fix-issue.md` → `/project:fix-issue`
 
 **Sintaxis especial:**
-- `` !`comando shell` `` — ejecuta el comando y alimenta su output al prompt
-- `$ARGUMENTS` — recibe parámetros del usuario
+- `` !`comando shell` `` — ejecuta y alimenta output al prompt
+- `$ARGUMENTS` — parámetros del usuario
 
 **Ejemplo (code review):**
 ```markdown
@@ -181,7 +343,7 @@ Revisa: calidad, seguridad, cobertura de tests, performance.
 Feedback específico y accionable por archivo.
 ```
 
-**Ejemplo (fix issue con argumento):**
+**Ejemplo (fix issue):**
 ```markdown
 ---
 description: Investigar y corregir un issue de GitHub
@@ -193,11 +355,11 @@ Encuentra la causa raíz, corrígelo, y escribe un test que lo habría detectado
 ```
 
 - **Equipo:** `.claude/commands/` → `/project:nombre` (committed)
-- **Personal:** `~/.claude/commands/` → `/user:nombre` (todos los repos)
+- **Personal:** `~/.claude/commands/` → `/user:nombre`
 
 ---
 
-### 🎯 Skills vs Commands
+## 7. Skills vs Commands
 
 | Aspecto | Commands | Skills |
 |---------|----------|--------|
@@ -206,20 +368,51 @@ Encuentra la causa raíz, corrígelo, y escribe un test que lo habría detectado
 | Referencia a otros archivos | No | Sí, con `@ARCHIVO.md` |
 | Ubicación | `.claude/commands/` | `.claude/skills/nombre/SKILL.md` |
 
-**Skills se auto-activan** cuando Claude detecta una situación que coincide con su `description` en el frontmatter YAML. Mencionar "security review" en la conversación activa automáticamente el skill de seguridad.
+**Unificación:** Un skill y un command con el mismo nombre generan el mismo slash command.
 
-**Unificación:** Anthropic fusionó ambos sistemas — un skill en `.claude/skills/deploy/SKILL.md` y un command en `.claude/commands/deploy.md` generan el mismo `/deploy`. Los commands existentes siguen funcionando.
+### 7.1 Skills auto-activados con guardrails
+
+> **[FIX MEDIO-6]** Los skills auto-activados tienen threshold de confianza, log obligatorio y confirmación para skills de alto impacto.
+
+**Skills se auto-activan** cuando Claude detecta coincidencia con la `description` del frontmatter YAML. Para prevenir falsos positivos:
+
+**Log obligatorio de activación:**
+```yaml
+# Cada auto-activación se registra en .claude/memory/skill-activations.log
+- timestamp: "2026-04-17T10:30:00Z"
+  skill: "security-review"
+  trigger_text: "fragmento que disparó la activación"
+  confidence: high | medium | low
+  confirmed: true | false     # si el usuario confirmó
+  false_positive: false        # marcado post-hoc si fue innecesario
+```
+
+**Niveles de activación por impacto:**
+
+| Impacto del skill | Threshold | Comportamiento |
+|---|---|---|
+| **Bajo** (formatting, linting) | Cualquier match | Auto-activa silenciosamente |
+| **Medio** (code-review, testing) | Medium+ confidence | Auto-activa + notifica al usuario |
+| **Alto** (security, deploy, delete) | High confidence + confirmación | Propone activación, espera confirmación explícita |
+
+El impacto se declara en el frontmatter del skill:
+```yaml
+---
+description: Security review exhaustivo
+impact: high
+---
+```
 
 ---
 
-### 🤖 Agents — Sub-agentes Especializados
+## 8. Agents — Sub-agentes Especializados
 
-Definidos en `.claude/agents/`, son personas especializadas con su propio contexto aislado:
+Definidos en `.claude/agents/`, con contexto aislado:
 
 ```yaml
 ---
 name: code-reviewer
-description: Revisor experto. Usar PROACTIVAMENTE al revisar PRs o validar implementaciones.
+description: Revisor experto. Usar PROACTIVAMENTE al revisar PRs.
 model: sonnet
 tools: Read, Grep, Glob
 ---
@@ -231,18 +424,21 @@ Eres un revisor senior enfocado en corrección y mantenibilidad.
 ```
 
 **Campos clave:**
-- `model:` — asignar modelo diferente por agente (haiku para tareas rápidas, opus para razonamiento profundo). **Reduce costes** sin sacrificar calidad.
-- `tools:` — restricción deliberada de permisos. Un auditor de seguridad solo debe leer, no escribir.
-- **Contexto separado:** el agente trabaja aislado, condensa sus hallazgos y devuelve un resumen a la sesión principal. No infla el contexto del hilo principal.
-- **Aislamiento de contexto en pipelines:** Cuando el mismo contexto planifica, implementa y revisa, la revisión es cosmética — el mismo "cerebro" se auto-aprueba. En pipelines de agentes (architect → coder → tester → reviewer), cada agente debe recibir **solo el output de los pasos declarados como dependencia**, no todo el contexto acumulado. El architect planifica sin detalles de implementación. El tester testea sin saber qué el coder consideró "fine". El reviewer revisa sin el sesgo optimista del implementador. Aislamiento crea accountability.
-- **Agente ≠ upgrade de un workflow:** Si cada paso tiene una sola acción correcta y el path está completamente definido, usar un script, un command o un hook — no un agente. Los agentes añaden latencia, coste y no-determinismo. Reservarlos para problemas donde la decisión intermedia requiere razonamiento: múltiples paths posibles, outputs variables, o necesidad de adaptarse a resultados inesperados.
-- **Personal:** `~/.claude/agents/` aplica a todos los proyectos.
+- `model:` — modelo diferente por agente (haiku para rápido, opus para razonamiento profundo).
+- `tools:` — restricción deliberada de permisos. Auditor de seguridad solo lee.
+- **Contexto separado:** trabaja aislado, devuelve resumen. No infla el hilo principal.
+
+**Aislamiento de contexto en pipelines:**
+- architect → coder → tester → reviewer: cada agente recibe **solo el output de sus dependencias**, no todo el contexto acumulado.
+- El architect planifica sin detalles de implementación.
+- El tester testea sin saber qué el coder consideró "fine".
+- El reviewer revisa sin el sesgo optimista del implementador.
+
+**Agente ≠ upgrade de un workflow:** Si el path está completamente definido → script, command o hook. Agentes solo para decisiones que requieren razonamiento: múltiples paths, outputs variables, resultados inesperados.
 
 ---
 
-### 🔒 Permisos — settings.json
-
-`settings.json` en `.claude/` controla qué puede hacer Claude sin preguntar:
+## 9. Permisos — settings.json
 
 ```json
 {
@@ -265,175 +461,259 @@ Eres un revisor senior enfocado en corrección y mantenibilidad.
 ```
 
 **Tres zonas:**
-- `allow` — ejecución silenciosa, sin confirmación
-- `deny` — bloqueado absoluto, nunca se ejecuta
-- **Todo lo demás** — Claude pide permiso antes de proceder (zona de seguridad)
+- `allow` — ejecución silenciosa
+- `deny` — bloqueado absoluto
+- **Todo lo demás** — Claude pide permiso
 
-**`$schema`** habilita autocompletado y validación en VS Code.
-**`settings.local.json`** para overrides personales (gitignored automáticamente).
+**`settings.local.json`** para overrides personales (gitignored).
 
 **Control de auto-memory:**
-- `"autoMemoryEnabled": false` en `settings.json` del proyecto (desactiva solo ese proyecto) o en `~/.claude/settings.json` (desactiva globalmente).
-- Variable de entorno `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` para forzar desactivación en CI/CD — sobreescribe cualquier configuración de settings.json.
-- Toggle rápido en sesión: `/memory` → seleccionar `Auto-memory: on/off`.
+- `"autoMemoryEnabled": false` en settings.json del proyecto o global.
+- `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` para CI/CD.
+- Toggle en sesión: `/memory` → `Auto-memory: on/off`.
 
 ---
 
-### 🚀 Orden de Setup Progresivo (De Cero a Productivo)
+## 10. Hooks — Acciones Automáticas Sin Excepción
 
-1. **`/init`** — Claude lee el proyecto y genera un CLAUDE.md starter. Recortarlo a lo esencial (~20 líneas: build commands, arquitectura, gotchas).
-2. **`settings.json`** — Permisos básicos: allow test/build scripts, deny .env y comandos destructivos.
-3. **1-2 commands** — Los workflows que más repites (code review, fix-issue).
-4. **`rules/`** — Cuando CLAUDE.md supere ~50 líneas, fragmentar en archivos temáticos con path scoping.
-5. **`~/.claude/CLAUDE.md`** — Preferencias personales de coding que aplican a todos tus proyectos.
-6. **Skills y Agents** — Añadir cuando un workflow complejo se repita. No antes.
+Los hooks se ejecutan **siempre**, sin variación ni juicio de Claude:
 
-> **Regla del 95%:** Los pasos 1-5 cubren el 95% de las necesidades. Skills y agents son optimización avanzada.
-
----
-
-### 🪝 Hooks — Acciones Automáticas Sin Excepción
-
-Los hooks son diferentes a rules y skills: se ejecutan **siempre**, antes o después de una acción de herramienta, sin variación ni juicio de Claude.
-
-- **PreToolUse:** Validación antes de ejecutar (ej: lint antes de commit)
-- **PostToolUse:** Acción después de ejecutar (ej: format después de write)
+- **PreToolUse:** Validación antes de ejecutar
+- **PostToolUse:** Acción después de ejecutar
 - **Stop:** Verificación al cerrar sesión
 
-**Cuándo usar hook vs rule:** Si la acción debe ocurrir el 100% de las veces sin excepción → hook. Si depende del contexto → rule o skill.
+**Hook vs rule:** 100% de las veces sin excepción → hook. Depende del contexto → rule o skill.
+
+### 10.1 Hooks de enforcement obligatorios
+
+> Estos hooks implementan los gates de la state machine (§2) y los guardrails de validación (§1.6).
+
+| Hook | Tipo | Trigger | Acción |
+|---|---|---|---|
+| `plan-gate` | PreToolUse(Write/Edit) | Intento de escribir código sin PLAN.md | Bloquea + mensaje: "Plan requerido. Ejecuta EXPLORE → PLAN primero." |
+| `tdd-gate` | PreToolUse(Write/Edit) | Escribir implementación sin tests previos | Bloquea + mensaje: "Tests primero. Escribir tests que fallen antes de implementar." |
+| `commit-checklist` | PreToolUse(Bash:git commit) | Intento de commit | Ejecuta checklist: tests existen, tests pasan, diff planificado. Bloquea si falla. |
+| `non-goal-guard` | PostToolUse(Write/Edit) | Archivo escrito coincide con non_goal glob | Bloquea + rollback del archivo + log. |
+| `plan-drift-detector` | PostToolUse(Write/Edit) | Archivo modificado no está en files_affected | Warning + log. Si coincide con non_goal → bloqueo. |
+| `auto-format` | PostToolUse(Write/Edit) | Cualquier escritura | Ejecuta formatter del proyecto. |
+| `session-consolidate` | Stop | Cierre de sesión | Promueve conocimiento elegible al wiki + archiva lessons expiradas. |
 
 ---
 
-### ⏰ Routines — Ejecución Autónoma en la Nube
+## 11. Circuit Breakers para Operación Autónoma
 
-Una routine es una configuración guardada (prompt + repositorio GitHub + connectors) que se ejecuta de forma autónoma en infraestructura de Anthropic. No requiere terminal abierto ni sesión activa.
+> **[FIX ALTO-4]** Todo proceso autónomo tiene límites duros no negociables.
+
+### 11.1 Configuración obligatoria para loops y routines
+
+```yaml
+# Parámetros obligatorios — declarados en PLAN.md o en la definición del loop/routine
+circuit_breaker:
+  max_iterations: 10          # Máximo absoluto de iteraciones
+  timeout_minutes: 120        # Tiempo máximo total
+  cost_ceiling_usd: 10.00    # Presupuesto máximo de tokens (estimado)
+  consecutive_failures: 3     # Fallos consecutivos antes de abortar
+  fallback: abort_and_notify  # abort_and_notify | create_issue_and_stop | rollback_and_notify
+  notify_channel: null        # Slack/email/GitHub issue (opcional)
+```
+
+### 11.2 Comportamiento ante límites
+
+| Límite alcanzado | Acción |
+|---|---|
+| `max_iterations` | STOP inmediato. Crear issue con estado actual + progreso parcial. |
+| `timeout_minutes` | STOP inmediato. Commit parcial de trabajo completado + issue. |
+| `cost_ceiling_usd` | STOP inmediato. Log de tokens consumidos + issue. |
+| `consecutive_failures` | ROLLBACK al último commit exitoso + issue con logs de errores. |
+| Loop no converge (mismos tests fallan 3 veces) | STOP + crear issue con diagnóstico + sugerir intervención humana. |
+
+### 11.3 Escalación a humano
+
+Cuando el circuit breaker actúa:
+1. Crear GitHub issue con label `agent-escalation`
+2. Incluir: estado actual, progreso completado, punto de fallo, logs relevantes
+3. Asignar al owner del repo
+4. NO intentar "una iteración más" — el circuit breaker es non-negotiable
+
+---
+
+## 12. Rollback Strategy
+
+> **[FIX ALTO-5]** Cada operación autónoma es reversible por diseño.
+
+### 12.1 Protocolo de snapshots
+
+1. **Antes de ejecutar:** `git tag pre-<plan_id>` — snapshot del estado limpio
+2. **Durante ejecución:** Commits atómicos por unidad de trabajo, cada uno con referencia al plan:
+   ```
+   feat: implement auth service [plan-2026-04-17-001]
+   ```
+3. **Después de cada commit:** Ejecutar test suite completa
+   - Tests pasan → continuar
+   - Tests fallan → `git revert HEAD` + intentar fix (máximo 2 intentos)
+   - 2 fixes fallidos → `git reset --hard pre-<plan_id>` + escalar a humano
+
+### 12.2 Branching para trabajo autónomo
+
+- Routines y loops autónomos SIEMPRE trabajan en branch `claude/<plan_id>`
+- NUNCA push directo a main
+- Al completar → crear PR para revisión humana
+- PR incluye: resumen de cambios, tests añadidos, logs de ejecución
+
+---
+
+## 13. Routines — Ejecución Autónoma en la Nube
+
+Una routine = prompt + repositorio GitHub + connectors, ejecutada en infraestructura de Anthropic.
 
 **Modelo de ejecución:**
-- Anthropic levanta una VM fresca, clona el repo y ejecuta el prompt con acceso a los connectors configurados.
-- Cada ejecución es una **sesión discreta** — comienza limpia, hace su trabajo y termina. Sin estado entre ejecuciones, lo que previene drift de contexto.
-- Variable `CLAUDE_CODE_REMOTE=true` disponible para que scripts de setup detecten ejecución cloud y ajusten comportamiento (evitar instalaciones pesadas locales).
+- VM fresca, clona repo, ejecuta prompt con connectors.
+- Sesión discreta — sin estado entre ejecuciones (previene drift).
+- `CLAUDE_CODE_REMOTE=true` para detectar ejecución cloud.
 
-**Tres tipos de trigger:**
+**Tres triggers:**
 
 | Trigger | Configuración | Caso de uso |
 |---|---|---|
-| **Schedule** | Cron via CLI (`/schedule`) o web UI | Mantenimiento nocturno: doc drift, stale issues, dependency checks |
-| **API** | Endpoint HTTP + bearer token | Webhooks de Sentry/Datadog/PagerDuty → diagnóstico automático |
-| **GitHub** | Eventos: `pull_request.opened`, `release`, tags | PR review automático, release notes |
+| **Schedule** | Cron via `/schedule` o web UI | Mantenimiento nocturno |
+| **API** | Endpoint HTTP + bearer token | Webhooks de Sentry/Datadog |
+| **GitHub** | `pull_request.opened`, `release`, tags | PR review, release notes |
 
-Se pueden combinar múltiples triggers en una misma routine.
+**Branch protection:** Solo push a `claude/`. Nunca a main.
 
-**Branch protection (crítico):**
-- Por defecto, routines solo pueden pushear a branches con prefijo `claude/`.
-- **Nunca** habilitar push directo a main. La routine crea branch + PR; un humano revisa y mergea.
+**Least privilege:** Solo conectar servicios que la routine necesita.
 
-**Scope de connectors:**
-- Aplicar **least privilege**: solo conectar Slack, Linear, GitHub, etc. si la routine los necesita.
-- Menos connectors = menor radio de impacto ante errores de prompt.
+**Circuit breaker obligatorio:** Toda routine MUST declarar `circuit_breaker` (ver §11.1). Routines sin circuit breaker → no se ejecutan.
 
-**Límites diarios:**
+**Prompts para routines — completamente deterministas:**
+- Cubrir cada punto de decisión
+- Qué hacer si no encuentra resultados
+- Formato exacto de output
+- Acción alternativa ante fallos
+- No hay humano para resolver ambigüedades
 
-| Plan | Routines/día |
-|---|---|
-| Pro | 5 |
-| Max | 15 |
-| Team/Enterprise | 25 |
+**Límites diarios:** Pro: 5, Max: 15, Team/Enterprise: 25.
 
-**Tres patrones prácticos para empezar:**
-1. **Nightly Issue Groomer** (schedule): Asigna labels, identifica equipo responsable, publica resumen en Slack.
-2. **PR Review Bot** (GitHub trigger): Prompt adversarial que busca edge cases, concurrencia y lógica — ignora estilo (el linter lo cubre).
-3. **Deploy Verifier** (API trigger): Post-deploy smoke checks + scan de error logs + trace al commit responsable.
+**Tres patrones para empezar:**
+1. **Nightly Issue Groomer** (schedule): Labels, equipo responsable, resumen en Slack.
+2. **PR Review Bot** (GitHub): Prompt adversarial — edge cases, concurrencia, lógica (no estilo).
+3. **Deploy Verifier** (API): Smoke checks + error logs + trace al commit.
 
-**Limitaciones actuales (research preview):**
-- Intervalo mínimo de schedule: 1 hora. Para polling más frecuente, usar `/loop` en sesión activa.
-- API triggers y GitHub webhooks solo configurables vía web console (requieren OAuth).
-- Sin encadenamiento nativo de routines. Workaround: la routine A llama al API endpoint de la routine B como paso final.
-
-**Regla de arranque:** Empezar con UNA routine schedule de bajo riesgo (stale TODOs, doc drift). Observar output una semana antes de escalar.
+**Regla de arranque:** UNA routine schedule de bajo riesgo. Observar una semana antes de escalar.
 
 ---
 
-### 📚 Wiki de Proyecto — Memoria Permanente Acumulativa
+## 14. Wiki de Proyecto — Memoria Permanente con Indexación
 
-Inspirado en el patrón "LLM Wiki" (Karpathy): un directorio de documentos Markdown que crece con cada sesión y persiste como documentación committable del proyecto.
+> **[FIX Token waste #3 + CRÍTICO-A]** El wiki tiene índice estructurado y criterios de promoción objetivos.
 
-**Dos sistemas complementarios:**
-| Sistema | Ubicación | Persistencia | Propósito |
+### 14.1 Tres capas de memoria
+
+| Capa | Ubicación | Persistencia | Propósito |
 |---|---|---|---|
-| `memory/` | `.claude/memory/` | Efímera (gitignored) | Contexto de sesión, decisiones tentativas, WIP |
-| `auto-memory` | `~/.claude/projects/<proj>/memory/` | Semi-persistente (local) | MEMORY.md auto-gestionado por Claude + archivos topic on-demand |
-| `wiki/` | `docs/src/wiki/` | Permanente (committed) | Conocimiento confirmado del proyecto |
+| `memory/` | `.claude/memory/` | Efímera (gitignored) | Contexto de sesión, WIP |
+| `auto-memory` | `~/.claude/projects/<proj>/memory/` | Semi-persistente (local) | MEMORY.md auto-gestionado |
+| `wiki/` | `docs/src/wiki/` | Permanente (committed) | Conocimiento confirmado |
 
-**Flujo de conocimiento:**
+### 14.2 Flujo de conocimiento
+
 ```
-Sesión de trabajo → .claude/memory/ (captura rápida)
-                         ↓ (promoción automática o manual)
-                   docs/src/wiki/ (conocimiento permanente)
+Sesión → .claude/memory/ (captura rápida)
+              ↓ criterios de promoción (§14.4)
+         docs/src/wiki/ (conocimiento permanente)
 ```
 
-**Tipos de páginas wiki:**
-- **Overview** (`_overview.md`): Propósito, stack, decisiones fundacionales
-- **Entity** (`entities/*.md`): Modelos, servicios, módulos del sistema
-- **Concept** (`concepts/*.md`): Patrones, convenciones, reglas de negocio
-- **Decision** (`decisions/*.md`): ADRs — decisiones con contexto y alternativas
-- **Glossary** (`glossary.md`): Términos del dominio
-- **Log** (`log.md`): Registro cronológico de cambios al wiki
+### 14.3 Estructura del wiki con índice
 
-**Criterios de promoción (memory → wiki):**
-- ✅ Decisiones de arquitectura confirmadas
-- ✅ Reglas de negocio estables
-- ✅ Convenciones adoptadas por el equipo
-- ❌ Workarounds temporales
-- ❌ Bugs en progreso
-- ❌ Información tentativa
+```
+docs/src/wiki/
+├── _index.yaml              # Índice semántico para búsqueda eficiente
+├── _overview.md              # Propósito, stack, decisiones fundacionales
+├── entities/                 # Modelos, servicios, módulos
+├── concepts/                 # Patrones, convenciones, reglas de negocio
+├── decisions/                # ADRs con contexto y alternativas
+├── glossary.md               # Términos del dominio
+└── log.md                    # Registro cronológico
+```
 
-**Integración automática:**
-- El hook `session-consolidate.sh` promueve conocimiento elegible al wiki al cerrar sesión
-- El agente `memory-consolidator` marca entradas promovidas como archivadas antes de comprimir
-- Los agentes `planner`, `architect`, `doc-updater` consultan y actualizan el wiki durante el trabajo
+**Índice semántico (`_index.yaml`):**
+
+> **[FIX Token waste #3]** Claude consulta el índice antes de leer archivos completos. El índice es un lookup ligero (~50-100 líneas) que evita leer todo el wiki para encontrar información.
+
+```yaml
+# _index.yaml — actualizado automáticamente por session-consolidate hook
+entries:
+  - file: "decisions/auth-strategy.md"
+    keywords: [auth, JWT, session, cookies, login]
+    summary: "Decisión: usar session cookies sobre JWT para auth web"
+    last_updated: 2026-04-15
+  - file: "concepts/error-handling.md"
+    keywords: [errors, exceptions, logging, sentry]
+    summary: "Patrón de manejo de errores con envelope response"
+    last_updated: 2026-04-10
+```
+
+### 14.4 Criterios de promoción objetivos (memory → wiki)
+
+> **[FIX CRÍTICO-A]** La promoción NO depende de juicio subjetivo de Claude.
+
+| Criterio | Tipo | Condición |
+|---|---|---|
+| **Explícito** | Usuario ejecuta `/promote <entry>` | Inmediato |
+| **Implícito** | Entry sobrevive 3+ sesiones sin contradicción Y `status == active` | Automático en session-consolidate |
+| **Consenso** | 2+ agentes referencian la misma entry en sesiones distintas | Automático |
+| **Tema elegible** | Decisión de arquitectura, regla de negocio, convención adoptada | Requerido |
+
+**NO se promueve:**
+- Workarounds temporales
+- Bugs en progreso
+- Información tentativa
+- Entries con `status != active`
+
+### 14.5 Integración automática
+
+- Hook `session-consolidate` promueve entries elegibles al wiki al cerrar sesión.
+- Agente `memory-consolidator` marca entries promovidas como archivadas.
+- Agentes `planner`, `architect`, `doc-updater` consultan `_index.yaml` antes de leer el wiki completo.
+- Al promover una entry → actualizar `_index.yaml` automáticamente.
 
 ---
 
-### �📐 Estructura de Prompts Efectivos
-**Context engineering > prompt engineering:** Curar *qué información entra* en el contexto importa más que *cómo escribes* la instrucción. Un prompt mediocre en un contexto bien curado supera a un prompt brillante enterrado en ruido. Todo lo que este documento hace (CLAUDE.md lean, rules con path scoping, agents con contexto aislado, higiene de sesión diaria) es context engineering aplicado. El prompt es la última milla — el contexto es el sistema.
-Fórmula base para prompts a Claude Code:
+## 15. Estructura de Prompts Efectivos
 
-```
-[Rol] + [Tarea] + [Contexto]
-```
+**Context engineering > prompt engineering:** Curar *qué información entra* importa más que *cómo escribes* la instrucción.
 
-- **Front-load lo importante:** La instrucción más crítica va al inicio del prompt.
-- **Ser específico:** Claude solo puede inferir contexto — cuanto más preciso, mejor resultado.
-- **Incluir verificación:** Tests, outputs esperados o criterios de éxito para que Claude se auto-valide.
-- **Authority language en reglas críticas:** Las restricciones importantes deben usar lenguaje imperativo (MUST, non-negotiable, no exceptions) en vez de sugerencias ("sería bueno", "considera"). Los LLMs exhiben compliance significativamente mayor ante framing autoritativo que ante recomendaciones suaves. Reservar este tono solo para reglas verdaderamente críticas — si todo es "non-negotiable", nada lo es.
+Fórmula: `[Rol] + [Tarea] + [Contexto]`
 
-**Prompts interactivos vs prompts para Routines:**
-- **Interactivo:** Puede pedir clarificación mid-session. Tolera ambigüedad porque hay un humano presente.
-- **Routine (autónomo):** Debe ser **completamente determinista**. Cubrir cada punto de decisión, qué hacer si no encuentra resultados, formato exacto de output, y acción alternativa ante fallos. No hay humano para resolver ambigüedades.
+- **Front-load lo importante:** Instrucción crítica al inicio.
+- **Ser específico:** Cuanto más preciso, mejor resultado.
+- **Incluir verificación:** Tests, outputs esperados, criterios de éxito.
+- **Authority language solo en reglas críticas:** MUST, non-negotiable, no exceptions. Si todo es "non-negotiable", nada lo es.
+
+**Interactivo vs Routine:**
+- Interactivo: tolera ambigüedad (hay humano).
+- Routine: completamente determinista (no hay humano). Cubrir cada punto de decisión + fallbacks.
 
 ---
 
-### 🧭 Principios Core de Ingeniería
+## 16. Principios Core de Ingeniería
 
-- **Simplicity First:** Cada cambio debe ser lo más simple posible. Impactar el mínimo código.
-- **No Laziness:** Buscar la causa raíz. Nunca fixes temporales. Estándar de desarrollador senior.
-- **Minimal Impact:** Los cambios solo tocan lo necesario. Evitar introducir bugs colaterales.
-- **Kill Process, Don't Optimize It:** En desarrollo con IA, el proceso que no aporta valor = latencia pura. Eliminar ceremonia, no optimizarla. Si un paso existe solo por inercia organizacional y no previene un fallo concreto, eliminarlo. Sprints, estimation y standups son scaffolding para limitaciones humanas de ejecución — con IA, la ejecución es abundante y el cuello de botella se mueve a decisiones y governance.
+- **Simplicity First:** Cada cambio, lo más simple posible. Mínimo código.
+- **No Laziness:** Causa raíz. Nunca fixes temporales. Estándar senior.
+- **Minimal Impact:** Solo tocar lo necesario. No introducir bugs colaterales.
+- **Kill Process, Don't Optimize It:** Proceso sin valor = latencia pura. Eliminar, no optimizar.
 
 ---
 
-### 🤖 Prompt sugerido para entregarle a la otra IA
+## 17. Orden de Setup Progresivo
 
-Puedes copiar y pegar este bloque directamente a la IA que te ayudará a configurar tu repositorio:
+1. **`/init`** → CLAUDE.md starter. Recortar a ~20 líneas esenciales.
+2. **`settings.json`** → Permisos básicos: allow test/build, deny .env y destructivos.
+3. **1-2 commands** → Workflows más repetidos.
+4. **`rules/`** → Cuando CLAUDE.md supere ~50 líneas, fragmentar con path scoping.
+5. **`~/.claude/CLAUDE.md`** → Preferencias personales globales.
+6. **Hooks de enforcement** → Instalar hooks de §10.1 para gates obligatorios.
+7. **Skills y Agents** → Cuando un workflow complejo se repita. No antes.
+8. **Circuit breakers** → Configurar antes de habilitar cualquier loop/routine.
 
-> "Actúa como un Arquitecto de Software Experto en herramientas de IA. Voy a inicializar un repositorio padre que será gestionado principalmente a través de la CLI de **Claude Code**. 
-> 
-> Basado en el flujo de trabajo de élite de Claude Code (Q1 2026), necesito que redactes el archivo **`CLAUDE.md`** inicial para este repositorio. Este archivo debe actuar como un 'contrato vivo' y debe instruir a Claude para que siga estrictamente estas directivas:
-> 
-> 1. **Planificación Obligatoria:** Antes de escribir código, Claude debe generar un plan estructurado (archivos afectados, riesgos, criterios de aceptación).
-> 2. **Higiene de Contexto:** Instruir a Claude para que sugiera el uso de `/fork` para experimentos y mantenga la sesión principal enfocada solo en la tarea actual.
-> 3. **Verificación Continua:** Establecer reglas para usar `/loop` y comandos de testeo locales paso a paso, en lugar de confiar ciegamente en la generación.
-> 4. **Prevención de Código Duplicado:** Obligar a invocar herramientas de revisión y linting o el uso del concepto `/simplify` antes de dar por terminada una tarea.
-> 5. **Actualización Diaria:** Un recordatorio en el prompt del sistema para que, al final del día, sugiera qué aprendizajes nuevos deben añadirse a este mismo archivo `CLAUDE.md`.
-> 
-> Redacta el `CLAUDE.md` en formato Markdown, estructurado, directo y sin texto de relleno. Incluye marcadores de posición `[como este]` para los comandos específicos de testeo/linting de mi stack tecnológico que te proporcionaré más adelante."
+> **Regla del 95%:** Los pasos 1-6 cubren el 95% de las necesidades.
