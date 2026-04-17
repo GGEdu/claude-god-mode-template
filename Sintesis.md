@@ -392,7 +392,7 @@ Sesión de trabajo → .claude/memory/ (captura rápida)
 ---
 
 ### �📐 Estructura de Prompts Efectivos
-
+**Context engineering > prompt engineering:** Curar *qué información entra* en el contexto importa más que *cómo escribes* la instrucción. Un prompt mediocre en un contexto bien curado supera a un prompt brillante enterrado en ruido. Todo lo que este documento hace (CLAUDE.md lean, rules con path scoping, agents con contexto aislado, higiene de sesión diaria) es context engineering aplicado. El prompt es la última milla — el contexto es el sistema.
 Fórmula base para prompts a Claude Code:
 
 ```
