@@ -1,5 +1,10 @@
 
-## 1. Filosofía Central (El Modelo Operativo)
+> **[FIX ALTO-P2-19]** Leyenda de markers de implementación:
+> - `[BUILT-IN]` — Funcionalidad nativa de Claude Code. Solo configurar.
+> - `[TO BUILD]` — Requiere implementación (hooks, scripts, estructura). Incluye spec o pseudocódigo.
+> - `[CONVENTION]` — Acuerdo de equipo/individuo. No requiere código, solo disciplina.
+
+## 1. Filosofía Central (El Modelo Operativo) `[CONVENTION]`
 
 El repositorio se rige por un **modelo de 5 capas + 3 sistemas de enforcement**:
 
@@ -42,11 +47,23 @@ Auto Mode para tareas rutinarias + validación programática obligatoria antes d
 
 - **TDD estricto enforced por hook:** Un hook `PreToolUse` sobre `Write`/`Edit` verifica que existan tests para el módulo ANTES de permitir escribir código de implementación. Si los tests se crean DESPUÉS del código → hook fuerza revisión por agente independiente con prompt adversarial.
 - **Validación factual obligatoria:** Antes de afirmar que un archivo/función/API existe o tiene cierto comportamiento, Claude MUST ejecutar `grep`/`read_file` para verificar. Nunca afirmar de memoria. Esto es una regla non-negotiable en CLAUDE.md.
+
+> **[FIX CRÍTICO-P2-8]** Esta regla es textual — no hookeable al nivel del "pensamiento" del modelo. Se mitiga con capas:
+> 1. **Capa 1 (rule):** Authority language máxima en CLAUDE.md: `MUST verify, non-negotiable, no exceptions`
+> 2. **Capa 2 (hook PostToolUse sobre Write/Edit):** Si el código contiene imports/requires, verificar con `find` que los archivos referenciados existen. Warning si no.
+> 3. **Capa 3 (agente):** `code-reviewer` con prompt adversarial: "Verifica que cada archivo, función y API referenciados en el diff existen realmente en el codebase. Ejecuta grep para confirmar."
+> **Limitación reconocida:** No se puede prevenir que Claude piense algo falso — solo se puede verificar que lo que escribe como código/texto sea correcto. Las 3 capas cubren el output, no el razonamiento.
 - **Checklist programático pre-commit** (hook `PreToolUse` sobre `Bash(git commit*)`):
   1. ¿Existen tests para los archivos modificados?
   2. ¿Los tests fallan sin la implementación? (prueba de que el test detecta el fallo)
   3. ¿El diff incluye solo archivos declarados en el plan?
   4. Si alguna respuesta es NO → bloquear commit + registrar razón.
+
+> **[FIX ALTO-P2-9]** El checklist pre-commit también valida calidad mínima de tests:
+  5. ¿Los archivos de test modificados contienen al menos 1 assertion por función de test? (heurística: buscar `assert`, `expect`, `should`, `toBe`)
+  6. ¿Los nombres de test correlacionan con `acceptance_criteria` del plan? (heurística por keywords — best effort, no bloqueante)
+  **Limitación reconocida:** Validar calidad de test al 100% es imposible en un hook. El agente `code-reviewer` cubre el gap con prompt: "Verifica que los tests cubran los criterios de aceptación y no sean triviales."
+
 - **Tabla de racionalización como DENY list programática:**
 
   | Si el agente intenta... | El hook hace... |
@@ -72,6 +89,7 @@ Después de CADA corrección del usuario → registrar con schema estructurado:
 # Lesson entry — schema obligatorio
 id: lesson-YYYY-MM-DD-NNN
 date: 2026-04-17
+scope: "api-auth"             # Namespace explícito para detección de contradicciones
 trigger: "Qué causó el error (acción concreta)"
 pattern: "Qué hacía mal (patrón reconocible)"
 fix: "Qué debe hacer en su lugar (acción correctiva)"
@@ -83,7 +101,13 @@ superseded_by: null       # ID de lesson que reemplaza esta
 status: active            # active | promoted | archived | superseded
 ```
 
-**Detección de contradicciones:** Al escribir una nueva lesson, buscar entries existentes con keywords solapantes. Si se detecta contradicción → marcar la anterior como `status: superseded` + `superseded_by: <new_id>` + registrar en log de cambios.
+> **[FIX ALTO-P2-14]** Detección de contradicciones usa `scope` + keywords, no solo keywords.
+
+**Detección de contradicciones:** Al escribir una nueva lesson, buscar entries existentes con **mismo `scope`** Y keywords solapantes. Solo `scope` idéntico → potencial contradicción. Scopes diferentes → no contradicción aunque compartan keywords. Si se detecta contradicción → marcar la anterior como `status: superseded` + `superseded_by: <new_id>` + registrar en log de cambios.
+
+> **[FIX ALTO-P2-15]** `last_referenced` se actualiza automáticamente — no depende de que Claude recuerde.
+
+**Enforcement de `last_referenced`:** El hook `session-consolidate` (Stop hook) escanea el historial de herramientas de la sesión buscando lecturas de archivos de lessons (`read_file` sobre paths en `lessons/`). Actualiza `last_referenced` de TODAS las entries que aparecieron en el contexto. No depende de acción manual de Claude.
 
 **Criterios de promoción (lesson → rule):**
 - **Señal explícita:** Usuario ejecuta `/promote <lesson-id>`
@@ -102,6 +126,21 @@ status: active            # active | promoted | archived | superseded
 
 **Backward propagation:** Cuando la implementación diverge del plan → Claude MUST proponer actualización del plan/CLAUDE.md ANTES de continuar con la nueva dirección. El plan vivo debe reflejar la realidad actual.
 
+> **[FIX ALTO-P2-6]** Toda mutación del plan deja audit trail:
+
+**Protocolo de mutación de PLAN.md:**
+1. Copiar versión actual a `PLAN.v{N}.md` (snapshot inmutable)
+2. Añadir entrada al `## Change log` del plan:
+   ```yaml
+   - timestamp: "2026-04-17T14:30:00Z"
+     field: "files_affected"
+     old: ["src/auth.ts"]
+     new: ["src/auth.ts", "src/middleware/cors.ts"]
+     reason: "CORS middleware necesario para auth cross-origin"
+   ```
+3. Plan mutado pasa por GATE-2 nuevamente (re-validación de coherencia)
+4. Si la mutación toca `non_goals` → requiere aprobación humana (modo interactivo) o STOP (modo autónomo)
+
 ### 1.9 Elegancia balanceada
 
 - Cambios no triviales: pausar → "¿hay una forma más elegante?"
@@ -116,7 +155,7 @@ status: active            # active | promoted | archived | superseded
 
 ---
 
-## 2. Máquina de Estados para Operación Autónoma
+## 2. Máquina de Estados para Operación Autónoma `[TO BUILD]`
 
 > **[FIX CRÍTICO-1 + CRÍTICO-2]** El flujo de trabajo ya no es una directiva textual — es un autómata con estados, transiciones y gates obligatorios.
 
@@ -136,13 +175,45 @@ INIT → EXPLORE → [GATE-1] → PLAN → [GATE-2] → EXECUTE → [GATE-3] →
                                └────────────────────────────────────────┘
 ```
 
-### 2.2 Gates obligatorios (implementados como hooks)
+> **[FIX MEDIO-P2-20]** Taxonomía de errores para decidir si RE-PLAN es necesario:
+>
+> | Error | Acción | ¿Cuenta como RE-PLAN? |
+> |---|---|---|
+> | Bug de implementación (1-3 archivos) | Fix inline | NO |
+> | Test incorrecto | Corregir test | NO |
+> | Diseño inadecuado (múltiples criterios fallan) | RE-PLAN completo | SÍ |
+> | Scope insuficiente (faltan archivos) | Actualizar plan (§1.8) + continuar | NO |
+> | Conflicto con non-goals | STOP + escalar | N/A |
+>
+> Solo errores de diseño consumen iteraciones de RE-PLAN (max 2). Los demás se resuelven sin penalizar el contador.
 
-| Gate | Tipo | Precondición | Si falla |
-|---|---|---|---|
-| **GATE-1** (Explore→Plan) | PreToolUse(Write) | Existe artefacto de exploración (archivos leídos, contexto documentado) | Bloquea escritura de plan. Volver a EXPLORE. |
-| **GATE-2** (Plan→Execute) | PreToolUse(Write/Edit) | Existe `PLAN.md` con: archivos_afectados, non_goals, criterios_aceptacion, tests_requeridos | Bloquea escritura de código. Volver a PLAN. |
-| **GATE-3** (Execute→Verify) | PreToolUse(Bash:git commit) | Tests pasan + diff solo incluye archivos declarados en plan | Bloquea commit. Si tests fallan → ROLLBACK. |
+> **[FIX ALTO-P2-4]** El estado BLOCKED tiene salida definida:
+
+**BLOCKED — protocolo de salida:**
+- **Timeout:** `blocked_timeout_minutes: 15` (configurable en settings.json)
+- **En sesión interactiva:** Notificar al usuario con diagnóstico: qué información falta, qué exploración falló, qué se necesita para desbloquear.
+- **En modo autónomo:** Al expirar timeout → crear GitHub issue con label `agent-blocked` + contexto completo + STOP inmediato.
+- **BLOCKED nunca es terminal silencioso.** Siempre produce un artefacto de diagnóstico.
+
+### 2.2 Gates obligatorios (implementados como hooks) `[TO BUILD]`
+
+> **[FIX CRÍTICO-P2-1]** Los gates tienen whitelist de archivos de metadatos. El `plan-gate` NO bloquea la escritura del propio plan, artefactos de exploración ni archivos de memoria.
+
+**Whitelist de metadatos (excluidos de plan-gate y tdd-gate):**
+```
+**/PLAN.md
+**/RESEARCH.md
+**/VERIFICATION.md
+.claude/memory/**
+docs/src/wiki/**
+**/*.log
+```
+
+| Gate | Tipo | Precondición | Si falla | Whitelist |
+|---|---|---|---|---|
+| **GATE-1** (Explore→Plan) | PreToolUse(Write) | Existe artefacto de exploración (archivos leídos, contexto documentado) | Bloquea escritura de plan. Volver a EXPLORE. | Solo aplica a PLAN.md |
+| **GATE-2** (Plan→Execute) | PreToolUse(Write/Edit) | Existe `PLAN.md` con: archivos_afectados, non_goals, criterios_aceptacion, tests_requeridos | Bloquea escritura de código fuente. Volver a PLAN. | Excluye metadatos (whitelist arriba) |
+| **GATE-3** (Execute→Verify) | PreToolUse(Bash:git commit) | Tests pasan + diff solo incluye archivos declarados en plan | Bloquea commit. Si tests fallan → ROLLBACK. | N/A |
 
 ### 2.3 Artefacto de plan (schema obligatorio)
 
@@ -168,10 +239,16 @@ tests_required:
   - "tests/auth.test.ts — login flow"
   - "tests/auth.test.ts — token refresh"
 rollback_tag: "pre-plan-YYYY-MM-DD-NNN"
-max_iterations: 3          # Para loops autónomos
-timeout_minutes: 60        # Tiempo máximo
-cost_ceiling_usd: 5.00    # Presupuesto máximo de tokens
+max_iterations: 3          # Para loops autónomos (default: 10 en settings.json)
+timeout_minutes: 60        # Tiempo máximo (default: 120)
+cost_ceiling_usd: 5.00    # Presupuesto máximo (default: 10.00)
 ```
+
+> **[FIX ALTO-P2-11]** Economía de tokens del metasistema:
+> - Los campos `max_iterations`, `timeout_minutes`, `cost_ceiling_usd` usan **defaults de settings.json** si no se declaran. Solo incluirlos en PLAN.md cuando el valor difiere del default.
+> - `rollback_tag` se genera automáticamente si no se declara: `pre-{plan_id}`.
+> - El plan mínimo viable tiene solo 4 campos obligatorios: `plan_id`, `approach`, `files_affected`, `acceptance_criteria`. Todo lo demás es opcional con defaults sensatos.
+> - **Carga lazy de metadatos:** Solo CLAUDE.md (200 líneas) + MEMORY.md sección CRITICAL (50 líneas) se cargan siempre. Lessons, logs de skills, _index.yaml → solo on-demand cuando Claude los necesita.
 
 ### 2.4 Commitment checkpoint en modo autónomo
 
@@ -195,7 +272,7 @@ cost_ceiling_usd: 5.00    # Presupuesto máximo de tokens
 
 ---
 
-## 3. Anatomía del Repositorio
+## 3. Anatomía del Repositorio `[BUILT-IN]`
 
 ### 3.1 Proyecto (`.claude/` — committed, compartido)
 
@@ -289,7 +366,7 @@ proyecto/
 
 ---
 
-## 5. Rules — Reglas Modulares con Scoping
+## 5. Rules — Reglas Modulares con Scoping `[BUILT-IN]`
 
 Cuando CLAUDE.md crece demasiado → fragmentar en `.claude/rules/`:
 
@@ -319,7 +396,7 @@ Contexto limpio = mejores resultados.
 
 ---
 
-## 6. Slash Commands
+## 6. Slash Commands `[BUILT-IN]`
 
 Un archivo `.md` en `.claude/commands/` → slash command automático:
 
@@ -359,7 +436,7 @@ Encuentra la causa raíz, corrígelo, y escribe un test que lo habría detectado
 
 ---
 
-## 7. Skills vs Commands
+## 7. Skills vs Commands `[BUILT-IN]`
 
 | Aspecto | Commands | Skills |
 |---------|----------|--------|
@@ -387,6 +464,8 @@ Encuentra la causa raíz, corrígelo, y escribe un test que lo habría detectado
   false_positive: false        # marcado post-hoc si fue innecesario
 ```
 
+> **[FIX MEDIO-P2-12]** Política de rotación: `skill-activations.log` se rota semanalmente por `session-consolidate`. Mantener última semana activa. Archivar en `skill-activations.{date}.log`. Máximo 4 archivos de archivo (1 mes).
+
 **Niveles de activación por impacto:**
 
 | Impacto del skill | Threshold | Comportamiento |
@@ -405,7 +484,7 @@ impact: high
 
 ---
 
-## 8. Agents — Sub-agentes Especializados
+## 8. Agents — Sub-agentes Especializados `[BUILT-IN]`
 
 Definidos en `.claude/agents/`, con contexto aislado:
 
@@ -438,7 +517,7 @@ Eres un revisor senior enfocado en corrección y mantenibilidad.
 
 ---
 
-## 9. Permisos — settings.json
+## 9. Permisos — settings.json `[BUILT-IN]`
 
 ```json
 {
@@ -474,7 +553,7 @@ Eres un revisor senior enfocado en corrección y mantenibilidad.
 
 ---
 
-## 10. Hooks — Acciones Automáticas Sin Excepción
+## 10. Hooks — Acciones Automáticas Sin Excepción `[BUILT-IN + TO BUILD]`
 
 Los hooks se ejecutan **siempre**, sin variación ni juicio de Claude:
 
@@ -498,9 +577,138 @@ Los hooks se ejecutan **siempre**, sin variación ni juicio de Claude:
 | `auto-format` | PostToolUse(Write/Edit) | Cualquier escritura | Ejecuta formatter del proyecto. |
 | `session-consolidate` | Stop | Cierre de sesión | Promueve conocimiento elegible al wiki + archiva lessons expiradas. |
 
+> **[FIX MEDIO-P2-17]** `session-consolidate` ejecuta en orden determinista:
+> 1. Actualizar `last_referenced` de entries consultadas en la sesión
+> 2. Archivar entries con `last_referenced > 30 días`
+> 3. Promover entries elegibles (solo las que sobrevivieron paso 2)
+> 4. Actualizar `_index.yaml`
+> 5. Rotar `skill-activations.log` si aplica
+>
+> **[FIX MEDIO-P2-10]** Regla adicional en CLAUDE.md: "Ejecutar tests con `Bash` tool — nunca reportar resultado sin output de terminal visible."
+
+### 10.2 Especificación técnica de hooks `[TO BUILD]`
+
+> **[FIX CRÍTICO-P2-2 + CRÍTICO-P2-18]** Los hooks NO son directivas textuales — son scripts ejecutables con contrato de I/O definido.
+
+**Runtime:** Python 3.10+ (stdlib only, cero dependencias externas). Alternativa: bash + `jq` para hooks triviales (auto-format).
+
+**Contrato de I/O:**
+
+```
+stdin  → JSON del evento (schema de Claude Code)
+stdout → JSON de respuesta: {"decision": "allow"|"block", "reason": "..."}
+exit 0 → allow (si stdout vacío)
+exit 1 → block
+exit 2 → error del hook (fail-closed: se trata como block)
+```
+
+**Schema de entrada (stdin):**
+```json
+{
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "src/services/auth.ts",
+    "content": "..."
+  },
+  "session_id": "uuid",
+  "timestamp": "2026-04-17T10:30:00Z"
+}
+```
+
+**Timeout:** 10 segundos max por hook. Timeout → exit 2 (fail-closed).
+
+**Dependencias del entorno:** `python3`, `git`, `find`, `jq` — presentes en cualquier dev environment estándar.
+
+**Estructura de archivos:**
+```
+.claude/hooks/
+├── plan-gate.py              # GATE-2: verifica PLAN.md antes de código
+├── tdd-gate.py               # Verifica tests antes de implementación
+├── commit-checklist.py       # GATE-3: checklist pre-commit
+├── non-goal-guard.py         # Detecta writes a paths prohibidos
+├── plan-drift-detector.py    # Warning si archivo no está en plan
+├── hook-health-check.py      # Dry-run de todos los hooks al inicio
+├── auto-format.sh            # Ejecuta formatter (bash trivial)
+└── session-consolidate.py    # Promoción + archivado al cierre
+```
+
+**Ejemplo de implementación — `plan-gate.py`:**
+```python
+#!/usr/bin/env python3
+"""GATE-2: Bloquea escritura de código fuente si no existe PLAN.md válido."""
+import json, sys, os, fnmatch
+
+# Whitelist de archivos excluidos del gate (metadatos, no código)
+WHITELIST = [
+    "**/PLAN.md", "**/PLAN.v*.md", "**/RESEARCH.md", "**/VERIFICATION.md",
+    ".claude/memory/**", "docs/src/wiki/**", "**/*.log", "**/*.yaml",
+    "**/REVIEW.md", "**/SECURITY.md"
+]
+
+PLAN_REQUIRED_FIELDS = ["plan_id", "files_affected", "acceptance_criteria"]
+
+def is_whitelisted(file_path: str) -> bool:
+    return any(fnmatch.fnmatch(file_path, pattern) for pattern in WHITELIST)
+
+def plan_exists_and_valid() -> tuple[bool, str]:
+    plan_path = "PLAN.md"
+    if not os.path.exists(plan_path):
+        return False, "PLAN.md no existe. Ejecuta EXPLORE → PLAN primero."
+    with open(plan_path) as f:
+        content = f.read()
+    missing = [field for field in PLAN_REQUIRED_FIELDS if field not in content]
+    if missing:
+        return False, f"PLAN.md incompleto. Faltan: {', '.join(missing)}"
+    return True, ""
+
+def main():
+    event = json.load(sys.stdin)
+    file_path = event.get("tool_input", {}).get("file_path", "")
+
+    if is_whitelisted(file_path):
+        json.dump({"decision": "allow", "reason": "Archivo de metadatos (whitelist)"}, sys.stdout)
+        sys.exit(0)
+
+    valid, reason = plan_exists_and_valid()
+    if not valid:
+        json.dump({"decision": "block", "reason": reason}, sys.stdout)
+        sys.exit(1)
+
+    json.dump({"decision": "allow", "reason": "PLAN.md válido"}, sys.stdout)
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
+```
+
+### 10.3 Health check de hooks `[TO BUILD]`
+
+> **[FIX CRÍTICO-P2-3]** Si un hook falla silenciosamente, TODOS los gates se desactivan. Esto es inaceptable.
+
+**Protocolo:**
+
+1. **Al inicio de sesión:** `hook-health-check.py` ejecuta dry-run de cada hook con fixtures de test predefinidas.
+2. **Resultado por hook:** `pass` | `fail` | `timeout`
+3. **Si algún hook falla:**
+   - Warning persistente en la sesión: `"⚠️ Hook {name} no operativo. Gates degradados."`
+   - Log en `.claude/memory/hook-health.log`
+   - La sesión NO se bloquea, pero opera en modo degradado con warnings visibles
+4. **Política fail-closed:** Hook que no responde en 10s → se trata como `block`. Nunca como `allow`. Mejor bloquear por error que permitir por fallo.
+
+**Fixture de test (`.claude/hooks/fixtures/`):**
+```json
+// fixture-write-code.json — simula escritura de archivo de código
+{
+  "tool_name": "Write",
+  "tool_input": {"file_path": "src/test-file.ts", "content": "// test"},
+  "session_id": "health-check",
+  "timestamp": "2026-01-01T00:00:00Z"
+}
+```
+
 ---
 
-## 11. Circuit Breakers para Operación Autónoma
+## 11. Circuit Breakers para Operación Autónoma `[TO BUILD]`
 
 > **[FIX ALTO-4]** Todo proceso autónomo tiene límites duros no negociables.
 
@@ -537,21 +745,50 @@ Cuando el circuit breaker actúa:
 
 ---
 
-## 12. Rollback Strategy
+## 12. Rollback Strategy `[CONVENTION + TO BUILD]`
 
 > **[FIX ALTO-5]** Cada operación autónoma es reversible por diseño.
 
 ### 12.1 Protocolo de snapshots
 
 1. **Antes de ejecutar:** `git tag pre-<plan_id>` — snapshot del estado limpio
-2. **Durante ejecución:** Commits atómicos por unidad de trabajo, cada uno con referencia al plan:
+2. **Durante ejecución:** Commits atómicos por unidad de trabajo (ver §12.3), cada uno con referencia al plan:
    ```
    feat: implement auth service [plan-2026-04-17-001]
    ```
 3. **Después de cada commit:** Ejecutar test suite completa
    - Tests pasan → continuar
-   - Tests fallan → `git revert HEAD` + intentar fix (máximo 2 intentos)
-   - 2 fixes fallidos → `git reset --hard pre-<plan_id>` + escalar a humano
+   - Tests fallan → clasificar error (ver §12.4) antes de decidir acción
+
+> **[FIX ALTO-P2-5]** Rollback no es one-size-fits-all. La acción depende del tipo de error.
+
+### 12.3 Definición de "unidad de trabajo" `[CONVENTION]`
+
+> **[FIX MEDIO-P2-7]** Sin definición, los commits son arbitrariamente granulares o gruesos.
+
+**Una unidad de trabajo = un criterio de aceptación del plan.** Cada entry en `acceptance_criteria` de PLAN.md produce un commit atómico. Esto alinea granularidad de commits con verificabilidad.
+
+Ejemplo:
+```yaml
+acceptance_criteria:
+  - "Los tests de login pasan"          → commit 1
+  - "Los tests de token refresh pasan"  → commit 2
+  - "No hay regresiones"                → verificación final (no commit propio)
+```
+
+### 12.4 Clasificación de errores antes de rollback `[CONVENTION]`
+
+> **[FIX ALTO-P2-5]** No todo error merece rollback. Clasificar primero, actuar después.
+
+| Tipo de error | Señal de detección | Acción | Cuenta como RE-PLAN |
+|---|---|---|---|
+| **Sintaxis/import** | Error en compilación o lint | Fix inline (max 2 intentos) → rollback si persiste | NO |
+| **Test falla por implementación** | Test existía ANTES del cambio actual | `git revert HEAD` + corregir implementación | NO |
+| **Test falla por test incorrecto** | Test creado EN ESTE commit | Revisar y corregir el test primero, no rollback | NO |
+| **Error de diseño** | Múltiples acceptance_criteria fallan simultáneamente | `git reset --hard pre-<plan_id>` + RE-PLAN | SÍ |
+| **Dependencia externa** | Error de red, API, paquete no encontrado | Retry con backoff (max 3) → BLOCKED si persiste | NO |
+| **Scope insuficiente** | Se necesitan archivos no declarados en plan | Actualizar plan (§1.8 backward propagation) + continuar | NO |
+| **Conflicto con non-goals** | Write a path de non_goal | STOP inmediato + escalar a humano | N/A |
 
 ### 12.2 Branching para trabajo autónomo
 
@@ -562,7 +799,7 @@ Cuando el circuit breaker actúa:
 
 ---
 
-## 13. Routines — Ejecución Autónoma en la Nube
+## 13. Routines — Ejecución Autónoma en la Nube `[BUILT-IN]`
 
 Una routine = prompt + repositorio GitHub + connectors, ejecutada en infraestructura de Anthropic.
 
@@ -601,9 +838,15 @@ Una routine = prompt + repositorio GitHub + connectors, ejecutada en infraestruc
 
 **Regla de arranque:** UNA routine schedule de bajo riesgo. Observar una semana antes de escalar.
 
+> **[FIX MEDIO-P2-16]** Protocolo de integración de output de routines:
+> - Routine produce output → lo deja en `ops/sessions/<routine-name>-<date>.md`
+> - Al iniciar sesión interactiva, Claude verifica si hay nuevos archivos en `ops/sessions/` desde la última sesión
+> - Si existen → mostrar resumen al usuario y preguntar si actuar sobre ellos
+> - Output de routines NUNCA se promueve al wiki automáticamente — requiere revisión humana primero
+
 ---
 
-## 14. Wiki de Proyecto — Memoria Permanente con Indexación
+## 14. Wiki de Proyecto — Memoria Permanente con Indexación `[TO BUILD]`
 
 > **[FIX Token waste #3 + CRÍTICO-A]** El wiki tiene índice estructurado y criterios de promoción objetivos.
 
@@ -653,6 +896,8 @@ entries:
     last_updated: 2026-04-10
 ```
 
+> **[FIX MEDIO-P2-13]** Límite de 200 entries en `_index.yaml`. Al superar → archivar entries con `last_updated > 90 días` a `_index.archived.yaml`. Si tras archivar sigue > 200 → fusionar entries del mismo directorio en una sola con keywords combinados.
+
 ### 14.4 Criterios de promoción objetivos (memory → wiki)
 
 > **[FIX CRÍTICO-A]** La promoción NO depende de juicio subjetivo de Claude.
@@ -679,7 +924,7 @@ entries:
 
 ---
 
-## 15. Estructura de Prompts Efectivos
+## 15. Estructura de Prompts Efectivos `[CONVENTION]`
 
 **Context engineering > prompt engineering:** Curar *qué información entra* importa más que *cómo escribes* la instrucción.
 
@@ -696,7 +941,7 @@ Fórmula: `[Rol] + [Tarea] + [Contexto]`
 
 ---
 
-## 16. Principios Core de Ingeniería
+## 16. Principios Core de Ingeniería `[CONVENTION]`
 
 - **Simplicity First:** Cada cambio, lo más simple posible. Mínimo código.
 - **No Laziness:** Causa raíz. Nunca fixes temporales. Estándar senior.
@@ -705,7 +950,7 @@ Fórmula: `[Rol] + [Tarea] + [Contexto]`
 
 ---
 
-## 17. Orden de Setup Progresivo
+## 17. Orden de Setup Progresivo `[CONVENTION]`
 
 1. **`/init`** → CLAUDE.md starter. Recortar a ~20 líneas esenciales.
 2. **`settings.json`** → Permisos básicos: allow test/build, deny .env y destructivos.
