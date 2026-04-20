@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Claude God Mode Template"
   text: "Boilerplate de Claude Code con superpoderes"
-  tagline: "140 skills, 15 stacks de usuario (+common), layers técnicos composables, 4 domain overlays, 22 agentes, sistema de memoria, hooks defensivos y MCPs configurados. Todo listo en menos de una hora."
+  tagline: "139 skills, 15 stacks de usuario (+common), layers técnicos composables, 4 domain overlays, 35 agentes, sistema de memoria, hooks defensivos y MCPs configurados. Todo listo en menos de una hora."
   actions:
     - theme: brand
       text: Instalación paso a paso
@@ -19,7 +19,7 @@ hero:
 features:
   - icon: 🧠
     title: Everything Claude Code (ECC)
-    details: 140 skills, 15 tech stacks de usuario y layers técnicos composables (React, etc.) con 4 domain overlays. Los agentes se compilan con skills embebidas por stack + layer — code reviewers, TDD guides, build resolvers, security scanners y más.
+    details: 139 skills, 15 tech stacks de usuario y layers técnicos composables (React, etc.) con 4 domain overlays. Los agentes se compilan con skills embebidas por stack + layer — code reviewers, TDD guides, build resolvers, security scanners y más.
 
   - icon: 🔮
     title: Jedi Review — Panel de Expertos

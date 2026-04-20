@@ -278,10 +278,13 @@ init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel
 	@# 3b. Distribuir agentes a Antigravity (.agent/skills/) y Copilot (.github/prompts/)
 	@echo "  Distribuyendo agentes a Antigravity y Copilot..."
 	@python3 ops/distribute-agents.py stacks/$(STACK)/stack.yaml agents "$(PROJECT)"
-	@# 4. Copiar pipeline.yaml
+	@# 4. Copiar pipeline.yaml (stack-specific si existe, sino comun)
 	@if [ -f "stacks/$(STACK)/pipeline.yaml" ]; then \
 		cp stacks/$(STACK)/pipeline.yaml "$(PROJECT)/.claude/pipeline.yaml"; \
-		echo "  ✅ Pipeline de workflows copiado — usa /workflow para ejecutar"; \
+		echo "  ✅ Pipeline de workflows copiado (stack) — usa /workflow para ejecutar"; \
+	elif [ -f "stacks/common/pipeline.yaml" ]; then \
+		cp stacks/common/pipeline.yaml "$(PROJECT)/.claude/pipeline.yaml"; \
+		echo "  ✅ Pipeline de workflows copiado (comun) — usa /workflow para ejecutar"; \
 	fi
 	@# 4b. Copiar GitHub Actions workflows comunes
 	@if [ -d "stacks/common/workflows" ] && [ -n "$$(ls stacks/common/workflows/*.yml 2>/dev/null)" ]; then \

@@ -39,7 +39,8 @@ agents:
   performance-optimizer:
     skills: []
   refactor-cleaner:
-    skills: []
+    skills:
+    - code-simplification-patterns
   ui-engineer:
     skills:
     - ui-ux-pro-max
@@ -56,8 +57,6 @@ agents:
   loop-operator:
     skills:
     - safety-guard
-  code-simplifier:
-    skills: []
   silent-failure-hunter:
     skills: []
   comment-analyzer:
@@ -100,8 +99,6 @@ commands:
     when: Al crear widgets o screens — aplica sistema de diseño
   continuous-learning-v2:
     when: Extrae patrones de sesiones y los persiste
-  continuous-learning:
-    when: v1 fallback — extrae patrones de sesiones
   ck:
     when: Persistent memory per-project, git-aware tracking
   plankton-code-quality:

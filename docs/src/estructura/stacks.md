@@ -158,12 +158,13 @@ mcps:
 
 ## Agentes activados por stack
 
-Todos los stacks activan 20 agentes comunes, con 2 agentes dependientes del lenguaje:
+Todos los stacks activan 20 agentes comunes, con 15 agentes especializados por lenguaje/stack:
 
-- typescript-reviewer: nextjs-saas, nuxt-saas (stacks con TypeScript frontend integrado); también se activa via `LAYERS=react`.
-- python-reviewer: odoo, python-api, ml-pytorch (stacks Python).
+- typescript-reviewer, go-reviewer, java-reviewer, kotlin-reviewer, python-reviewer, cpp-reviewer, csharp-reviewer, flutter-reviewer
+- go-build-resolver, java-build-resolver, kotlin-build-resolver, cpp-build-resolver, dart-build-resolver
+- harness-optimizer
 
-Total instalado: 22 agentes (20 comunes + typescript-reviewer en stacks/layers con TS + python-reviewer en 3 stacks).
+Total: 35 agentes (20 comunes + 15 especializados según el stack y sus layers/domains).
 
 ---
 

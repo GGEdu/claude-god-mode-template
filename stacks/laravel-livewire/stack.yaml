@@ -52,7 +52,8 @@ agents:
   performance-optimizer:
     skills: []
   refactor-cleaner:
-    skills: []
+    skills:
+    - code-simplification-patterns
   ui-engineer:
     skills:
     - ui-ux-pro-max
@@ -66,8 +67,6 @@ agents:
     skills:
     - project-wiki
   silent-failure-hunter:
-    skills: []
-  code-simplifier:
     skills: []
   loop-operator:
     skills:

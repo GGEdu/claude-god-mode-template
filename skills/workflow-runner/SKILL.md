@@ -17,6 +17,29 @@ Execute multi-agent workflows defined in `.claude/pipeline.yaml`.
 Triggered by:
 - `/workflow <name>` (e.g., `/workflow feature`, `/workflow hotfix`)
 - `/workflow` (lists available workflows)
+- Auto-detection when the user says "implementa X", "add feature X", "crea X" without specifying a workflow
+
+## Workflow Routing (FAST_PATH Integration)
+
+When the user requests implementation without specifying a workflow, evaluate trivialidad before selecting:
+
+**Trivial (FAST_PATH) criteria — ALL must be true:**
+- Estimated files affected: 3 or fewer
+- Estimated lines changed: 50 or fewer
+- Does NOT involve auth, security, or payments
+- Does NOT create a new module or service
+
+**Routing decision:**
+- If trivial -> use `hotfix` workflow (no plan, just TDD + review)
+- If not trivial -> use `feature` workflow (full cycle with exploration and plan)
+
+**Notification requirement:** ALWAYS announce the selected workflow before executing:
+```
+▶ Workflow seleccionado: {name} — {description}.
+  Archivos estimados: ~N. Continuar? [Enter/n]
+```
+
+In autonomous mode (routines): the workflow MUST be declared explicitly in the routine prompt. Auto-detection is disabled — routines require deterministic prompts.
 
 ## Protocol
 

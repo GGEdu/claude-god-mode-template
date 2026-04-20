@@ -1,9 +1,14 @@
 # Orchestration Decisions & Architecture
 
-## Contexto
+## Contexto (Histórico)
 Durante la refactorización arquitectónica basada en los principios definidos en `rules/agents.md`, se tomó la decisión de crear perfiles **Orquestadores** ("Orchestrators") para cada stack significativo del repositorio `claude-god-mode-template`. 
 
-El objetivo es abstraer la invocación secuencial de las directivas (ej. lanzar TDD, luego Patterns, luego Seguridad) en un flujo único ("Flow") liderado por la inteligencia de orquestación.
+El objetivo era abstraer la invocación secuencial de las directivas (ej. lanzar TDD, luego Patterns, luego Seguridad) en un flujo único ("Flow") liderado por la inteligencia de orquestación.
+
+## Status: SUPERSEDED (2026-04-17)
+Los 9 orquestadores de stack (`laravel-orchestrator`, `django-orchestrator`, `golang-orchestrator`, `kotlin-orchestrator`, `perl-orchestrator`, `python-orchestrator`, `rust-orchestrator`, `springboot-orchestrator`, `cpp-orchestrator`) han sido eliminados en favor de un sistema más flexible: **pipeline.yaml workflows** ejecutables vía `/workflow-runner`.
+
+El nuevo enfoque (`pipeline.yaml` + `workflow-runner`) es más declarativo y fácil de customizar por proyecto que habilidades embebidas por stack.
 
 ## Decisiones Arquitectónicas (Decisions Records)
 

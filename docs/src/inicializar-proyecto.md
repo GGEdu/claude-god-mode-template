@@ -57,7 +57,7 @@ Inicializando stack 'laravel' + layer 'react' + domain 'healthcare' en /ruta/al/
   ✅ Stack rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   ✅ Domain rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   Compilando agentes con skills embebidas...
-  ✅ Agentes compilados (22 agentes con skills del stack + domain)
+  ✅ Agentes compilados (35 agentes con skills del stack + domain)
   ✅ Comandos: /jedi-review, /git-workflow, /design-md, ...
   ✅ CLAUDE.md creado — edita los [PLACEHOLDER] con el contexto del proyecto
   ✅ Domain context appended to CLAUDE.md

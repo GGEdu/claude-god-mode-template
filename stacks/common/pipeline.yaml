@@ -1,0 +1,88 @@
+workflows:
+  feature:
+    description: "Feature completa: exploracion, planificacion, TDD y revision"
+    steps:
+      - agent: docs-lookup
+        description: "Explorar codebase y documentacion relevante"
+        continue_on_failure: true
+      - agent: planner
+        description: "Crear plan de implementacion con acceptance criteria"
+      - agent: tdd-guide
+        description: "Escribir tests primero, luego implementar"
+      - agent: code-reviewer
+        description: "Revisar calidad del codigo"
+      - agent: security-reviewer
+        description: "Verificar vulnerabilidades"
+        parallel_with: code-reviewer
+      - audit: true
+        description: "Ejecutar verificaciones automaticas"
+      - agent: memory-consolidator
+        description: "Guardar decisiones en memoria"
+        always: true
+
+  hotfix:
+    description: "Fix rapido con revision minima — para tareas triviales"
+    steps:
+      - agent: tdd-guide
+        description: "Escribir test para el fix, luego implementar"
+      - agent: code-reviewer
+        description: "Revisar el fix"
+      - audit: true
+      - agent: memory-consolidator
+        description: "Guardar decisiones"
+        always: true
+
+  refactor:
+    description: "Mejora de codigo sin cambio de comportamiento"
+    steps:
+      - agent: planner
+        description: "Planificar el refactoring"
+      - agent: refactor-cleaner
+        description: "Simplificar y limpiar codigo"
+      - agent: code-reviewer
+        description: "Revisar cambios"
+      - audit: true
+      - agent: memory-consolidator
+        description: "Guardar decisiones"
+        always: true
+
+  review:
+    description: "Revision profunda de codigo existente"
+    steps:
+      - agent: code-reviewer
+        description: "Revision de calidad"
+      - agent: security-reviewer
+        description: "Revision de seguridad"
+        parallel_with: code-reviewer
+      - agent: silent-failure-hunter
+        description: "Buscar errores silenciados"
+      - agent: memory-consolidator
+        description: "Guardar hallazgos"
+        always: true
+
+  security-audit:
+    description: "Auditoria de seguridad exhaustiva"
+    steps:
+      - agent: security-reviewer
+        description: "Scan completo de vulnerabilidades"
+      - agent: silent-failure-hunter
+        description: "Detectar errores silenciados"
+      - agent: code-reviewer
+        description: "Revision de correcciones"
+      - agent: memory-consolidator
+        description: "Registrar hallazgos y decisiones"
+        always: true
+
+  documentation:
+    description: "Actualizacion de documentacion del proyecto"
+    steps:
+      - agent: docs-lookup
+        description: "Explorar estado actual de la documentacion"
+        continue_on_failure: true
+      - agent: doc-updater
+        description: "Escribir y actualizar documentacion"
+      - agent: code-reviewer
+        description: "Revisar precision de la documentacion"
+      - agent: memory-consolidator
+        description: "Registrar cambios de documentacion"
+        always: true

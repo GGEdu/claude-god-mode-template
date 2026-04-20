@@ -1,6 +1,6 @@
 ---
 name: conversation-analyzer
-description: Analyzes session transcripts to detect friction patterns: user frustration, repeated corrections, reverted work, and misunderstood intent. Outputs hook suggestions and behavioral adjustments. Use when a session feels stuck, when the user has corrected the same mistake twice, or after a long session to extract learnings.
+description: "Analyzes session transcripts to detect friction patterns: user frustration, repeated corrections, reverted work, and misunderstood intent. Outputs hook suggestions and behavioral adjustments. Use when a session feels stuck, when the user has corrected the same mistake twice, or after a long session to extract learnings."
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---

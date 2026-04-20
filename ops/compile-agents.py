@@ -36,6 +36,11 @@ def strip_yaml_frontmatter(content):
     return re.sub(r"^---\n.*?---\n+", "", content, count=1, flags=re.DOTALL)
 
 
+def resolve_skill_name(skill_name, skill_map):
+    """Resolve skill alias via skill_map, or return original name."""
+    return skill_map.get(skill_name, skill_name)
+
+
 def compile_agent(agent_path, skill_entries):
     """Read an agent file and append skill content inline."""
     content = read_file(agent_path)
@@ -109,6 +114,7 @@ def main():
         stack = yaml.safe_load(f)
 
     agents = stack.get("agents", {})
+    skill_map = stack.get("skill_map", {})
 
     # Merge overlay skills in order: layers first, then domain (last overlay wins on conflicts)
     if isinstance(agents, dict):
@@ -142,7 +148,7 @@ def main():
             skills = config.get("skills", [])
 
         skill_entries = [
-            (s, os.path.join(skills_base, s, "SKILL.md"))
+            (s, os.path.join(skills_base, resolve_skill_name(s, skill_map), "SKILL.md"))
             for s in skills
         ]
 

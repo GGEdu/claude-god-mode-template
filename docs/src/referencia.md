@@ -70,7 +70,7 @@ Top 3 acciones: 1) LoginRequest, 2) createToken('spa-web'), 3) AuthService
 | `/canary-watch URL` | Playwright comprueba errores de consola, peticiones fallidas, tiempos de carga | Después de desplegar |
 | `/workflow-runner feature` | Ejecuta pipeline completo: planner → tdd-guide → code-reviewer → security-reviewer | Features nuevos |
 | `/workflow-runner hotfix` | Pipeline rápido: tdd-guide → security-reviewer → audit | Fixes urgentes |
-| `/workflow-runner refactor` | Pipeline de refactor: planner → code-simplifier → code-reviewer | Refactorizaciones |
+| `/workflow-runner refactor` | Pipeline de refactor: planner → refactor-cleaner → code-reviewer | Refactorizaciones |
 
 Ejemplo:
 
@@ -124,7 +124,7 @@ Claude los activa automáticamente o puedes pedirlos explícitamente:
 "Lanza code-reviewer y security-reviewer en paralelo sobre los cambios de auth"
 ```
 
-### Agentes principales (22 instalados globalmente)
+### Agentes principales (35 instalados globalmente)
 
 | Agente | Propósito | Se activa automáticamente cuando... |
 | --- | --- | --- |
@@ -145,7 +145,7 @@ Claude los activa automáticamente o puedes pedirlos explícitamente:
 | `pr-test-analyzer` | Analiza coverage de tests en un PR | Antes de hacer merge |
 | `comment-analyzer` | Evalúa calidad de comentarios: precisión, obsolescencia | En archivos de lógica crítica |
 | `conversation-analyzer` | Analiza la sesión para detectar fricción, correcciones repetidas | Cuando la sesión se siente atascada |
-| `code-simplifier` | Refactoriza para legibilidad sin cambiar comportamiento | Después de que una feature funciona |
+| `refactor-cleaner` | Limpia código muerto y refactoriza para legibilidad sin cambiar comportamiento | Después de que una feature funciona o para mantenimiento |
 | `loop-operator` | Ejecuta loops multi-paso con detección de bloqueos | Para tareas de 5+ pasos secuenciales |
 | `memory-consolidator` | Consolida `.claude/memory/` cuando crece demasiado | Cuando un archivo supera 150 líneas |
 | `docs-lookup` | Busca documentación actualizada de librerías y APIs vía Context7 | Al necesitar docs de una lib específica |
@@ -253,7 +253,7 @@ proyecto/
 │
 ~/.claude/                     ← Instalación global (make install)
 ├── settings.json              ← Configuración global con Stop hook
-├── agents/                    ← 22 agentes base disponibles en todos los proyectos
+├── agents/                    ← 35 agentes base disponibles en todos los proyectos
 ├── rules/common/              ← Reglas comunes en todos los proyectos
 └── hooks/
     └── session-consolidate.sh ← Se ejecuta al terminar cada sesión

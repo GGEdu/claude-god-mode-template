@@ -18,22 +18,18 @@
       "Bash(python -m pytest*)",
       "Bash(ruff check*)",
       "Bash(ruff format*)",
+      "Bash(make *)",
       "Read(/tmp/**)",
-      "Read($HOME/**)",
-      "Bash(grep -E \"\\\\.\\(md|json|sh|py|mts|yaml|yml\\)$\")",
       "Bash(stat .claude/memory/*.md)",
-      "mcp__filesystem__list_directory_with_sizes",
-      "Read(//tmp/**)",
-      "Bash(grep -n \"^## Sección\\\\|^## Sec\\\\|^---$\" /tmp/tutorial-raw.md)",
-      "Bash(cp ./.claude/rules/common/orchestration.md ./rules/common/orchestration.md)",
-      "Bash(rm ./.claude/rules/common/orchestration.md)"
+      "mcp__filesystem__list_directory_with_sizes"
     ],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./secrets/**)",
       "Bash(git push --force*)",
-      "Bash(rm -rf /*)"
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ./*)"
     ],
     "additionalDirectories": [
       "./.claude/memory",

@@ -92,21 +92,6 @@ disponibles:
 | `/team-builder` | Componer equipos de agentes en paralelo. |
 | `/rules-distill` | Destilar patrones en nuevas reglas. |
 
-### Orquestadores de Stack (Pipeline Managers)
-
-Estos comandos especiales actúan como Tech Leads para un ecosistema. Al invocarlos para una tarea, no la resuelven directamente de forma simple. En su lugar, ejecutan un pipeline estricto (`Test -> Auditoría Paralela de Patrones/Seguridad -> Verificación`) delegando el trabajo en otras skills del stack.
-
-| Orquestador | Cuándo invocarlo |
-| --- | --- |
-| `/laravel-orchestrator` | Tareas completas y complejas en proyectos Laravel. |
-| `/django-orchestrator` | Tareas completas y complejas en proyectos Django. |
-| `/springboot-orchestrator` | Tareas y refactorizaciones en Spring Boot. |
-| `/python-orchestrator` | Flujos de datos, APIs generales y scripts en Python. |
-| `/rust-orchestrator` | Implementaciones críticas en Rust. |
-| `/golang-orchestrator` | Creación de lógica concurrente y APIs en Go. |
-| `/cpp-orchestrator` | Lógica a nivel de sistema o alta performance en C++. |
-| `/kotlin-orchestrator` | Implementaciones backend e infraestructura en Kotlin. |
-| `/perl-orchestrator` | Módulos, scripts y mantenimiento legado en Perl. |
 
 ### Skills embebidas en agentes (no slash commands)
 
@@ -148,7 +133,7 @@ Tú → "Implementa con TDD: [feature]"   (Claude lanza tdd-guide con laravel-td
 
 ## Skills en `skills/` que NO se activan con `laravel` + `LAYERS=react`
 
-Las 140 skills del directorio `skills/` cubren muchos otros stacks y casos.
+Las 139 skills del directorio `skills/` cubren muchos otros stacks y casos.
 Las que no forman parte del stack activo no se mueven a `commands/` y no
 interfieren en tu sesión. Están disponibles si en algún momento las necesitas:
 

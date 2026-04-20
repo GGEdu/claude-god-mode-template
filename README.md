@@ -32,9 +32,9 @@ Sigue la guía completa en [`docs/src/instalacion.md`](docs/src/instalacion.md).
 - **Rules universales** en `.claude/rules/common/` — siempre activas en cada sesión
 - **15 tech stacks** configurables (`laravel`, `laravel-livewire`, `nextjs-saas`, `python-api`, `go-api`, `odoo`, `cpp`, `flutter`, `java-springboot`, `kotlin-multiplatform`, `ml-pytorch`, `nuxt-saas`, `perl`, `rust-api`, `swift-ios`) + **layers técnicos** composables (`react`, …)
 - **4 domain overlays** opcionales (`healthcare`, `ai-agent`, `content-creator`, `supply-chain`) — se combinan con cualquier tech stack
-- **24 agentes** especializados con skills embebidas por compilación (`planner`, `architect`, `tdd-guide`, `ui-engineer`, `repo-reviewer`, etc.)
-- **9 Stack Orchestrators** (Pipeline Managers) actuando como Tech Leads para delegación automática del ciclo de vida (`laravel-orchestrator`, `django-orchestrator`, etc.)
-- **140+ skills** organizadas en `skills/` — activadas por stack, no globalmente
+- **35 agentes** especializados con skills embebidas por compilación (`planner`, `architect`, `tdd-guide`, `ui-engineer`, `repo-reviewer`, etc.)
+- **Pipeline workflows** (`.claude/pipeline.yaml`) ejecutables vía `/workflow-runner` para orquestación de ciclos de vida (`feature`, `hotfix`, `refactor`)
+- **139 skills** organizadas en `skills/` — activadas por stack, no globalmente
 - **Sistema de memoria** en `.claude/memory/` — persistencia de decisiones, actualizada automáticamente al terminar cada sesión
 - **MCPs preconfigurados** — GitHub activo por defecto, NotebookLM y n8n opcionales
 

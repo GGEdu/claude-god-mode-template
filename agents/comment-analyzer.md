@@ -1,6 +1,6 @@
 ---
 name: comment-analyzer
-description: Evaluates comment quality across four dimensions: factual accuracy, completeness, long-term value, and misleading elements. Use when a PR has significant comment changes, or periodically on core business logic files. Flags outdated references, redundant code-echo comments, and stale TODOs.
+description: "Evaluates comment quality across four dimensions: factual accuracy, completeness, long-term value, and misleading elements. Use when a PR has significant comment changes, or periodically on core business logic files. Flags outdated references, redundant code-echo comments, and stale TODOs."
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---

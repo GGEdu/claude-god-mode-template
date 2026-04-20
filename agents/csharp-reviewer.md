@@ -91,11 +91,6 @@ Fix: What to change
 - **Minimal APIs**: Route grouping, endpoint filters, proper `TypedResults`
 - **Blazor**: Component lifecycle, `StateHasChanged` usage, JS interop disposal
 
-## Reference
-
-For detailed C# patterns, see skill: `dotnet-patterns`.
-For testing guidelines, see skill: `csharp-testing`.
-
 ---
 
 Review with the mindset: "Would this code pass review at a top .NET shop or open-source project?"

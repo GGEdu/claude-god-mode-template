@@ -44,7 +44,8 @@ agents:
   performance-optimizer:
     skills: []
   refactor-cleaner:
-    skills: []
+    skills:
+    - code-simplification-patterns
   e2e-runner:
     skills: []
   doc-updater:
@@ -54,8 +55,6 @@ agents:
     skills:
     - project-wiki
   silent-failure-hunter:
-    skills: []
-  code-simplifier:
     skills: []
   loop-operator:
     skills:
@@ -94,8 +93,6 @@ commands:
     when: Buscar y evaluar paquetes Laravel via LaraPlugins.io
   continuous-learning-v2:
     when: Extrae patrones de sesiones y los persiste
-  continuous-learning:
-    when: v1 fallback — extrae patrones de sesiones
   ck:
     when: Persistent memory per-project, git-aware tracking
   plankton-code-quality:

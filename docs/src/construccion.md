@@ -8,10 +8,10 @@
 
 ```text
 claude-god-mode-template/
-├── agents/                  ← Fuente de verdad de los 22 agentes (make install los copia a ~/.claude/agents/)
+├── agents/                  ← Fuente de verdad de los 35 agentes (make install los copia a ~/.claude/agents/)
 ├── hooks/
 │   └── session-consolidate.sh  ← Hook de memoria (make install → ~/.claude/hooks/)
-├── skills/                  ← 140 skills organizadas por nombre
+├── skills/                  ← 139 skills organizadas por nombre
 │   ├── laravel-patterns/
 │   │   └── SKILL.md
 │   ├── jedi-review/

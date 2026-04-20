@@ -45,7 +45,7 @@ workflows:
     steps:
       - agent: planner
         description: "Planificar el refactoring"
-      - agent: code-simplifier
+      - agent: refactor-cleaner
         description: "Simplificar código"
       - agent: code-reviewer
         description: "Revisar cambios"
@@ -66,7 +66,7 @@ COMMANDS_COMMON = {
     "benchmark": 'Medir rendimiento antes/después de un PR o cambio',
 }
 
-# ─── Agent builder (21 agents, language-specific ones vary) ───────────────────
+# ─── Agent builder (20 agents, language-specific ones vary) ───────────────────
 
 def build_agents(
     *,
@@ -114,13 +114,12 @@ def build_agents(
     agent("security-reviewer", sec_all)
     agent("database-reviewer", db_all)
     agent("performance-optimizer", [])
-    agent("refactor-cleaner", [])
+    agent("refactor-cleaner", ["code-simplification-patterns"])
     agent("e2e-runner", e2e_skills)
     agent("doc-updater", [])
     agent("memory-consolidator", [])
     agent("build-error-resolver", [])
     agent("loop-operator", ["safety-guard"])
-    agent("code-simplifier", [])
     agent("silent-failure-hunter", [])
     agent("comment-analyzer", [])
     agent("conversation-analyzer", [])

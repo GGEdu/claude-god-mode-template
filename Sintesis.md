@@ -225,6 +225,7 @@ No toda tarea necesita plan formal. El sistema distingue dos modos:
 **/PLAN.md
 **/RESEARCH.md
 **/VERIFICATION.md
+**/pipeline.yaml
 .claude/memory/**
 docs/src/wiki/**
 **/*.log
@@ -309,6 +310,8 @@ last_gate_passed: null      # GATE-1 | GATE-2 | GATE-3
 last_updated: "2026-04-17T10:30:00Z"
 blocked_since: null         # Timestamp si está en BLOCKED
 error_log: []               # Últimos errores para diagnóstico
+workflow_active: null        # Nombre del workflow activo (null si no hay)
+workflow_step: 0             # Paso actual del workflow (0 si no hay)
 ```
 
 **Protocolo de actualización:**
@@ -324,6 +327,7 @@ error_log: []               # Últimos errores para diagnóstico
 
 ```
 .claude/
+├── pipeline.yaml             # Workflows de agentes (§workflow-runner)
 ├── plans/
 │   ├── PLAN.md               # Plan activo (el vigente)
 │   └── PLAN.v1.md            # Snapshots inmutables (§1.8)
@@ -347,6 +351,7 @@ proyecto/
 └── .claude/
     ├── settings.json          # Permisos y config
     ├── settings.local.json    # Permisos personales (gitignored)
+    ├── pipeline.yaml          # Workflows de agentes (/workflow)
     ├── rules/                 # Reglas modulares por tema
     ├── commands/              # Slash commands → /project:nombre
     ├── skills/                # Workflows auto-invocados
@@ -418,7 +423,7 @@ proyecto/
 * **Corrección:** `/rewind` (doble Esc) para borrar contexto fallido. `[BUILT-IN]`
 * **Regla de los 2 intentos:** 2 correcciones fallidas → `/clear` + reescribir incorporando lo aprendido. `[BUILT-IN]`
 * **Investigaciones acotadas:** Nunca "investiga X" sin scope. Acotar o delegar a subagentes.
-* **Refactorización:** `/simplify` — invocar agentes de revisión (code-simplifier, refactor-cleaner). `[TO BUILD]` — crear como slash command que invoca el agente.
+* **Refactorización:** `/simplify` — invocar agente `refactor-cleaner` (simplificación + cleanup de código). `[TO BUILD]` — crear como slash command que invoca el agente.
 * **Tareas masivas:** `/batch` — dividir en worktrees independientes con supervisión. `[TO BUILD]` — crear como slash command que orquesta worktrees.
 
 ### 4.3 Ritual de Fin de Día
@@ -726,16 +731,18 @@ exit 2 → error del hook (fail-closed: se trata como block)
 
 **Estructura de archivos:**
 ```
-.claude/hooks/
-├── plan-gate.py              # GATE-2: verifica PLAN.md antes de código (+ FAST_PATH)
-├── tdd-gate.py               # Verifica tests antes de implementación (configurable)
-├── commit-checklist.py       # GATE-3: checklist pre-commit
-├── non-goal-guard.py         # Detecta writes a paths prohibidos
-├── plan-drift-detector.py    # Warning si archivo no está en plan
-├── hook-health-check.py      # Dry-run de todos los hooks al inicio + inicializa state.yaml
-├── session-read-logger.py    # PostToolUse(Read): registra lecturas en session-reads.log
-├── auto-format.sh            # Ejecuta formatter (bash trivial)
-└── session-consolidate.py    # Promoción + archivado al cierre
+hooks/                        # Fuente de verdad (make install → ~/.claude/hooks/)
+└── session-consolidate.sh    # IMPLEMENTADO: Stop hook — consolidación al cierre
+
+# [TO BUILD] — hooks descritos en este documento, pendientes de implementación:
+# .claude/hooks/plan-gate.py              # GATE-2: verifica PLAN.md antes de código (+ FAST_PATH)
+# .claude/hooks/tdd-gate.py               # Verifica tests antes de implementación (configurable)
+# .claude/hooks/commit-checklist.py       # GATE-3: checklist pre-commit
+# .claude/hooks/non-goal-guard.py         # Detecta writes a paths prohibidos
+# .claude/hooks/plan-drift-detector.py    # Warning si archivo no está en plan
+# .claude/hooks/hook-health-check.py      # Dry-run de todos los hooks al inicio + inicializa state.yaml
+# .claude/hooks/session-read-logger.py    # PostToolUse(Read): registra lecturas en session-reads.log
+# .claude/hooks/auto-format.sh            # Ejecuta formatter (bash trivial)
 ```
 
 **Ejemplo de implementación — `plan-gate.py`:**
@@ -1142,7 +1149,7 @@ Fórmula: `[Rol] + [Tarea] + [Contexto]`
 4. **`rules/`** → Cuando CLAUDE.md supere ~50 líneas, fragmentar con path scoping.
 5. **`~/.claude/CLAUDE.md`** → Preferencias personales globales.
 6. **Hooks de enforcement** → Instalar hooks de §10.1 para gates obligatorios.
-7. **Skills y Agents** → Cuando un workflow complejo se repita. No antes.
+7. **Skills, Agents y Workflows** → Cuando un workflow complejo se repita. `pipeline.yaml` define la secuencia de agentes por tipo de tarea. `make init-project` lo instala.
 8. **Circuit breakers** → Configurar antes de habilitar cualquier loop/routine.
 
 > **Regla del 95%:** Los pasos 1-6 cubren el 95% de las necesidades.

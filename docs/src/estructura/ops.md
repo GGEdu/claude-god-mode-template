@@ -53,7 +53,7 @@ python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir
 
 ### Cuándo se ejecuta
 
-- `make install` → compila los 22 agentes sin skills (instalación global)
+- `make install` → compila los 35 agentes sin skills (instalación global)
 - `make dev-stack STACK=x` → compila agentes con skills del stack para este repo
 - `make dev-stack STACK=x LAYERS=react` → stack + layer técnico
 - `make dev-stack STACK=x DOMAIN=y` → stack + domain overlay
@@ -197,6 +197,83 @@ Se puede invocar manualmente o integrar en el `Stop` hook de Claude Code para qu
 
 ---
 
+## `generate-stacks.py`
+
+**Propósito:** Genera los stacks con estructura consistente usando templates internos. Produce `stack.yaml` y `pipeline.yaml` para todos los stacks a partir de definiciones centralizadas en el script.
+
+### Uso
+
+```bash
+python3 ops/generate-stacks.py
+```
+
+> **Nota:** Solo ejecutar si se necesita regenerar todos los stacks desde cero. Normalmente los stacks se editan directamente.
+
+---
+
+## `copy-commands.py`
+
+**Propósito:** Copia los comandos slash (`.claude/commands/`) del stack activo al proyecto destino, aplicando overlays de layers y domains en orden.
+
+### Uso
+
+```bash
+python3 ops/copy-commands.py <project_path> <stack_yaml> [overlay.yaml...]
+```
+
+Envuelto por `make init-project` — raramente se invoca directamente.
+
+---
+
+## `distribute-agents.py`
+
+**Propósito:** Distribuye los agentes compilados a formatos alternativos: Antigravity (`.agent/skills/`) y GitHub Copilot (`.github/prompts/`). Excluye agentes que requieren MCP (solo funcionan en Claude Code).
+
+### Uso
+
+```bash
+python3 ops/distribute-agents.py <stack.yaml> <agents_dir> <project_dir>
+```
+
+---
+
+## `install-global.py`
+
+**Propósito:** Instala en `~/.claude/` solo los agentes y skills que realmente se usan (referenciados en algún `stack.yaml` o `domain.yaml`). Evita instalar assets huérfanos globalmente.
+
+### Uso
+
+```bash
+python3 ops/install-global.py ~/.claude
+```
+
+Envuelto por `make install`.
+
+---
+
+## `test-suite.py`
+
+**Propósito:** Suite de tests integral. Inicializa cada stack en `proyectos/<stack>/`, verifica todos los archivos generados, testea cada skill embebida, y persiste el progreso en `.claude/memory/` para sobrevivir crashes.
+
+### Uso
+
+```bash
+python3 ops/test-suite.py [--stack STACK] [--resume] [--domain DOMAIN] [--no-invoke] [--keep] [--verbose]
+```
+
+| Flag | Descripción |
+|------|-------------|
+| `--stack STACK` | Ejecutar solo ese stack |
+| `--resume` | Reanudar desde el último checkpoint |
+| `--domain DOMAIN` | Probar también un domain overlay |
+| `--no-invoke` | Solo estructura + embed, sin invocaciones `claude --print` |
+| `--keep` | Mantener directorios `proyectos/` tras los tests |
+| `--verbose` | Mostrar detalles en fallos |
+
+Envuelto por `make test-suite`.
+
+---
+
 ## `triggers/`
 
 Directorio con triggers para ejecución autónoma programada vía Antigravity. Cada archivo YAML define un trabajo que Claude Code ejecuta según un cron, sin sesión abierta.
@@ -222,6 +299,7 @@ prompt: |
 | `weekly-security-audit.yaml` | Lunes 09:00 UTC | Auditoría de seguridad de archivos modificados en 7 días |
 | `weekly-docs-health.yaml` | Martes 09:00 UTC | Verifica que la documentación esté actualizada |
 | `daily-memory-consolidation.yaml` | Diario 07:00 UTC | Consolida `.claude/memory/` si crece demasiado |
+| `weekly-repo-discovery.yaml` | Domingos 09:00 UTC | Descubre repos de GitHub con potencial para integración; screening Haiku de 12-15 candidatos; genera lista para deep-dive manual |
 
 ### Activación
 

@@ -44,8 +44,8 @@ make dev-stack STACK=laravel LAYERS=react
 # En un proyecto nuevo
 make init-project STACK=laravel LAYERS=react PROJECT=/ruta/al/proyecto
 
-# Múltiples layers (comma-separated)
-make init-project STACK=laravel LAYERS=react,vue PROJECT=/ruta
+# Múltiples layers (comma-separated, cuando existan varios)
+make init-project STACK=laravel LAYERS=react PROJECT=/ruta
 
 # Stack + layers + domain
 make init-project STACK=python-api LAYERS=react DOMAIN=healthcare PROJECT=/ruta

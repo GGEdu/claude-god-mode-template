@@ -1,6 +1,6 @@
 # Directorio: `agents/`
 
-Fuente de verdad de los **22 agentes** del template. `make install` los compila (con skills embebidas) y los copia a `~/.claude/agents/`.
+Fuente de verdad de los **35 agentes** del template. `make install` los compila (con skills embebidas) y los copia a `~/.claude/agents/`.
 
 > Los archivos en `agents/` son la base. **Nunca editar directamente** `.claude/agents/` — esos son artefactos compilados por `ops/compile-agents.py`.
 
@@ -22,7 +22,7 @@ El desarrollador **no invoca skills manualmente** — los agentes ya conocen sus
 
 ---
 
-## Inventario de los 22 agentes
+## Inventario de los 35 agentes
 
 ### Planificación
 
@@ -36,7 +36,6 @@ El desarrollador **no invoca skills manualmente** — los agentes ya conocen sus
 | Agente | Descripción | Modelo | Herramientas |
 |--------|-------------|--------|--------------|
 | **code-reviewer** | Revisión experta de código para calidad, seguridad y mantenibilidad. Usar INMEDIATAMENTE después de escribir o modificar código. OBLIGATORIO para todos los cambios. | sonnet | Read, Grep, Glob, Bash |
-| **code-simplifier** | Refactoriza código para reducir carga cognitiva. Aplica early returns, async/await, extracción de lógica anidada. Preserva comportamiento exactamente. Usar después de que una feature funciona y tiene tests. | sonnet | Read, Grep, Glob, Bash, Edit |
 | **comment-analyzer** | Evalúa calidad de comentarios en 4 dimensiones: precisión, completitud, valor a largo plazo, elementos engañosos. Usar en PRs con cambios de comentarios o periódicamente en lógica de negocio. | sonnet | Read, Grep, Glob, Bash |
 | **typescript-reviewer** | Revisor experto de TypeScript/JavaScript. Especializado en type safety, async correctness, seguridad Node/web, patrones idiomáticos. OBLIGATORIO para proyectos TS/JS. | sonnet | Read, Grep, Glob, Bash |
 | **python-reviewer** | Revisor experto de Python. PEP 8, idiomas Pythónicos, type hints, seguridad, rendimiento. OBLIGATORIO para proyectos Python. | sonnet | Read, Grep, Glob, Bash |
@@ -69,23 +68,65 @@ El desarrollador **no invoca skills manualmente** — los agentes ya conocen sus
 | Agente | Descripción | Modelo | Herramientas |
 |--------|-------------|--------|--------------|
 | **build-error-resolver** | Especialista en resolución de errores de build y TypeScript. Usar PROACTIVAMENTE cuando el build falla. Solo corrige errores con diffs mínimos — sin ediciones arquitectónicas. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
-| **refactor-cleaner** | Especialista en limpieza y consolidación de código muerto. Ejecuta knip, depcheck, ts-prune para identificar código sin usar y lo elimina de forma segura. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
+| **refactor-cleaner** | Especialista en limpieza y consolidación de código muerto. Ejecuta knip, depcheck, ts-prune para identificar código sin usar y lo elimina de forma segura. También refactoriza para reducir carga cognitiva (early returns, async/await, extracción de lógica anidada) preservando comportamiento. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
 | **doc-updater** | Especialista en documentación y codemaps. Actualiza READMEs, guías, genera docs/CODEMAPS/*. | haiku | Read, Write, Edit, Bash, Grep, Glob |
 | **loop-operator** | Ejecuta loops de tareas autónomas multi-paso de forma segura. Para tareas que requieren 5+ pasos secuenciales. Incluye detección de stalls, checkpoints y escalation gates. Diferente de planner (que crea planes). | sonnet | Read, Grep, Glob, Bash, Edit, Write |
 | **memory-consolidator** | Consolida y comprime archivos en `.claude/memory/` cuando crecen demasiado. Invocar cuando un archivo supere 150 líneas o el directorio supere 600 líneas totales. | sonnet | Read, Write, Bash |
 | **docs-lookup** | Busca documentación actualizada de librerías, frameworks y APIs usando Context7 MCP. Usar cuando el usuario pregunta cómo usar una librería o necesita ejemplos de código actualizados. | sonnet | Read, Grep, mcp__context7__ |
 | **github-orchestrator** | Publica resultados de agentes en GitHub: comenta reviews en PRs, crea issues desde reportes de auditoría. Detecta duplicados y gestiona etiquetas. Usar cuando necesites que la salida de un agente sea visible en el repo remoto. | sonnet | Read, Bash |
+| **harness-optimizer** | Analiza y mejora la configuración del harness de agentes local (settings.json, stack.yaml, calidad de agentes). Activo en todos los stacks. | sonnet | Read, Grep, Glob, Bash, Edit |
+
+### Revisores por lenguaje
+
+Activos solo en el stack correspondiente. Revisores especializados con idiomas, patrones y herramientas nativas de cada lenguaje.
+
+| Agente | Descripción | Modelo | Herramientas |
+|--------|-------------|--------|--------------|
+| **go-reviewer** | Revisor experto de Go. Concurrencia, patrones idiomáticos, seguridad. Usa golangci-lint. OBLIGATORIO para proyectos Go. | sonnet | Read, Grep, Glob, Bash |
+| **java-reviewer** | Revisor experto de Java/Spring Boot. Arquitectura en capas, JPA, Maven/Gradle, checkstyle. OBLIGATORIO para proyectos Java. | sonnet | Read, Grep, Glob, Bash |
+| **kotlin-reviewer** | Revisor experto de Kotlin. Patrones idiomáticos, Compose, coroutines, KMP, detekt. OBLIGATORIO para proyectos Kotlin. | sonnet | Read, Grep, Glob, Bash |
+| **cpp-reviewer** | Revisor experto de C++. Memory safety, idiomas C++20, cppcheck, clang-tidy. OBLIGATORIO para proyectos C++. | sonnet | Read, Grep, Glob, Bash |
+| **csharp-reviewer** | Revisor experto de C#/.NET. Async patterns, nullable, dotnet build. Listo para activar en cualquier stack .NET. | sonnet | Read, Grep, Glob, Bash |
+| **flutter-reviewer** | Revisor experto de Flutter/Dart. Widget best practices, flutter analyze, patrones Dart. OBLIGATORIO para proyectos Flutter. | sonnet | Read, Grep, Glob, Bash |
+| **python-reviewer** | Revisor experto de Python. PEP 8, idiomas Pythónicos, type hints, mypy, ruff. OBLIGATORIO para proyectos Python. | sonnet | Read, Grep, Glob, Bash |
+| **typescript-reviewer** | Revisor experto de TypeScript/JavaScript. Type safety, async correctness, seguridad Node/web. OBLIGATORIO para proyectos TS/JS. | sonnet | Read, Grep, Glob, Bash |
+
+### Resolvedores de build por lenguaje
+
+Activos solo en el stack correspondiente. Corrigen errores de build con diffs mínimos, sin ediciones arquitectónicas.
+
+| Agente | Descripción | Modelo | Herramientas |
+|--------|-------------|--------|--------------|
+| **go-build-resolver** | Resolución de errores de `go build`, `vet` y módulos. Stack: go-api. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
+| **java-build-resolver** | Resolución de errores Maven/Gradle y compilación Java/Spring. Stack: java-springboot. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
+| **kotlin-build-resolver** | Resolución de errores Kotlin/Gradle. Stack: kotlin-multiplatform. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
+| **cpp-build-resolver** | Resolución de errores CMake, linker y templates C++. Stack: cpp. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
+| **dart-build-resolver** | Resolución de errores pub, build_runner y Flutter. Stack: flutter. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
+
+### UI y evaluación
+
+| Agente | Descripción | Modelo | Herramientas |
+|--------|-------------|--------|--------------|
+| **ui-engineer** | Especialista UI/UX — construye nuevos componentes y mejora los existentes. Modo pasivo (revisa) y modo CLI (`/ui-engineer`). Activo en stacks con frontend. | sonnet | Read, Write, Edit, Bash, Grep, Glob |
+| **repo-reviewer** | Evalúa un repositorio GitHub externo (score/100) para determinar si aporta skills/agents/rules al template. Flujo formal Haiku screening → Sonnet deep-dive. | sonnet | Read, Bash, Glob, Grep |
 
 ---
 
 ## Activación por stack
 
-Los stacks activan 20 agentes comunes, más 2 agentes dependientes del lenguaje:
+Los stacks activan 20 agentes comunes, más 15 agentes especializados por lenguaje/stack:
 
 | Agente | Stacks donde se incluye |
 | --- | --- |
 | **typescript-reviewer** | laravel (con `LAYERS=react`), nextjs-saas, nuxt-saas — stacks con frontend TypeScript, o cualquier stack con `LAYERS=react` |
 | **python-reviewer** | odoo, python-api, ml-pytorch (stacks Python) |
+| **go-reviewer** + **go-build-resolver** | go-api |
+| **java-reviewer** + **java-build-resolver** | java-springboot |
+| **kotlin-reviewer** + **kotlin-build-resolver** | kotlin-multiplatform |
+| **cpp-reviewer** + **cpp-build-resolver** | cpp |
+| **flutter-reviewer** + **dart-build-resolver** | flutter |
+| **ui-engineer** | nextjs-saas, nuxt-saas, laravel-livewire (stacks con frontend) |
+| **harness-optimizer** | Todos los 15 stacks |
 | Resto (20) | Todos los 15 stacks |
 
 ---
