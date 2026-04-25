@@ -1,0 +1,61 @@
+name: requirements-engineering
+description: "Ingeniería de requisitos: contexto bruto → Epics → Features → backlog priorizado MoSCoW → C4/STRIDE → GitHub Issues. Composable sobre cualquier stack tecnológico. Adaptado de Maya-AQSS/agentics-extractor-requisitos."
+
+# Esta layer NO añade un frontend ni cambia el linter/tests del stack base.
+# Añade un set de agentes + comandos + plantillas + pipeline workflows
+# orientado al proceso PRE-implementación (descubrimiento de producto).
+
+agent_skills:
+  architect:
+    - requirements-stride
+  business-analyst:
+    - requirements-stride   # contexto cruzado para clasificación por categoría universal
+
+agents:
+  # Agentes nuevos que esta layer aporta al sistema (top-level en agents/).
+  # El init-project los activa solo cuando esta layer está seleccionada.
+  - business-analyst
+  - change-manager
+
+commands:
+  iniciar-requisitos:
+    when: "Al iniciar un proyecto greenfield o derivar Epics+Features desde notas de negocio"
+    file: commands/iniciar-requisitos.md
+  revisar-cambios:
+    when: "Cuando llegan cambios sobre backlog ya consolidado (reunión cliente, cambio de prioridad)"
+    file: commands/revisar-cambios.md
+
+workflows:
+  # Workflows que esta layer añade a .claude/pipeline.yaml.
+  # El compositor de pipelines del init-project los mergeará con los workflows base.
+  - requirements
+  - change-review
+
+rules:
+  - requirements-workflow.md
+
+templates:
+  feature_backlog: templates/feature-backlog.md
+  change_request: templates/change-request.md
+
+scripts:
+  upload_backlog_to_github: scripts/upload_backlog_to_github.sh
+
+# Outputs canónicos que el pipeline genera en disco. Estos paths se crean
+# bajo el proyecto destino (no bajo el template) cuando se ejecutan las fases.
+canonical_outputs:
+  master_context: docs/src/0_descripcion_proyecto.md     # input maestro (rellenar antes)
+  changes_log: docs/src/0_cambios_requisitos.md          # input para Fase 7
+  epics_features: docs/src/1_epics_and_features.md       # output Fase 1
+  architecture_risks: docs/src/2_architecture_risks.md   # output Fase 2
+  c4_diagrams: docs/src/3_c4_diagrams.md                  # output Fase 4
+  backlog_dir: docs/src/backlog/                         # output Fase 3 (1 .md por Feature)
+  audit_log: docs/src/AUDIT_LOG.md                       # append-only por cada fase
+  error_prevention: docs/src/ERROR_PREVENTION_LOG.md     # lecciones aprendidas
+
+prerequisites:
+  - "gh CLI >= 2.40 autenticado para Fase 6 (subida a GitHub Issues)"
+  - "jq instalado"
+  - "GitHub Project con campo Single-Select 'Priority' (Must / Should / Could)"
+
+incompatibilities: []   # composable con cualquier tech stack

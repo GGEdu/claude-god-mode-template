@@ -178,9 +178,41 @@ workflows:
 | `agent` | string | Agent name to invoke |
 | `audit` | bool | Run ops/audit-task.sh |
 | `description` | string | What this step does |
-| `parallel_with` | string | Run in parallel with named agent |
+| `parallel_with` | string | Run in parallel with named agent (one) |
+| `parallel_with_agent` | string | Alias of `parallel_with`; use when fan-out is by agent name |
 | `always` | bool | Run even if previous steps failed |
 | `continue_on_failure` | bool | Don't stop pipeline if this step fails |
+| `skill` | string | Activate this skill on the agent for this step (e.g. `requirements-stride`) |
+| `outputs` | array<string> | File paths or directories the step is expected to produce |
+| `approval_gate` | object | Pause after step until user confirms (see below) |
+
+### Workflow-Level Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `description` | string | Human-readable summary |
+| `layer` | string | Layer that owns this workflow (e.g. `requirements-engineering`); only available when that layer is active |
+| `re_entrant` | bool | Workflow may be invoked multiple times in the same project; each run logs as a separate entry |
+| `steps` | array | Steps as documented above |
+
+### `approval_gate` Object
+
+```yaml
+approval_gate:
+  message: "Plan ready. Approve to proceed to TDD?"
+  blocking: true   # default true; set false to allow auto-approval in autonomous mode
+  on_reject: stop  # stop | retry | skip   (default: stop)
+```
+
+**Behavior:**
+
+1. After the step finishes, print the `message` to chat.
+2. Wait for user input. Accept `y` / `yes` / Enter to approve, `n` / `no` to reject.
+3. If approved → continue to next step.
+4. If rejected → apply `on_reject` (default: halt the workflow with a saved cursor in `.claude/state/<workflow>.yaml` for resumption).
+5. In autonomous mode (`/loop` or scheduled triggers): if `blocking: true`, abort and notify; if `blocking: false`, auto-approve and log.
+
+**Outputs verification:** if a step declares `outputs:`, verify each path exists after execution. If a declared output is missing and `continue_on_failure` is not true, mark the step as `incomplete` and trigger `on_reject`.
 
 ## Task-Level Memory
 
