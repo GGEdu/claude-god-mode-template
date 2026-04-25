@@ -342,22 +342,31 @@ workflow_step: 0             # Paso actual del workflow (0 si no hay)
 
 ## 3. Anatomía del Repositorio `[BUILT-IN]`
 
-### 3.1 Proyecto (`.claude/` — committed, compartido)
+### 3.1 Proyecto (`.claude/` — parcialmente committed)
 
 ```
 proyecto/
 ├── CLAUDE.md                  # Reglas del equipo (~200 líneas máx)
 ├── CLAUDE.local.md            # Overrides personales (gitignored)
 └── .claude/
-    ├── settings.json          # Permisos y config
+    ├── settings.json          # Permisos y config (committed)
     ├── settings.local.json    # Permisos personales (gitignored)
-    ├── pipeline.yaml          # Workflows de agentes (/workflow)
-    ├── rules/                 # Reglas modulares por tema
-    ├── commands/              # Slash commands → /project:nombre
-    ├── skills/                # Workflows auto-invocados
-    ├── agents/                # Sub-agentes especializados
-    └── hooks/                 # Hooks programáticos (enforcement)
+    ├── pipeline.yaml          # Workflows de agentes (committed) → /workflow-runner
+    ├── pipeline.schema.yaml   # Documentación formal de la gramática (committed)
+    ├── rules/                 # Reglas modulares (gitignored — instalado por stack)
+    ├── commands/              # Slash commands (gitignored — copia stack-specific)
+    ├── skills/                # Workflows auto-invocados (gitignored — copia stack-specific)
+    ├── agents/                # Sub-agentes especializados (gitignored — copia stack-specific)
+    ├── hooks/                 # Hooks programáticos (committed — enforcement universal)
+    ├── memory/                # Memoria persistente (parcial gitignored)
+    │   ├── lessons/           # Lessons del Self-Improvement Loop §1.8
+    │   ├── plan-drift.log    # Log de violaciones de non-goals
+    │   └── commit-bypass.log  # Audit trail de --no-verify
+    ├── plans/                 # PLAN.md activo + snapshots PLAN.v*.md
+    └── state.yaml             # Estado de la state machine (gitignored, §2.6)
 ```
+
+> **Patrón template/instalado**: el catálogo completo (`agents/`, `skills/`, `rules/`, `stacks/` en la raíz del repo) NO está en `.claude/`. `make init-project STACK=<stack>` filtra por stack y copia a `.claude/agents/`, `.claude/skills/`, `.claude/rules/`. Por esto `.claude/agents/` puede tener menos entries que el catálogo raíz `/agents/` — es esperado.
 
 ### 3.2 Global (`~/.claude/` — personal)
 
