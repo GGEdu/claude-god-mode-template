@@ -1,0 +1,89 @@
+# Schema documentado de pipeline.yaml (CONT-7)
+#
+# Este archivo NO es ejecutado por workflow-runner — es la referencia formal
+# de la gramática que pipeline.yaml debe seguir. Cuando crees un workflow nuevo,
+# valida tu YAML mentalmente contra este documento.
+#
+# Si quieres validación automática, usa un validador de JSON Schema sobre
+# pipeline.yaml apuntando a las definiciones de abajo.
+
+# ── Estructura raíz ──────────────────────────────────────────────────────────
+# Un archivo pipeline.yaml tiene exactamente una clave de nivel raíz: `workflows`.
+workflows:
+  # Cada clave bajo workflows es el nombre del workflow (ej. "feature", "hotfix").
+  # Este nombre es lo que el usuario usa al invocar: /workflow-runner <nombre>
+  example-workflow:
+    # ── Campos del workflow ──────────────────────────────────────────────────
+    description: "Descripción humana del workflow (string, obligatorio)"
+    # `steps` es la secuencia de pasos. Lista (orden importa).
+    steps:
+      # ── Tipos de step ────────────────────────────────────────────────────
+      # Cada step es un objeto con UNA de estas claves principales:
+      #   - `agent`: invoca un sub-agente (de .claude/agents/)
+      #   - `audit`: ejecuta verificaciones automáticas (CI checks)
+      #   - `skill`: invoca un slash-command (de .claude/commands/)
+
+      # Step tipo `agent`
+      - agent: "nombre-del-agente"     # obligatorio: nombre exacto sin .md
+        description: "Qué hace este step (string)"      # opcional pero recomendado
+        # Modificadores (todos opcionales):
+        parallel_with: "otro-agente"   # ejecuta en paralelo con el step que invocó "otro-agente" inmediatamente antes
+        always: true                   # se ejecuta incluso si steps anteriores fallaron (cleanup, logging)
+        continue_on_failure: true      # si este step falla, los siguientes siguen ejecutándose
+        timeout_minutes: 30            # default: 60. Timeout duro para el agente
+
+      # Step tipo `audit`
+      - audit: true                    # obligatorio: ejecuta los checks declarados
+        description: "Linting + tests + cobertura"
+        # Cuando audit es true, workflow-runner ejecuta:
+        #   1. Linter del stack (ruff, eslint, pint, etc.)
+        #   2. Test suite con cobertura
+        #   3. Verificación de cobertura ≥ 80% (95% si SCOPE=security)
+        #   4. Hook hook-health-check.py
+        # Si cualquiera falla, marca el step como failed.
+
+      # Step tipo `skill`
+      - skill: "nombre-del-skill"      # obligatorio: nombre del slash-command sin /
+        description: "Invoca /jedi-review"
+
+# ── Semántica detallada ──────────────────────────────────────────────────────
+#
+# parallel_with:
+#   Funciona como sigue: el step con `parallel_with: A` se ejecuta en paralelo
+#   con el step que invocó al agente A inmediatamente antes en la lista de steps.
+#   Si A no aparece antes en la lista → error de validación al cargar pipeline.yaml.
+#   El workflow espera a que ambos terminen antes de continuar.
+#
+#   Ejemplo: code-reviewer y security-reviewer en paralelo:
+#     - agent: code-reviewer
+#     - agent: security-reviewer
+#       parallel_with: code-reviewer
+#
+# always:
+#   Si `always: true`, el step se ejecuta incluso si un step previo falló.
+#   Útil para cleanup, memoria, notificaciones. Si el workflow es abortado por
+#   el usuario, los `always` se intentan ejecutar igualmente (best-effort).
+#
+# continue_on_failure:
+#   Si `continue_on_failure: true` y este step falla, los steps posteriores
+#   siguen ejecutándose. El workflow termina con `status: partial`.
+#   Si NO está presente y un step falla, el workflow se aborta inmediatamente.
+#
+# Combinación: un step puede tener varios modificadores.
+#   - agent: docs-lookup
+#     continue_on_failure: true     # si falla, no aborta
+#     description: "Exploración previa, fallo no crítico"
+#
+# ── Ejemplos completos ──────────────────────────────────────────────────────
+# Ver .claude/pipeline.yaml para ejemplos reales.
+
+# ── Validación al ejecutar ──────────────────────────────────────────────────
+# workflow-runner valida en este orden antes de ejecutar:
+#   1. workflows existe y es dict
+#   2. El nombre solicitado existe como clave
+#   3. workflows[nombre].steps es lista no vacía
+#   4. Cada step tiene exactamente uno de: agent | audit | skill
+#   5. Si tiene parallel_with, el agente referenciado aparece antes en la lista
+#   6. Si tiene agent: <X>, el archivo .claude/agents/<X>.md existe
+#   7. Si tiene skill: <X>, el archivo .claude/commands/<X>.md existe
+# Falla con error claro si algún check no pasa.
