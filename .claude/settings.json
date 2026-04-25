@@ -20,8 +20,7 @@
       "Bash(ruff format*)",
       "Bash(make *)",
       "Read(/tmp/**)",
-      "Bash(stat .claude/memory/*.md)",
-      "mcp__filesystem__list_directory_with_sizes"
+      "Bash(stat .claude/memory/*.md)"
     ],
     "deny": [
       "Read(./.env)",
@@ -34,17 +33,108 @@
     "additionalDirectories": [
       "./.claude/memory",
       "./.claude/rules",
-      "./.claude/rules/common"
+      "./.claude/rules/common",
+      "./.claude/hooks"
     ]
   },
   "model": "sonnet",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/hook-health-check.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/plan-gate.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/tdd-gate.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/hook-health-check.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/plan-gate.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/tdd-gate.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/commit-checklist.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/non-goal-guard.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/plan-drift-detector.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/auto-format.sh; [ -f \"$f\" ] && bash \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/non-goal-guard.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/plan-drift-detector.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/auto-format.sh; [ -f \"$f\" ] && bash \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/session-read-logger.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/session-consolidate.sh"
+            "command": "f=.claude/hooks/session-consolidate.sh; g=$HOME/.claude/hooks/session-consolidate.sh; if [ -f \"$f\" ]; then bash \"$f\"; elif [ -f \"$g\" ]; then bash \"$g\"; else echo '{\"decision\":\"allow\",\"reason\":\"session-consolidate not installed\"}'; fi"
           }
         ]
       }

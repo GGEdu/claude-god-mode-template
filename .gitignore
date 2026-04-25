@@ -16,6 +16,18 @@ secrets/
 # Memoria de sesión de Claude (se regenera automáticamente vía hook)
 # Las decisiones permanentes van en docs/src/ — no en memory/
 .claude/memory/*.md
+.claude/memory/*.log
+.claude/memory/lessons/*.yaml
+!.claude/memory/lessons/_index.yaml
+!.claude/memory/lessons/README.md
+
+# Estado de la state machine (gitignored — local de sesión, no compartido)
+.claude/state.yaml
+.claude/session-reads.log
+
+# Snapshots inmutables del PLAN (Sintesis.md §1.8)
+PLAN.v*.md
+.claude/plans/PLAN.v*.md
 
 # Dependencias
 node_modules/

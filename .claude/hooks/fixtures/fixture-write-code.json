@@ -1,0 +1,6 @@
+{
+  "tool_name": "Write",
+  "tool_input": {"file_path": "src/test-file.ts", "content": "// test"},
+  "session_id": "health-check",
+  "timestamp": "2026-01-01T00:00:00Z"
+}
