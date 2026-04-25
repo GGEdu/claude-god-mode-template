@@ -34,7 +34,8 @@ Sigue la guía completa en [`docs/src/instalacion.md`](docs/src/instalacion.md).
 - **4 domain overlays** opcionales (`healthcare`, `ai-agent`, `content-creator`, `supply-chain`) — se combinan con cualquier tech stack
 - **35 agentes** especializados con skills embebidas por compilación (`planner`, `architect`, `tdd-guide`, `ui-engineer`, `repo-reviewer`, etc.)
 - **Pipeline workflows** (`.claude/pipeline.yaml`) ejecutables vía `/workflow-runner` para orquestación de ciclos de vida (`feature`, `hotfix`, `refactor`)
-- **139 skills** organizadas en `skills/` — activadas por stack, no globalmente
+- **140 skills** organizadas en `skills/` — activadas por stack, no globalmente
+- **Caveman selectivo** (`skills/caveman/`) — compresión de output 22–87% en agentes de acción (`refactor-cleaner`, `*-build-resolver`, `doc-updater`, `e2e-runner`, `memory-consolidator`, `loop-operator`); excluido de planner/architect/reviewers para preservar auditabilidad
 - **Sistema de memoria** en `.claude/memory/` — persistencia de decisiones, actualizada automáticamente al terminar cada sesión
 - **MCPs preconfigurados** — GitHub activo por defecto, NotebookLM y n8n opcionales
 
