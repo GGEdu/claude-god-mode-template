@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
 """GATE-2: Bloquea escritura de código fuente si no existe PLAN.md válido.
-   Implementa FAST_PATH bypass para tareas triviales (Sintesis.md §2.1)."""
+   Implementa FAST_PATH bypass para tareas triviales (Sintesis.md §2.1).
+
+   USA-4: actualiza .claude/state.yaml en cada transición (§2.6)."""
 import json, sys, os, fnmatch, subprocess
+
+# Importa helpers de state machine si están disponibles
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from _paths import transition_state
+    HAS_STATE = True
+except ImportError:
+    HAS_STATE = False
+    def transition_state(*args, **kwargs):
+        return {}
 
 WHITELIST = [
     "PLAN.md", "PLAN.v*.md", "RESEARCH.md", "VERIFICATION.md",
@@ -89,6 +101,8 @@ def main():
         if not valid:
             json.dump({"decision": "block", "reason": reason}, sys.stdout)
             sys.exit(1)
+        # GATE-2 pasado: PLAN existe y es válido → transicionar a EXECUTE
+        transition_state("EXECUTE", gate_passed="GATE-2", extra={"plan_path": plan_path})
         json.dump({"decision": "allow", "reason": f"PLAN.md válido ({plan_path})"}, sys.stdout)
         sys.exit(0)
 
@@ -98,6 +112,8 @@ def main():
         sys.exit(1)
 
     if is_trivial_change():
+        # FAST_PATH: cambio trivial sin PLAN — transicionar a FAST_PATH
+        transition_state("FAST_PATH", extra={"mode": "fast_path"})
         json.dump({"decision": "allow",
                    "reason": "FAST_PATH: cambio trivial (≤3 archivos, ≤50 líneas, no sensible)"}, sys.stdout)
         sys.exit(0)

@@ -514,6 +514,93 @@ test: ## Ejecuta la suite de tests integral (struct + embed + invoke)
 test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
 	python3 ops/test-suite.py --no-invoke
 
+# ---- DIAGNÓSTICO Y VERIFICACIÓN ----
+
+doctor: ## Diagnóstico completo de invariantes del template (USA-1: complementa make check)
+	@echo "🩺 Diagnóstico del template — verificando invariantes críticas..."
+	@echo ""
+	@echo "── 1. JSON/YAML de configuración ────────────────────"
+	@python3 -c "import json; json.load(open('.claude/settings.json'))" 2>/dev/null \
+		&& echo "  ✅ .claude/settings.json: JSON válido" \
+		|| echo "  ❌ .claude/settings.json: JSON inválido"
+	@python3 -c "import json; json.load(open('.mcp.json'))" 2>/dev/null \
+		&& echo "  ✅ .mcp.json: JSON válido" \
+		|| echo "  ❌ .mcp.json: JSON inválido"
+	@python3 -c "import yaml; yaml.safe_load(open('.claude/pipeline.yaml'))" 2>/dev/null \
+		&& echo "  ✅ .claude/pipeline.yaml: YAML válido" \
+		|| echo "  ❌ .claude/pipeline.yaml: YAML inválido"
+	@echo ""
+	@echo "── 2. Coherencia MCP permission vs declaración ──────"
+	@python3 -c "\
+import json; \
+allow = json.load(open('.claude/settings.json'))['permissions']['allow']; \
+mcp_perms = [p for p in allow if isinstance(p,str) and p.startswith('mcp__')]; \
+declared = list(json.load(open('.mcp.json'))['mcpServers'].keys()); \
+missing = [p for p in mcp_perms if p.split('__')[1] not in declared]; \
+print('  ✅ Todas las permissions MCP tienen servidor declarado' if not missing else '  ❌ Permissions MCP sin servidor: ' + str(missing))"
+	@echo ""
+	@echo "── 3. Hooks ejecutables ─────────────────────────────"
+	@for h in .claude/hooks/*.py .claude/hooks/*.sh; do \
+		[ -f "$$h" ] || continue; \
+		[ "$$(basename $$h)" = "_paths.py" ] && continue; \
+		if [ -x "$$h" ]; then \
+			echo "  ✅ $$h"; \
+		else \
+			echo "  ❌ $$h NO ejecutable (chmod +x falta)"; \
+		fi; \
+	done
+	@echo ""
+	@echo "── 4. Slash commands referenciados en CLAUDE.md ─────"
+	@if [ -f ".claude/CLAUDE.md" ]; then \
+		MISSING=0; \
+		for cmd in $$(grep -oE '`/[a-z][a-z-]+`' .claude/CLAUDE.md 2>/dev/null | tr -d '`/' | sort -u); do \
+			if [ -f ".claude/commands/$$cmd.md" ] || echo "$$cmd" | grep -qE "^(workflow|btw|fork|rewind|clear|memory|simplify|batch)$$"; then \
+				continue; \
+			fi; \
+			echo "  ⚠️  /$$cmd referenciado en CLAUDE.md pero .claude/commands/$$cmd.md no existe"; \
+			MISSING=$$((MISSING+1)); \
+		done; \
+		if [ $$MISSING -eq 0 ]; then echo "  ✅ Todos los slash commands citados existen"; fi; \
+	else \
+		echo "  ℹ️  Sin .claude/CLAUDE.md — skip"; \
+	fi
+	@true  # garantizar exit 0 del step
+	@echo ""
+	@echo "── 5. Estructura .claude/memory/lessons/ ────────────"
+	@[ -d ".claude/memory/lessons" ] \
+		&& echo "  ✅ .claude/memory/lessons/ existe" \
+		|| echo "  ❌ Falta .claude/memory/lessons/ (Sintesis.md §1.8)"
+	@[ -f ".claude/memory/lessons/_index.yaml" ] \
+		&& echo "  ✅ _index.yaml presente" \
+		|| echo "  ❌ Falta _index.yaml"
+	@[ -f ".claude/memory/lessons/README.md" ] \
+		&& echo "  ✅ README.md (schema) presente" \
+		|| echo "  ❌ Falta README.md de schema"
+	@echo ""
+	@echo "── 6. State machine ─────────────────────────────────"
+	@if [ -f ".claude/state.yaml" ]; then \
+		python3 -c "import yaml; s=yaml.safe_load(open('.claude/state.yaml')); \
+required=['session_id','current_state','mode','last_updated']; \
+missing=[k for k in required if k not in s]; \
+print('  ✅ state.yaml schema válido' if not missing else '  ❌ state.yaml falta: '+str(missing))"; \
+	else \
+		echo "  ℹ️  state.yaml no existe aún (se crea en primera sesión)"; \
+	fi
+	@echo ""
+	@echo "── 7. Pipeline.yaml referencia agents que existen ───"
+	@python3 -c "\
+import yaml; \
+p = yaml.safe_load(open('.claude/pipeline.yaml')); \
+import os; \
+agents_local = set(f.replace('.md','') for f in os.listdir('.claude/agents') if f.endswith('.md')) if os.path.isdir('.claude/agents') else set(); \
+agents_catalog = set(f.replace('.md','') for f in os.listdir('agents') if f.endswith('.md')) if os.path.isdir('agents') else set(); \
+agents_all = agents_local | agents_catalog; \
+missing = []; \
+[missing.append(s['agent']) for w in p.get('workflows',{}).values() for s in w.get('steps',[]) if 'agent' in s and s['agent'] not in agents_all]; \
+print('  ✅ Todos los agents en pipeline.yaml existen') if not missing else print('  ❌ Agents referenciados pero no existen: '+str(set(missing)))"
+	@echo ""
+	@echo "🩺 Diagnóstico completado."
+
 # ---- VERIFICACION ----
 
 check: ## Verifica que todo esta correctamente configurado

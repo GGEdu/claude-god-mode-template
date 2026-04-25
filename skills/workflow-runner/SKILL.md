@@ -16,8 +16,51 @@ Execute multi-agent workflows defined in `.claude/pipeline.yaml`.
 
 Triggered by:
 - `/workflow <name>` (e.g., `/workflow feature`, `/workflow hotfix`)
-- `/workflow` (lists available workflows)
+- `/workflow` or `/workflow --list` — lists available workflows from `.claude/pipeline.yaml`
 - Auto-detection when the user says "implementa X", "add feature X", "crea X" without specifying a workflow
+
+## List mode (`/workflow` or `/workflow --list`)
+
+When invoked without a workflow name (or with `--list`), the runner prints a menu:
+
+```
+Workflows disponibles en .claude/pipeline.yaml:
+
+  feature           Feature completa con planificación, TDD y revisión
+  hotfix            Fix rápido con revisión mínima
+  refactor          Mejora de código sin cambio de comportamiento
+  security-audit    Auditoría de seguridad exhaustiva
+  documentation    Actualización de documentación del proyecto
+  review            Revisión profunda de código existente
+
+Uso: /workflow <nombre>     (ej: /workflow feature)
+     /workflow --list       (este menú)
+     /workflow --describe <nombre>   (detalle de pasos)
+```
+
+**Implementación:** parsear `workflows:` keys del pipeline.yaml y mostrar nombre + description. No ejecutar ningún agente — solo descubrimiento.
+
+## Describe mode (`/workflow --describe <name>`)
+
+Imprime los steps del workflow nombrado para que el usuario sepa qué pasa al ejecutarlo:
+
+```
+Workflow: feature
+
+Pasos:
+  1. docs-lookup        Explorar codebase y documentación relevante
+                        (continue_on_failure: true)
+  2. planner            Crear plan de implementación
+  3. tdd-guide          Escribir tests primero, luego implementar
+  4. code-reviewer      Revisar calidad del código
+  5. security-reviewer  Verificar vulnerabilidades
+                        (parallel_with: code-reviewer)
+  6. [audit]            Ejecutar verificaciones automáticas
+  7. memory-consolidator Guardar decisiones en memoria
+                        (always: true)
+
+Total: 7 steps. Estimación: 15-30 min.
+```
 
 ## Workflow Routing (FAST_PATH Integration)
 

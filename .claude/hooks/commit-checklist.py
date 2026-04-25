@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
 """GATE-3: Verifica que existen tests con assertions antes de git commit (Sintesis.md §1.6).
-   Loggea bypasses --no-verify para audit trail (HIGH-1)."""
+   Loggea bypasses --no-verify para audit trail (HIGH-1).
+
+   USA-4: transiciona EXECUTE → VERIFY → DONE al pasar (§2.6)."""
 import json, sys, os, glob, subprocess
 from datetime import datetime, timezone
+
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from _paths import transition_state
+    HAS_STATE = True
+except ImportError:
+    HAS_STATE = False
+    def transition_state(*args, **kwargs):
+        return {}
 
 TEST_PATTERNS = [
     "tests/**/*.test.ts", "tests/**/*.spec.ts",
@@ -91,6 +102,8 @@ def main():
         }, sys.stdout)
         sys.exit(1)
 
+    # GATE-3 pasado: tests OK → transicionar a VERIFY/DONE
+    transition_state("VERIFY", gate_passed="GATE-3")
     json.dump({
         "decision": "allow",
         "reason": f"GATE-3: {len(test_files)} archivos de test con assertions — OK para commitear."
