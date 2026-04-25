@@ -516,6 +516,18 @@ test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
 
 # ---- DIAGNÓSTICO Y VERIFICACIÓN ----
 
+security-scan: ## Audita .claude/ con AgentShield (SUG-4 — vulnerabilidades, misconfigurations, prompt injection)
+	@if command -v npx >/dev/null 2>&1; then \
+		echo "🛡️  Ejecutando AgentShield sobre .claude/..."; \
+		npx --yes ecc-agentshield scan --min-severity medium 2>&1 | head -120; \
+		echo ""; \
+		echo "💡 Para reporte HTML completo: npx ecc-agentshield scan --format html > security-report.html"; \
+		echo "💡 Para auto-fix: npx ecc-agentshield scan --fix"; \
+	else \
+		echo "❌ npx no disponible. Instala Node.js."; \
+		exit 1; \
+	fi
+
 snapshot: ## Genera snapshot completo del repo en repomix-output.txt (SUG-5: para onboarding cold de un agente)
 	@if command -v npx >/dev/null 2>&1; then \
 		echo "📸 Generando snapshot con repomix..."; \

@@ -1,0 +1,38 @@
+name: weekly-security-scan
+description: "Ejecuta AgentShield semanalmente y abre issue con findings de severidad ≥ medium"
+schedule: "0 9 * * 1"
+agent: security-reviewer
+model: sonnet
+tags: [scheduled, security, agentshield]
+prompt: |
+  Ejecuta una auditoría de seguridad sobre la configuración de Claude Code de este proyecto.
+
+  PROTOCOLO:
+
+  1. Ejecuta el scan:
+     ```bash
+     npx --yes ecc-agentshield scan --format json --min-severity medium > /tmp/scan-result.json
+     ```
+
+  2. Parsea el resultado y separa:
+     - Critical: requieren acción inmediata
+     - High: requieren acción esta semana
+     - Medium: para backlog
+
+  3. Filtra falsos positivos conocidos (documentados en `.security-scan-ignore.md`):
+     - `--no-verify` en `.claude/hooks/commit-checklist.py` — implementación intencional del bypass logging
+     - `rm -rf` en `.claude/agents/harness-optimizer.md:187` — ejemplo de patrón a detectar, no comando ejecutable
+     - `--no-verify` en `.claude/agents/loop-operator.md:351` — instrucción de detección al agente
+     - `password` keyword en `.claude/agents/security-reviewer.md` — descripción de qué busca, no credencial real
+     - "Skill missing version metadata" — convención ECC 2.0 no aplicada al template
+
+  4. Si hay findings reales (no falsos positivos) post-filtrado:
+     - Abre issue en GitHub con título "[security-scan] N findings semana del YYYY-MM-DD"
+     - Incluye tabla con: file, severity, description, fix sugerido
+     - Asigna label "security-audit"
+
+  5. Si no hay findings reales: postea comment "✅ Auditoría limpia" en el issue de tracking (si existe).
+
+  6. Guarda el resultado JSON completo en `ops/sessions/security-scan-YYYY-MM-DD.json` para histórico.
+
+  Nunca apliques fixes automáticamente. Siempre escala a humano vía issue.
