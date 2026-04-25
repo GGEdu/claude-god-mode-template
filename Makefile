@@ -516,6 +516,25 @@ test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
 
 # ---- DIAGNÓSTICO Y VERIFICACIÓN ----
 
+snapshot: ## Genera snapshot completo del repo en repomix-output.txt (SUG-5: para onboarding cold de un agente)
+	@if command -v npx >/dev/null 2>&1; then \
+		echo "📸 Generando snapshot con repomix..."; \
+		npx repomix --ignore "**/node_modules/**,**/.git/**,**/dist/**,**/build/**,**/.claude/memory/**,**/.claude/state.yaml,**/.claude/session-reads.log,projects/**,proyectos/**" --output repomix-output.txt; \
+		echo "✅ Snapshot generado: repomix-output.txt ($$(wc -l < repomix-output.txt) líneas)"; \
+	else \
+		echo "❌ npx no disponible. Instala Node.js para usar repomix."; \
+		exit 1; \
+	fi
+
+lint-md: ## Linta archivos markdown del template con markdownlint-cli2 (SUG-6)
+	@if command -v npx >/dev/null 2>&1; then \
+		echo "🔍 Linting markdown..."; \
+		npx markdownlint-cli2 "**/*.md" "#node_modules" "#.claude/memory" "#projects" "#proyectos" || true; \
+	else \
+		echo "❌ npx no disponible. Instala Node.js para usar markdownlint."; \
+		exit 1; \
+	fi
+
 doctor: ## Diagnóstico completo de invariantes del template (USA-1: complementa make check)
 	@echo "🩺 Diagnóstico del template — verificando invariantes críticas..."
 	@echo ""

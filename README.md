@@ -10,6 +10,18 @@ Template maestro para proyectos con Claude Code: rules siempre activas, stacks c
 - Git
 - Cuenta Anthropic con plan Pro, Max o API activo
 
+### Dependencias Python
+
+Los hooks de `.claude/hooks/` usan `pyyaml` (parser robusto). Instalar con:
+
+```bash
+pip install -r requirements.txt
+# o con uv (recomendado):
+uv pip install -r requirements.txt
+```
+
+Si pyyaml no está disponible, los hooks degradan a un parser custom (más frágil, ver `non-goal-guard.py`).
+
 ## Quick Start
 
 ```bash

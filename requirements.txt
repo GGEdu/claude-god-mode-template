@@ -1,0 +1,15 @@
+# Dependencias Python del template
+#
+# Estos paquetes son usados por:
+# - .claude/hooks/*.py — hooks programáticos de enforcement
+# - ops/*.py — scripts de operación (compilación, generación, etc.)
+#
+# Instalación recomendada:
+#   pip install -r requirements.txt
+#   o con uv: uv pip install -r requirements.txt
+
+# Parser YAML robusto (usado por non-goal-guard.py, _paths.py)
+pyyaml>=6.0
+
+# Linter Python (referenciado por auto-format.sh)
+ruff>=0.1.0

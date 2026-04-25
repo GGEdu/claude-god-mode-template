@@ -27,7 +27,18 @@ WHITELIST = [
 
 PLAN_REQUIRED_FIELDS = ["plan_id", "files_affected", "acceptance_criteria"]
 PLAN_LOCATIONS = [".claude/plans/PLAN.md", "PLAN.md"]
-SENSITIVE_PATTERNS = ["**/auth/**", "**/security/**", "**/payment*/**", "**/admin/**"]
+# NEW-HIGH-10: cubre tanto archivos en directorios sensibles como archivos
+# con nombres sensibles (ej. src/auth.ts no estaba siendo flag).
+SENSITIVE_PATTERNS = [
+    # Directorios sensibles
+    "**/auth/**", "**/security/**", "**/payment*/**", "**/admin/**",
+    "**/secrets/**", "**/credentials/**", "**/billing/**",
+    # Archivos por nombre (cualquier ubicación)
+    "**/auth.*", "**/auth-*.*", "**/*-auth.*",
+    "**/security.*", "**/payment*.*",
+    "**/login.*", "**/oauth*.*", "**/jwt.*",
+    "**/credentials.*", "**/secrets.*",
+]
 
 FAST_PATH_MAX_FILES = 3
 FAST_PATH_MAX_LINES = 50

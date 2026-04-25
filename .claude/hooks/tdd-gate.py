@@ -5,9 +5,32 @@ import json, sys, os, fnmatch, glob, re
 
 CONFIG_DEFAULTS = {
     "mode": "warn",
-    "sourcePattern": "src/**/*.{ts,py,rs,php,js,tsx,jsx}",
-    "testPattern": "tests/**/*.{test.ts,test.py,spec.ts,spec.py,test.php}",
-    "excludePatterns": ["src/generated/**", "src/migrations/**", "*.config.*", "*.d.ts"],
+    # NEW-HIGH-9: patrones múltiples para cubrir tanto src/auth.ts (1 nivel)
+    # como src/services/auth.ts (N niveles). fnmatch trata ** como *, así que
+    # "src/**/*.ts" requiere ≥2 niveles. Añadidos patrones flat.
+    "sourcePattern": [
+        "src/*.{ts,py,rs,php,js,tsx,jsx,go,java,kt,rb,cs,swift,dart}",
+        "src/**/*.{ts,py,rs,php,js,tsx,jsx,go,java,kt,rb,cs,swift,dart}",
+        "app/*.{ts,py,php,rb}",
+        "app/**/*.{ts,py,php,rb,jsx,tsx}",
+        "lib/*.{ts,py,rs,php,rb,go,java,kt}",
+        "lib/**/*.{ts,py,rs,php,rb,go,java,kt}",
+    ],
+    "testPattern": [
+        "tests/**/*.test.{ts,py,php,js,rb,go}",
+        "tests/**/*.spec.{ts,py,php,js,rb}",
+        "test/**/*.{test,spec}.*",
+        "spec/**/*.spec.*",
+        "__tests__/**/*.{test,spec}.*",
+        "*_test.{go,py}",
+        "**/*_test.{go,py}",
+    ],
+    "excludePatterns": [
+        "src/generated/**", "src/migrations/**",
+        "**/generated/**", "**/migrations/**",
+        "*.config.*", "*.d.ts",
+        "**/__init__.py", "**/index.{ts,js}",
+    ],
     "allowNewModules": True,
 }
 
