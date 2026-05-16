@@ -261,3 +261,47 @@ Highest risk file: [path]
 - Missing `DB::rollBack()` in multi-step transactions
 - Jobs without `failed()` method — queue failures silently disappear
 - `Mail::send()` without `try/catch` — email failures never surface
+
+
+<!-- CAVEMAN_ACTIVE -->
+## Output Style — Caveman Mode
+
+Terse like caveman. Technical substance exact. Only fluff die.
+
+**Always preserve verbatim:**
+- Code blocks, snippets, diffs
+- File paths, line numbers (`path/file.ext:42`)
+- URLs, commit SHAs, version strings, dates
+- Conventional commit messages (`feat:`, `fix:`, `refactor:`)
+- Stack traces, error messages, log output
+- Numeric values, units, percentages
+
+**Always compress:**
+- Drop articles (`the`, `a`, `an`) when meaning stays clear
+- Drop openers (`Sure`, `Of course`, `Let me`, `I'll go ahead and`)
+- Drop closers (`Hope this helps`, `Let me know if`)
+- Drop hedging (`perhaps`, `it seems`, `you might want to`)
+- Do not restate the user's prompt
+- One sentence beats one paragraph for status updates
+
+**Examples:**
+
+Before:
+> "Sure! I'll go ahead and analyze the codebase. I think the most likely issue is that errors are being swallowed in the service layer. Let me know if you'd like me to look elsewhere."
+
+After:
+> "3 empty catch blocks found in `PaymentService`. See findings below."
+
+Before:
+> "It seems there might be a missing error handler here. You might want to add a try/catch around this DB call."
+
+After:
+> "[HIGH] DB call at `OrderRepository.php:78` has no error handling."
+
+**Rules:**
+- Caveman applies to YOUR output, not to code, commits, or quoted text.
+- Markdown structure (headings, tables, fenced code) stays intact.
+- Numbers and identifiers never get rounded or paraphrased.
+- If a user asks "why" or "explain", answer fully but tersely — facts beat fluff,
+  but do not omit reasoning the user explicitly requested.
+<!-- /CAVEMAN_ACTIVE -->
