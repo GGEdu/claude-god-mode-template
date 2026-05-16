@@ -274,6 +274,84 @@ Envuelto por `make test-suite`.
 
 ---
 
+## `cron/`
+
+Scripts para auditorías periódicas ejecutadas vía cron en el servidor. Alternativa a los triggers de Antigravity cuando el servidor ya tiene LiteLLM local y se quiere prescindir de APIs externas.
+
+### `weekly-audit.py`
+
+**Propósito:** Auditoría semanal de seguridad vía LiteLLM. Lee los archivos críticos del repo y envía el contexto al modelo. Guarda el resultado en `ops/sessions/audit-YYYY-MM-DD.md`.
+
+### Uso
+
+```bash
+# Ejecutar manualmente
+python3 ops/cron/weekly-audit.py
+
+# Con servidor LiteLLM alternativo
+LITELLM_URL=http://192.168.1.19:4000 python3 ops/cron/weekly-audit.py
+```
+
+### Variables de entorno
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `LITELLM_URL` | `http://localhost:4000` | URL del servidor LiteLLM |
+| `LITELLM_MODEL` | `cerebro-lite` | Alias del modelo |
+
+### Archivos que audita
+
+El script lee hasta 4 000 chars de cada archivo. Adaptar `AUDIT_FILES` al proyecto:
+
+```python
+AUDIT_FILES = [
+    "src/api/main.py",
+    "src/api/auth.py",
+    "src/ingestion/main.py",
+    "src/scraper/worker.py",
+]
+```
+
+Los archivos no encontrados se documentan como `*archivo no encontrado*` en el reporte — no produce error.
+
+### Output
+
+Crea `ops/sessions/audit-YYYY-MM-DD.md` con formato markdown estructurado:
+
+```markdown
+# Auditoría semanal — 2026-05-19
+
+## Resumen Ejecutivo
+...
+
+## Hallazgos (CRITICAL/HIGH/MEDIUM)
+...
+
+## Acciones recomendadas
+...
+```
+
+### Instalación como cron
+
+```bash
+crontab -e
+# Añadir (o copiar desde ops/cron/weekly-audit.cron):
+0 9 * * 1 cd /root/myproject && python3 ops/cron/weekly-audit.py >> /var/log/audit.log 2>&1
+```
+
+El archivo `ops/cron/weekly-audit.cron` contiene el snippet listo para pegar.
+
+### Cron vs Antigravity triggers
+
+| Criterio | Cron en servidor | Antigravity trigger |
+|----------|-----------------|---------------------|
+| LiteLLM local disponible | ✅ Ideal — sin API keys externas | ❌ Runner externo no alcanza la LAN |
+| Sin servidor propio | ❌ Requiere servidor | ✅ Solo necesita `ANTHROPIC_API_KEY` |
+| Independencia de proveedor LLM | ✅ Cualquier modelo vía LiteLLM | ❌ Requiere Claude Code |
+| Output local | ✅ Archivo en `ops/sessions/` | ✅ Igual |
+
+---
+
 ## `triggers/`
 
 Directorio con triggers para ejecución autónoma programada vía Antigravity. Cada archivo YAML define un trabajo que Claude Code ejecuta según un cron, sin sesión abierta.
