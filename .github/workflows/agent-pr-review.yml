@@ -1,8 +1,8 @@
 name: Agent — PR Review
 
 # Triggers on every PR open, update or reopen.
-# Runs code-reviewer + security-reviewer in parallel and posts
-# a combined markdown comment on the PR.
+# Runs code-reviewer + security-reviewer + pr-test-analyzer in parallel
+# and posts a combined markdown comment on the PR.
 #
 # Required secret: ANTHROPIC_API_KEY
 # Required permission: pull-requests: write
@@ -16,8 +16,10 @@ permissions:
   pull-requests: write
 
 jobs:
-  agent-review:
+  code-review:
     runs-on: ubuntu-latest
+    outputs:
+      report: ${{ steps.review.outputs.report }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,8 +34,8 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Code review (code-reviewer agent)
-        id: code-review
+      - name: Run code-reviewer agent
+        id: review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -50,8 +52,30 @@ jobs:
             Output the complete review in markdown. Be concise — skip LOW issues." \
           > /tmp/code-review.md
 
-      - name: Security review (security-reviewer agent)
-        id: security-review
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/code-review.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  security-review:
+    runs-on: ubuntu-latest
+    outputs:
+      report: ${{ steps.review.outputs.report }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run security-reviewer agent
+        id: review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -67,24 +91,80 @@ jobs:
             Only report real findings (>80% confidence). Output as markdown with severity labels." \
           > /tmp/security-review.md
 
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/security-review.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  pr-test-analysis:
+    runs-on: ubuntu-latest
+    outputs:
+      report: ${{ steps.analysis.outputs.report }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run pr-test-analyzer agent
+        id: analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          claude -p \
+            --allowedTools "Bash(git diff*),Bash(git log*),Read,Grep,Glob" \
+            --model sonnet \
+            "You are the pr-test-analyzer agent. Analyze test coverage for this PR.
+            Run: git diff ${BASE}...${HEAD}
+            Map changed code to existing tests. Identify:
+            - Untested paths in modified files
+            - Missing test cases for new logic branches
+            - Coverage gaps rated by impact (HIGH/MEDIUM/LOW)
+            Output a concise markdown coverage report. Rate overall coverage: ADEQUATE/GAPS/INSUFFICIENT." \
+          > /tmp/test-analysis.md
+
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/test-analysis.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  post-review:
+    needs: [code-review, security-review, pr-test-analysis]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
       - name: Post combined review as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODE_REPORT: ${{ needs.code-review.outputs.report }}
+          SECURITY_REPORT: ${{ needs.security-review.outputs.report }}
+          TEST_REPORT: ${{ needs.pr-test-analysis.outputs.report }}
         run: |
-          COMMENT=$(cat <<'EOF'
-          ## Code Review — Claude Code Agents
+          BODY="## Code Review — Claude Code Agents
 
-          EOF
-          )
-          COMMENT="${COMMENT}$(cat /tmp/code-review.md)"
-          COMMENT="${COMMENT}
+          ${CODE_REPORT:-*Code review did not complete.*}
 
           ---
 
           ## Security Review — Claude Code Agents
 
-          $(cat /tmp/security-review.md)"
+          ${SECURITY_REPORT:-*Security review did not complete.*}
+
+          ---
+
+          ## Test Coverage Analysis — Claude Code Agents
+
+          ${TEST_REPORT:-*Test analysis did not complete.*}"
 
           gh pr comment ${{ github.event.pull_request.number }} \
             --repo ${{ github.repository }} \
-            --body "${COMMENT}"
+            --body "${BODY}"

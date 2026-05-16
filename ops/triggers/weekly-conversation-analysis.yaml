@@ -1,0 +1,77 @@
+name: weekly-conversation-analysis
+description: "Análisis semanal de patrones de fricción en sesiones: correcciones repetidas, trabajo revertido, intención malinterpretada. Extrae aprendizajes y sugiere ajustes a hooks o comportamientos del agente."
+schedule: "0 10 * * 1"   # Lunes 10:00 UTC (tras security-audit de 09:00)
+model: haiku
+output: ops/sessions/weekly-conversation-analysis-$(date +%Y%m%d).md
+tags: [scheduled, analysis, weekly, learning]
+prompt: |
+  Eres el agente conversation-analyzer. Analiza las sesiones recientes para detectar patrones de fricción.
+
+  ## Objetivo
+
+  Revisar transcripts de sesiones de la última semana y extraer:
+  - Patrones de frustración del usuario (correcciones repetidas, "no", "para", "revierte")
+  - Trabajo revertido o deshecho frecuentemente
+  - Intención malinterpretada (user tuvo que reformular 2+ veces)
+  - Comportamientos del agente que ralentizan el trabajo
+
+  ## Paso 1: Localizar sesiones recientes
+
+  ```bash
+  # Sesiones de los últimos 7 días en ops/sessions/
+  find ops/sessions/ -name "*.md" -newer ops/sessions/ -type f 2>/dev/null | sort -r | head -20
+
+  # También revisar el directorio de memoria por cambios recientes
+  find .claude/memory/ -newer .claude/memory/ -type f 2>/dev/null | sort -r | head -10
+  ```
+
+  ## Paso 2: Leer sesiones relevantes
+
+  Para cada archivo encontrado, leer y buscar señales de fricción:
+  - Apariciones de: "no", "para", "revierte", "undo", "incorrecto", "mal"
+  - Reformulaciones de la misma instrucción
+  - Comentarios de frustración explícita
+  - Patrones de repetición (el agente hace X, el usuario corrige, el agente vuelve a hacer X)
+
+  ## Paso 3: Revisar memoria de feedback
+
+  ```bash
+  cat .claude/memory/feedback*.md 2>/dev/null
+  ls .claude/memory/ | grep feedback
+  ```
+
+  Comparar feedbacks guardados con patrones observados en sesiones. ¿Se están aplicando las correcciones previas?
+
+  ## Paso 4: Generar reporte con sugerencias de hooks
+
+  ```markdown
+  # Conversation Analysis — <fecha>
+
+  ## Resumen ejecutivo
+  - Sesiones analizadas: N
+  - Patrones de fricción detectados: N
+  - Correcciones recurrentes: N
+
+  ## Patrones de fricción detectados
+
+  ### [ALTO/MEDIO/BAJO] <nombre del patrón>
+  - Observado en: N sesiones
+  - Ejemplo representativo: "<fragmento>"
+  - Causa probable: <análisis>
+  - Sugerencia de hook o regla:
+    ```
+    <configuración sugerida>
+    ```
+
+  ## Feedbacks pendientes de aplicar
+  - <feedback guardado en memoria> → Estado: APLICADO / PENDIENTE
+
+  ## Recomendaciones priorizadas
+  1. <acción concreta: nuevo hook / edición de regla / ajuste de agente>
+  2. ...
+
+  ## Próximas sesiones a observar
+  - <área o tipo de tarea que merece seguimiento>
+  ```
+
+  Output final: solo el reporte markdown. Sin narrativa adicional.
