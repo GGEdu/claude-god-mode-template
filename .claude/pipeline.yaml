@@ -39,6 +39,9 @@ workflows:
         description: "Planificar el refactoring"
       - agent: refactor-cleaner
         description: "Simplificar y limpiar codigo"
+      - agent: performance-optimizer
+        description: "Detectar bottlenecks y optimizar rendimiento"
+        parallel_with: refactor-cleaner
       - agent: code-reviewer
         description: "Revisar cambios"
       - audit: true
@@ -85,6 +88,29 @@ workflows:
         description: "Buscar errores silenciados"
       - agent: memory-consolidator
         description: "Guardar hallazgos"
+        always: true
+
+  architecture-audit:
+    description: "Auditoría de cumplimiento arquitectónico — on-demand, requiere PROJECT_PATH. Ver skill architecture-audit para uso multi-proyecto."
+    steps:
+      - agent: architecture-auditor
+        description: "Auditar proyecto contra .claude/rules/project/architecture.md"
+      - agent: memory-consolidator
+        description: "Registrar hallazgos de arquitectura"
+        always: true
+
+  maintenance:
+    description: "Salud del harness: optimización de agentes, calidad de comentarios, docs"
+    steps:
+      - agent: harness-optimizer
+        description: "Revisar hooks, routing, permisos — sugerir optimizaciones del harness"
+      - agent: comment-analyzer
+        description: "Detectar comentarios obsoletos, engañosos o redundantes en el código"
+        parallel_with: harness-optimizer
+      - agent: doc-updater
+        description: "Actualizar docs tras cambios detectados por harness u otros agentes"
+      - agent: memory-consolidator
+        description: "Guardar hallazgos y decisiones de mantenimiento"
         always: true
 
   # ─────────────────────────────────────────────────────────────────────────
