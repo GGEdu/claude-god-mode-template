@@ -1,6 +1,10 @@
 ---
 name: architecture-audit
 description: "Orquesta N agentes architecture-auditor en paralelo (uno por proyecto) y consolida los resultados en AUDIT_SUMMARY.md en el workspace root. Cada agente escribe su AUDIT_REPORT.md independiente. Invoke with /architecture-audit."
+disallowed-tools:
+  - Write
+  - Edit
+  - NotebookEdit
 ---
 
 # Architecture Audit Skill

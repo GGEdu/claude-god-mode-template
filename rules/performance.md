@@ -12,10 +12,12 @@
 - Orchestrating multi-agent workflows
 - Complex coding tasks
 
-**Opus 4.5** (Deepest reasoning):
+**Opus 4.7** (`claude-opus-4-7`, deepest reasoning):
 - Complex architectural decisions
 - Maximum reasoning requirements
 - Research and analysis tasks
+
+> Migration note: Sonnet 4.5 1M context beta retired April 30 2026 — use Sonnet 4.6.
 
 ## Context Window Management
 

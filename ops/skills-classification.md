@@ -59,6 +59,7 @@ projects. Adding them to project stacks would be misleading.
 | `continuous-agent-loop` | Reference for choosing loop patterns |
 | `dmux-workflows` | Terminal multiplexer orchestration (tmux/zellij) |
 | `enterprise-agent-ops` | Enterprise-scale agent operations |
+| `effort-control` | `/effort` levels — set cost/reasoning budget before a workflow |
 
 **Action**: Document in `docs/` as harness-building tools. No stack integration needed.
 
@@ -89,7 +90,7 @@ use case — their value is interactive, one-shot invocation.
 | Category | Count | Status |
 |----------|-------|--------|
 | Domain stacks not yet created | 20 | Waiting for domain-specific stacks |
-| Claude Code meta-tools | 10 | Intentionally standalone |
+| Claude Code meta-tools | 11 | Intentionally standalone |
 | Developer slash commands | 8 | Intentionally standalone |
 | **Referenced (stack or pipeline)** | **105** | **Integrated** |
 | **Total** | **143** | |

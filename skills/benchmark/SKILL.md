@@ -2,6 +2,10 @@
 name: benchmark
 description: Use this skill to measure performance baselines, detect regressions before/after PRs, and compare stack alternatives.
 origin: ECC
+disallowed-tools:
+  - Write
+  - Edit
+  - NotebookEdit
 ---
 
 # Benchmark — Performance Baseline & Regression Detection
