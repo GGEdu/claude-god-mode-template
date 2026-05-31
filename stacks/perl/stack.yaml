@@ -87,7 +87,7 @@ commands:
     when: Al entrar en un repo nuevo — genera guía de onboarding
   benchmark:
     when: Medir rendimiento antes/después de un PR o cambio
-  continuous-learning-v2:
+  continuous-learning:
     when: Extrae patrones de sesiones y los persiste
   ck:
     when: Persistent memory per-project, git-aware tracking

@@ -105,7 +105,7 @@ commands:
     when: Trazar botones/touchpoints por toda la cadena de estado
   design-md:
     when: Al crear componentes o páginas — aplica sistema de diseño
-  continuous-learning-v2:
+  continuous-learning:
     when: Extrae patrones de sesiones y los persiste
   ck:
     when: Persistent memory per-project, git-aware tracking

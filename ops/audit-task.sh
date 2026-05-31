@@ -22,7 +22,7 @@ FAIL=0
 FINDINGS=""
 
 # --- Check 1: Secrets scan ---
-SECRETS_PATTERN='(sk-[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36}|password\s*=\s*["\x27][^"\x27]{4,})'
+SECRETS_PATTERN='(sk-[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|ghp_[a-zA-Z0-9]{36}|ghs_[a-zA-Z0-9]{36}|glpat-[a-zA-Z0-9_-]{20,}|password\s*=\s*["\x27][^"\x27]{4,})'
 if FOUND=$(grep -rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.py" --include="*.php" --include="*.go" --include="*.env" -E "$SECRETS_PATTERN" . 2>/dev/null | grep -v node_modules | grep -v vendor | grep -v '.git/' | head -5); then
     if [ -n "$FOUND" ]; then
         FAIL=$((FAIL + 1))
@@ -86,6 +86,13 @@ if [ -f "package.json" ] && grep -q '"lint"' package.json 2>/dev/null; then
     else
         WARN=$((WARN + 1))
         FINDINGS="${FINDINGS}\n  ⚠️  LINT: npm run lint reportó errores"
+    fi
+elif [ -f "composer.json" ] && [ -f "vendor/bin/pint" ]; then
+    if ./vendor/bin/pint --test 2>/dev/null; then
+        PASS=$((PASS + 1))
+    else
+        WARN=$((WARN + 1))
+        FINDINGS="${FINDINGS}\n  ⚠️  LINT: pint reportó errores de estilo PHP"
     fi
 else
     PASS=$((PASS + 1))  # No linter configured, skip

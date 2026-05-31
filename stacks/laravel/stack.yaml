@@ -91,7 +91,7 @@ commands:
     when: Medir rendimiento antes/después de un PR o cambio
   laravel-plugin-discovery:
     when: Buscar y evaluar paquetes Laravel via LaraPlugins.io
-  continuous-learning-v2:
+  continuous-learning:
     when: Extrae patrones de sesiones y los persiste
   ck:
     when: Persistent memory per-project, git-aware tracking

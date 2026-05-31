@@ -122,8 +122,9 @@ For each step:
 1. **Announce**: `"▶ Step N: {agent} — {description}"`
 2. **Execute**: Invoke the agent as a subagent with the task context
 3. **Capture**: Note key outputs/decisions from the agent
-4. **Update memory**: Write a brief entry to `.claude/memory/` with what was done
-5. **Check**: If step failed, STOP and report (unless `continue_on_failure: true`)
+4. **Approval gate** (if `approval_gate` defined on this step): Display the `message` field and WAIT for explicit developer confirmation (`y`/Enter = continue, `n` = stop). If denied: save progress to `.claude/memory/`, report remaining steps, and exit pipeline. If `blocking: true`, cancelling the gate aborts the entire workflow.
+5. **Update memory**: Write a brief entry to `.claude/memory/` with what was done
+6. **Check**: If step failed, STOP and report (unless `continue_on_failure: true`)
 
 ### 4. Audit Gate
 

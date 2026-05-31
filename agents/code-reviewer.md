@@ -95,7 +95,7 @@ function processUsers(users) {
 }
 ```
 
-### React/Next.js Patterns (HIGH)
+### React/Next.js Patterns (HIGH — skip if not using React/Next.js)
 
 When reviewing React/Next.js code, also check:
 
