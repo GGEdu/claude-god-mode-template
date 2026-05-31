@@ -124,6 +124,20 @@ commands:
     when: Verificación adversarial pre-ship — 2 revisores independientes
   agent-introspection-debugging:
     when: Cuando un agente falla en loop o sin progreso
+  blueprint:
+    when: Plan features grandes multi-sesión — convierte objetivo en pasos con outputs verificables
+  deep-research:
+    when: Investigación profunda con fuentes web — entrega reporte citado con evidencia
+  mcp-server-patterns:
+    when: Construir MCP servers (Node/TS SDK) — tools, resources, prompts, Zod validation
+
+  claude-api:
+    when: Integrar Claude API en pipelines ML — Messages, batches, prompt caching
+  eval-harness:
+    when: Framework de evaluación formal para modelos y pipelines (eval-driven development)
+  cost-aware-llm-pipeline:
+    when: Optimización de costes LLM — model routing, budget tracking, prompt caching
+
 mcps:
   notebooklm: false
   n8n: false

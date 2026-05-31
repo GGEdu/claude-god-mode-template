@@ -133,6 +133,16 @@ commands:
     when: Cuando un agente falla en loop o sin progreso
   tentacle:
     when: Gestionar áreas de trabajo aisladas para features multi-sesión — crear, listar, handoff
+  blueprint:
+    when: Plan features grandes multi-sesión — convierte objetivo en pasos con outputs verificables
+  deep-research:
+    when: Investigación profunda con fuentes web — entrega reporte citado con evidencia
+  mcp-server-patterns:
+    when: Construir MCP servers (Node/TS SDK) — tools, resources, prompts, Zod validation
+
+  claude-api:
+    when: Patrones de la API de Claude (Python/TS) — Messages, streaming, tool use, batches
+
 mcps:
   notebooklm: false
   n8n: false
