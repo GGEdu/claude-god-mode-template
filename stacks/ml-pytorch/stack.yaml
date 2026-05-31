@@ -138,6 +138,9 @@ commands:
   cost-aware-llm-pipeline:
     when: Optimización de costes LLM — model routing, budget tracking, prompt caching
 
+  architecture-audit:
+    when: Audita arquitectura de N proyectos en paralelo — genera AUDIT_SUMMARY.md
+
 mcps:
   notebooklm: false
   n8n: false

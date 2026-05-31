@@ -137,6 +137,12 @@ commands:
   claude-api:
     when: Patrones de la API de Claude (Python/TS) — Messages, streaming, tool use, batches
 
+  architecture-audit:
+    when: Audita arquitectura de N proyectos en paralelo — genera AUDIT_SUMMARY.md
+
+  market-research:
+    when: Investigación de mercado y competencia — análisis con fuentes web
+
 mcps:
   notebooklm: false
   n8n: false

@@ -134,6 +134,12 @@ commands:
   mcp-server-patterns:
     when: Construir MCP servers (Node/TS SDK) — tools, resources, prompts, Zod validation
 
+  architecture-audit:
+    when: Audita arquitectura de N proyectos en paralelo — genera AUDIT_SUMMARY.md
+
+  market-research:
+    when: Investigación de mercado y competencia — análisis con fuentes web
+
 mcps:
   notebooklm: false
   n8n: false
