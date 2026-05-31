@@ -127,7 +127,7 @@ mcps:
 ### 15 comandos universales (todos los stacks)
 
 - `continuous-learning`: extrae patrones de sesiones (v1).
-- `continuous-learning-v2`: extrae patrones de sesiones (v2).
+- `continuous-learning`: extrae patrones de sesiones (v2).
 - `ck`: memoria persistente por proyecto, git-aware.
 - `plankton-code-quality`: auto-format/lint en tiempo de escritura.
 - `strategic-compact`: sugiere `/compact` en puntos lógicos.

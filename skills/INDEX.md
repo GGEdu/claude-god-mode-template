@@ -118,7 +118,7 @@ Ejemplo: escribir "necesito tests para este endpoint" activa `*-tdd` o `tdd-work
 | `workflow-runner` | Ejecución de pipeline.yaml |
 | `autonomous-loops` | Loops cron de agents |
 | `continuous-learning` | Learning loop v1 |
-| `continuous-learning-v2` | Learning v2 con confidence scoring |
+| `continuous-learning` | Learning v2 con confidence scoring |
 | `dmux-workflows` | Multi-pane terminal |
 | `scheduled-tasks` | Tareas programadas |
 | `team-builder` | Composición de agents en paralelo |

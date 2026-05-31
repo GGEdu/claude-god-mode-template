@@ -158,7 +158,7 @@ Estas skills se usan como comandos slash (`/nombre`), no se incrustan en agentes
 | Skill / Comando | Stacks | Propósito |
 |-----------------|--------|-----------|
 | `continuous-learning` | Todos | Extrae patrones de sesiones (v1) |
-| `continuous-learning-v2` | Todos | Extrae patrones de sesiones (v2) |
+| `continuous-learning` | Todos | Extrae patrones de sesiones (v2) |
 | `ck` | Todos | Memoria persistente por proyecto |
 | `plankton-code-quality` | Todos | Auto-format/lint en escritura |
 | `strategic-compact` | Todos | Sugiere /compact en puntos clave |
