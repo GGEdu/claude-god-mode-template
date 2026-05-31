@@ -25,6 +25,12 @@ secrets/
 .claude/state.yaml
 .claude/session-reads.log
 
+# Worktrees de agentes (temporales, se crean/eliminan automáticamente)
+.claude/worktrees/
+
+# Caché local (search indexes, embeddings, etc.)
+.cache/
+
 # Tentacle work areas — todo.md es estado local; CONTEXT.md y worktree/ son locales también
 .tentacles/*/todo.md
 .tentacles/*/worktree/
