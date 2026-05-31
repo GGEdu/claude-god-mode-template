@@ -25,6 +25,10 @@ secrets/
 .claude/state.yaml
 .claude/session-reads.log
 
+# Tentacle work areas — todo.md es estado local; CONTEXT.md y worktree/ son locales también
+.tentacles/*/todo.md
+.tentacles/*/worktree/
+
 # Snapshots inmutables del PLAN (Sintesis.md §1.8)
 PLAN.v*.md
 .claude/plans/PLAN.v*.md

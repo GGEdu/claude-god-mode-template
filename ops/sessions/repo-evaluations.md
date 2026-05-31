@@ -4,8 +4,8 @@
 <!-- NO editar manualmente — el agente gestiona este archivo -->
 
 ## Stats
-- Total evaluados: 3
-- INCLUDE: 2 | REVIEW: 1 | WATCH: 0 | SKIP: 0
+- Total evaluados: 4
+- INCLUDE: 3 | REVIEW: 1 | WATCH: 0 | SKIP: 0
 
 ---
 
@@ -54,3 +54,14 @@
 - **Notes:** [info adicional relevante]
 
 -->
+
+### Everything Claude Code (v2.0.0-rc.1) — https://github.com/affaan-m/everything-claude-code
+- **Date:** 2026-05-31
+- **Score:** 89/100 (Relevancia: 25/25, Calidad: 34/35, Extractabilidad: 18/20, Coste: 12/20)
+- **Tier:** INCLUDE
+- **Reason:** v2 RC adds 5 critical agent-optimization skills (parallel-executor, benchmark-loop, latency-critical, recursive-ledger, data-throughput) + 95 new domain skills; zero breaking changes to v1 integrated skills. 243 total skills, 2568 passing tests, cross-harness design. RC status mitigated by validation gates and content stability claim.
+- **Discovered via:** manual re-evaluation
+- **Extracted:** skills (v2-new, priority): [parallel-execution-optimizer, benchmark-optimization-loop, recursive-decision-ledger, latency-critical-systems, data-throughput-accelerator], skills (v1-compat, already integrated): [agent-introspection-debugging, council, santa-method, hookify-rules], agents: no new critical agents vs v1.10.0
+- **Status:** Integrate v2 RC now
+- **Notes:** v1.10.0 skills (council, santa-method, agent-introspection, hookify-rules) have zero breaking changes—forks remain valid. RC released 2026-05-25 with tarball + cross-harness surfaces (Codex, OpenCode, Cursor, Gemini, Zed). New optimization pack directly enables speedup in harness orchestration. Itô prediction-market skills are gated/separate billing, low priority for core template. Adoption path: (1) pull v2.0.0-rc.1 tarball, (2) extract 5 optimization skills + refresh 4 existing forks, (3) integrate 95 new domain skills on backlog. Estimated effort: 4-6h for top 9, 20-30h for full domain suite. Recommendation: ADOPT RC NOW vs waiting for GA—ECC has battle-tested track record (199k stars, Hackathon winner), RC gates adequate, early adoption = 3-4mo competitive advantage in agent perf tuning.
+
