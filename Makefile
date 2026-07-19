@@ -71,6 +71,9 @@ stacks = [yaml.safe_load(open(f)) for f in glob.glob('stacks/*/stack.yaml')]; \
 domains = [yaml.safe_load(open(f)) for f in glob.glob('domains/*/domain.yaml')]; \
 [[used.update(skills or []) for skills in (d.get('agent_skills',{}) or {}).values()] for d in domains]; \
 [used.update((d.get('commands',{}) or {}).keys()) for d in domains]; \
+layers = [yaml.safe_load(open(f)) for f in glob.glob('layers/*/layer.yaml')]; \
+[[used.update(skills or []) for skills in (d.get('agent_skills',{}) or {}).values()] for d in layers]; \
+[used.update((d.get('commands',{}) or {}).keys()) for d in layers]; \
 all_skills = {os.path.basename(p) for p in glob.glob('skills/*') if os.path.isdir(p)}; \
 unused = sorted(all_skills - used); \
 print('Skills sin usar (' + str(len(unused)) + ' de ' + str(len(all_skills)) + ' totales):'); \
@@ -585,7 +588,7 @@ print('  ✅ Todas las permissions MCP tienen servidor declarado' if not missing
 	@if [ -f ".claude/CLAUDE.md" ]; then \
 		MISSING=0; \
 		for cmd in $$(grep -oE '`/[a-z][a-z-]+`' .claude/CLAUDE.md 2>/dev/null | tr -d '`/' | sort -u); do \
-			if [ -f ".claude/commands/$$cmd.md" ] || echo "$$cmd" | grep -qE "^(workflow|btw|fork|rewind|clear|memory|simplify|batch)$$"; then \
+			if [ -f ".claude/commands/$$cmd.md" ] || [ -f "skills/$$cmd/SKILL.md" ] || echo "$$cmd" | grep -qE "^(workflow|btw|fork|rewind|clear|memory|simplify|batch)$$"; then \
 				continue; \
 			fi; \
 			echo "  ⚠️  /$$cmd referenciado en CLAUDE.md pero .claude/commands/$$cmd.md no existe"; \
