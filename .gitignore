@@ -13,6 +13,11 @@ secrets/
 .claude/commands/
 .claude/rules/
 
+# Memoria: vault (Obsidian) se commitea; grafo y cache de Graphify/MemPalace no
+graphify-out/
+entities.json
+!vault/
+
 # Memoria de sesión de Claude (se regenera automáticamente vía hook)
 # Las decisiones permanentes van en docs/src/ — no en memory/
 .claude/memory/*.md
@@ -23,6 +28,7 @@ secrets/
 
 # Estado de la state machine (gitignored — local de sesión, no compartido)
 .claude/state.yaml
+.claude/state.yaml.lock
 .claude/session-reads.log
 
 # Snapshots inmutables del PLAN (Sintesis.md §1.8)
@@ -53,3 +59,13 @@ proyectos/
 # OS
 .DS_Store
 Thumbs.db
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+
+# Graphify: `graphify hook install` escribe estos con una ruta absoluta al
+# intérprete Python de ESTA máquina (uv tool / venv) hardcodeada — nunca
+# portable entre máquinas, no commitear (a diferencia de pre-commit/pre-push,
+# que sí son del repo).
+.githooks/post-commit
+.githooks/post-checkout

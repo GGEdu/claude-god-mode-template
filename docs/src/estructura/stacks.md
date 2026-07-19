@@ -158,13 +158,12 @@ mcps:
 
 ## Agentes activados por stack
 
-Todos los stacks activan 20 agentes comunes, con 15 agentes especializados por lenguaje/stack:
+Todos los stacks activan los mismos 20 agentes comunes (incluye `harness-optimizer`), más agentes específicos según el stack y sus layers/domains:
 
-- typescript-reviewer, go-reviewer, java-reviewer, kotlin-reviewer, python-reviewer, cpp-reviewer, csharp-reviewer, flutter-reviewer
-- go-build-resolver, java-build-resolver, kotlin-build-resolver, cpp-build-resolver, dart-build-resolver
-- harness-optimizer
+- **Lenguaje/UI** (13, cada uno solo en el/los stack(s) que lo necesitan): `ui-engineer`, `typescript-reviewer`, `python-reviewer`, `go-reviewer`, `go-build-resolver`, `java-reviewer`, `java-build-resolver`, `kotlin-reviewer`, `kotlin-build-resolver`, `cpp-reviewer`, `cpp-build-resolver`, `flutter-reviewer`, `dart-build-resolver`
+- **Sin stack fijo** (5, se activan por layer o son de invocación ad-hoc/meta): `business-analyst` y `change-manager` (layer `requirements-engineering`), `architecture-auditor` y `repo-reviewer` (pipeline/trigger, no stack), `csharp-reviewer` (reservado — no hay stack .NET todavía)
 
-Total: 35 agentes (20 comunes + 15 especializados según el stack y sus layers/domains).
+Total: 38 agentes (20 comunes + 13 de lenguaje/UI + 5 sin stack fijo).
 
 ---
 

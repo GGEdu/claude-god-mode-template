@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 # session-consolidate.sh — Consolidación automática de memoria al final de cada sesión
 #
-# Se ejecuta como Stop hook de Claude Code.
-# Revisa el trabajo de la sesión y actualiza .claude/memory/ si hay algo relevante.
+# Se ejecuta como Stop hook de Claude Code. Vuelca lo relevante de la sesión a
+# vault/ (si existe, memoria curada por proyecto) o .claude/memory/ (fallback,
+# proyectos sin vault todavía), luego mantiene Graphify y MemPalace al día.
+#
+# Decisión 2026-07-14 (council unánime, ver vault/memory/decisions/ de este
+# repo): sustituye a MCP `memory` — nunca se usó en ningún proyecto porque
+# requería población manual explícita. Estos 3 se autoactualizan (git hook
+# para Graphify, este mismo Stop hook para vault + MemPalace) sin que el
+# usuario tenga que pedirlo.
 
 set -euo pipefail
 
@@ -18,8 +25,16 @@ if [ ! -d ".claude" ]; then
     exit 0
 fi
 
-# ── Crear directorio de memoria si no existe ───────────────────────────────────
-mkdir -p .claude/memory
+# ── Elegir destino de memoria: vault/ si existe, si no .claude/memory/ ─────────
+if [ -d "vault" ]; then
+    MEM_DIR="vault/memory"
+    mkdir -p "$MEM_DIR/conversations" "$MEM_DIR/decisions" "$MEM_DIR/research"
+    MEM_LAYOUT="vault/memory/ — subcarpetas: conversations/ (qué se hizo en la sesión), decisions/ (decisiones de arquitectura y por qué), research/ (hallazgos de investigación por tema)."
+else
+    MEM_DIR=".claude/memory"
+    mkdir -p "$MEM_DIR"
+    MEM_LAYOUT=".claude/memory/ — un archivo por tema (ej: auth.md, architecture.md, domain-rules.md)."
+fi
 
 # ── Lanzar consolidación ───────────────────────────────────────────────────────
 export CLAUDE_CONSOLIDATION_RUNNING=1
@@ -29,13 +44,14 @@ claude --print \
     --max-turns 5 \
     "Eres un agente de consolidación de memoria de proyecto. Al final de cada sesión de trabajo capturas decisiones y contexto para que la próxima sesión arranque informada.
 
-DIRECTORIO DE MEMORIA: .claude/memory/
+DIRECTORIO DE MEMORIA: $MEM_DIR
+LAYOUT: $MEM_LAYOUT
 
 TU TAREA:
 1. Ejecuta: git log --oneline -10 2>/dev/null || true
 2. Ejecuta: git diff HEAD~1 HEAD --name-only 2>/dev/null || true
 3. Ejecuta: git status --short 2>/dev/null || true
-4. Lista los archivos existentes en .claude/memory/
+4. Lista los archivos existentes en $MEM_DIR
 5. Lee los archivos de memoria que ya existen para no duplicar
 
 SIEMPRE escribe al menos un archivo si hubo cualquier actividad en la sesión
@@ -55,8 +71,8 @@ QUÉ NO GUARDAR (nunca):
 - Variables de entorno con valores reales
 - Información personal o de usuarios finales
 
-FORMATO de archivos en .claude/memory/:
-- Un archivo por tema (ej: auth.md, architecture.md, domain-rules.md)
+FORMATO de archivos en $MEM_DIR:
+- Un archivo por tema/decisión, nombre descriptivo (con fecha si aplica)
 - Frontmatter obligatorio:
   ---
   name: nombre-descriptivo
@@ -86,7 +102,7 @@ if [ -d "docs/src/wiki" ] && [ -f "docs/src/wiki/index.md" ]; then
 WIKI DEL PROYECTO: docs/src/wiki/
 
 TU TAREA:
-1. Lee los archivos recién actualizados en .claude/memory/
+1. Lee los archivos recién actualizados en $MEM_DIR
 2. Lee docs/src/wiki/index.md para conocer las páginas existentes
 3. Evalúa qué información de memory/ es PERMANENTE y merece estar en el wiki
 
@@ -111,8 +127,29 @@ Máximo 3 páginas actualizadas o creadas." \
         2>>"$HOME/.claude/hooks/session-consolidate.log" || true
 fi
 
-# Rotar log si supera 200 líneas (evita crecimiento indefinido)
-LOG="$HOME/.claude/hooks/session-consolidate.log"
-if [ -f "$LOG" ] && [ "$(wc -l < "$LOG")" -gt 200 ]; then
-    tail -100 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+# ── Graphify: instalar el git hook si aún no está (idempotente) ────────────────
+# No reconstruye nada aquí — el propio hook post-commit de Graphify ya se
+# encarga del grafo en cada commit. Esto solo asegura que el hook exista.
+if command -v graphify >/dev/null 2>&1 && [ -d ".git" ]; then
+    if graphify hook status 2>/dev/null | grep -q "not installed"; then
+        graphify hook install >>"$HOME/.claude/hooks/session-consolidate.log" 2>&1 || true
+    fi
 fi
+
+# ── MemPalace: indexar semánticamente lo que cambió en la sesión ───────────────
+# 100% local (embeddings locales, sin LLM/API en modo 'projects'). Si el
+# proyecto no tiene mempalace.yaml todavía, se inicializa primero (heurísticas
+# only, --no-llm — nunca manda contenido a un LLM externo).
+if command -v mempalace >/dev/null 2>&1; then
+    if [ ! -f "mempalace.yaml" ]; then
+        mempalace init . --yes --no-llm >>"$HOME/.claude/hooks/mempalace-mine.log" 2>&1 || true
+    fi
+    mempalace mine "$(pwd)" >>"$HOME/.claude/hooks/mempalace-mine.log" 2>&1 || true
+fi
+
+# Rotar logs si superan 200 líneas (evita crecimiento indefinido)
+for LOG in "$HOME/.claude/hooks/session-consolidate.log" "$HOME/.claude/hooks/mempalace-mine.log"; do
+    if [ -f "$LOG" ] && [ "$(wc -l < "$LOG")" -gt 200 ]; then
+        tail -100 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+    fi
+done

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Claude God Mode Template"
   text: "Boilerplate de Claude Code con superpoderes"
-  tagline: "139 skills, 15 stacks de usuario (+common), layers técnicos composables, 4 domain overlays, 35 agentes, sistema de memoria, hooks defensivos y MCPs configurados. Todo listo en menos de una hora."
+  tagline: "139 skills, 15 stacks de usuario (+common), layers técnicos composables, 4 domain overlays, 38 agentes, sistema de memoria, hooks defensivos y MCPs configurados. Todo listo en menos de una hora."
   actions:
     - theme: brand
       text: Instalación paso a paso

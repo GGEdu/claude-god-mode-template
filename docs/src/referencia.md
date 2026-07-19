@@ -124,7 +124,7 @@ Claude los activa automáticamente o puedes pedirlos explícitamente:
 "Lanza code-reviewer y security-reviewer en paralelo sobre los cambios de auth"
 ```
 
-### Agentes principales (35 instalados globalmente)
+### Agentes principales (38 instalados globalmente)
 
 | Agente | Propósito | Se activa automáticamente cuando... |
 | --- | --- | --- |
@@ -253,7 +253,7 @@ proyecto/
 │
 ~/.claude/                     ← Instalación global (make install)
 ├── settings.json              ← Configuración global con Stop hook
-├── agents/                    ← 35 agentes base disponibles en todos los proyectos
+├── agents/                    ← 38 agentes base disponibles en todos los proyectos
 ├── rules/common/              ← Reglas comunes en todos los proyectos
 └── hooks/
     └── session-consolidate.sh ← Se ejecuta al terminar cada sesión

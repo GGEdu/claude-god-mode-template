@@ -21,10 +21,10 @@
       "args": ["-y", "@supabase/mcp-server-supabase@latest", "--project-ref=YOUR_PROJECT_REF"],
       "description": "Supabase database operations"
     },
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"],
-      "description": "Persistent memory across sessions"
+    "mempalace": {
+      "command": "mempalace-mcp",
+      "args": [],
+      "description": "Semantic + verbatim memory (local, no API key) — replaces server-memory. See vault-template/ for the full memory stack (vault + Graphify + MemPalace)."
     },
     "sequential-thinking": {
       "command": "npx",

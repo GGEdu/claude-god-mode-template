@@ -39,7 +39,7 @@ Lo que hace:
    Las 12 reglas universales (coding-style, security, git-workflow, testing, orchestration...) quedan **siempre activas** en todos los proyectos.
 
 2. Copia `agents/*.md` → `~/.claude/agents/`
-   Los 35 agentes especializados quedan disponibles en todos los proyectos como subprocesos autónomos.
+   Los 38 agentes especializados quedan disponibles en todos los proyectos como subprocesos autónomos.
 
 3. **No copia skills** — Las skills se activan por stack con `make init-project` en cada proyecto. Solo se copian las relevantes para ese stack a `project/.claude/commands/`.
 
@@ -73,7 +73,7 @@ Verificando configuracion...
 ── Instalacion global (~/.claude/) ──────────────────
   ✅ settings.json global
   ✅ Reglas comunes globales (12 archivos)
-  ✅ Agentes globales (35 agentes)
+  ✅ Agentes globales (38 agentes)
   ✅ Hook de consolidacion de memoria
 
 ── Este repositorio (.claude/) ──────────────────────
@@ -86,9 +86,9 @@ Verificando configuracion...
   ✅ NotebookLM MCP instalado
 
 ── Sincronización de agentes ────────────────────────
-  Fuente: 35 agentes en agents/
-  Local:  35 agentes en .claude/agents/ (compilados con skills del stack activo)
-  Global: 35 agentes en ~/.claude/agents/
+  Fuente: 38 agentes en agents/
+  Local:  38 agentes en .claude/agents/ (compilados con skills del stack activo)
+  Global: 38 agentes en ~/.claude/agents/
   ✅ Agentes fuente disponibles
 
 ── ops/ scripts ─────────────────────────────────────
@@ -308,7 +308,7 @@ Salida:
 Inicializando stack 'laravel' + layer 'react' en /ruta/al/proyecto...
   ✅ Stack rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   Compilando agentes con skills embebidas...
-  ✅ Agentes compilados (35 agentes con skills del stack)
+  ✅ Agentes compilados (38 agentes con skills del stack)
   ✅ Comandos: /jedi-review, /git-workflow, /design-md, ...
   ✅ GitHub Actions copiados a .github/workflows/ — añade ANTHROPIC_API_KEY en Settings → Secrets
   ✅ CLAUDE.md creado — edita los [PLACEHOLDER] con el contexto del proyecto

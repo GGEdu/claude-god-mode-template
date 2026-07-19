@@ -328,6 +328,31 @@ init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel
 	else \
 		echo "  ✅ docs/ ya existe con wiki — no modificado"; \
 	fi
+	@# 5c. Memoria por defecto: vault (Obsidian) + Graphify (grafo de código) + MemPalace (semántico)
+	@# Decisión 2026-07-14 (council unánime): sustituye a MCP `memory` (nunca usado, requería
+	@# población manual). Los 3 se auto-actualizan (git hook / Stop hook), no hace falta pedirlo.
+	@if [ ! -d "$(PROJECT)/vault" ]; then \
+		cp -r stacks/common/vault-template "$(PROJECT)/vault"; \
+		PROJECT_NAME=$$(basename "$(PROJECT)"); \
+		sed -i "s/__PROJECT_NAME__/$$PROJECT_NAME/g" "$(PROJECT)/vault/000-index.md"; \
+		echo "  ✅ vault/ creado (memoria curada) — se llena automáticamente al final de cada sesión"; \
+	else \
+		echo "  ✅ vault/ ya existe — no sobreescrito"; \
+	fi
+	@if command -v graphify >/dev/null 2>&1; then \
+		(cd "$(PROJECT)" && graphify hook install >/dev/null 2>&1) && \
+		echo "  ✅ Graphify: git hook instalado (grafo de código se reconstruye en cada commit)" || \
+		echo "  ⚠️  Graphify: no se pudo instalar el git hook (¿$(PROJECT) no es un repo git aún?)"; \
+	else \
+		echo "  ⚠️  Graphify no está instalado (uv tool install graphifyy) — capa de grafo de código omitida"; \
+	fi
+	@if command -v mempalace >/dev/null 2>&1; then \
+		(cd "$(PROJECT)" && mempalace init . --yes --no-llm >/dev/null 2>&1) && \
+		echo "  ✅ MemPalace: configurado (mempalace.yaml) — se indexa automáticamente al final de cada sesión" || \
+		echo "  ⚠️  MemPalace: fallo al inicializar (revisa manualmente con 'mempalace init .')"; \
+	else \
+		echo "  ⚠️  MemPalace no está instalado (pip install mempalace) — capa semántica omitida"; \
+	fi
 	@# 6. CLAUDE.md solo si no existe (+ layer appends + domain append)
 	@if [ ! -f "$(PROJECT)/.claude/CLAUDE.md" ]; then \
 		cp stacks/$(STACK)/CLAUDE.md "$(PROJECT)/.claude/CLAUDE.md"; \
@@ -350,7 +375,7 @@ init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel
 	@# 7. Actualizar .gitignore del proyecto (excluir archivos generados de Claude)
 	@if [ -f "$(PROJECT)/.gitignore" ]; then \
 		if ! grep -q "\.claude/agents/" "$(PROJECT)/.gitignore"; then \
-			printf '\n# Claude Code — archivos generados (no commitear)\n.claude/agents/\n.claude/commands/\n.claude/rules/\n.claude/pipeline.yaml\n# Claude Code — si commitear (contexto del proyecto)\n!.claude/CLAUDE.md\n!.claude/memory/\n' >> "$(PROJECT)/.gitignore"; \
+			printf '\n# Claude Code — archivos generados (no commitear)\n.claude/agents/\n.claude/commands/\n.claude/rules/\n.claude/pipeline.yaml\n# Claude Code — si commitear (contexto del proyecto)\n!.claude/CLAUDE.md\n!.claude/memory/\n# Memoria: vault (Obsidian) se commitea; grafo y cache de Graphify/MemPalace no\ngraphify-out/\nentities.json\n!vault/\n# MemPalace per-project files (issue #185)\nmempalace.yaml\n' >> "$(PROJECT)/.gitignore"; \
 			echo "  ✅ .gitignore actualizado — archivos generados de Claude excluidos"; \
 		else \
 			echo "  ✅ .gitignore ya tiene entradas de Claude"; \

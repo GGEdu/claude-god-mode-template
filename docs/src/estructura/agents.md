@@ -1,6 +1,6 @@
 # Directorio: `agents/`
 
-Fuente de verdad de los **35 agentes** del template. `make install` los compila (con skills embebidas) y los copia a `~/.claude/agents/`.
+Fuente de verdad de los **38 agentes** del template. `make install` los compila (con skills embebidas) y los copia a `~/.claude/agents/`.
 
 > Los archivos en `agents/` son la base. **Nunca editar directamente** `.claude/agents/` — esos son artefactos compilados por `ops/compile-agents.py`.
 
@@ -22,7 +22,7 @@ El desarrollador **no invoca skills manualmente** — los agentes ya conocen sus
 
 ---
 
-## Inventario de los 35 agentes
+## Inventario de los 38 agentes
 
 ### Planificación
 
@@ -30,6 +30,13 @@ El desarrollador **no invoca skills manualmente** — los agentes ya conocen sus
 |--------|-------------|--------|--------------|
 | **architect** | Diseño de arquitectura de sistemas, escalabilidad y decisiones técnicas. Usar PROACTIVAMENTE al planificar features, refactorizar sistemas grandes o tomar decisiones arquitectónicas. | opus | Read, Grep, Glob |
 | **planner** | Especialista en planificación para features complejas y refactoring. Usar PROACTIVAMENTE cuando el usuario pide implementar features, cambios arquitectónicos o refactoring complejo. | opus | Read, Grep, Glob |
+
+### Ingeniería de requisitos
+
+| Agente | Descripción | Modelo | Herramientas |
+|--------|-------------|--------|--------------|
+| **business-analyst** | Principal Product Owner & Agile Coach. Convierte contexto bruto de negocio (entrevistas, conversaciones, notas) en Epics, Features y backlog priorizado MoSCoW. Usar PROACTIVAMENTE al iniciar proyecto greenfield, al ejecutar `/iniciar-requisitos`, o cuando necesite generar/actualizar backlog de producto. NO genera código fuente — solo artefactos .md de requisitos. | opus | Read, Write, Edit, Glob, Grep |
+| **change-manager** | Change Impact Analyst & Backlog Revision Manager. Analiza impacto de nuevos requisitos sobre backlog existente, modifica backlogs afectados, crea nuevos donde sea necesario y mantiene coherencia de dependencias. Usar al ejecutar `/revisar-cambios` o cuando lleguen cambios desde reunión, conversación o decisión de negocio sobre backlog ya consolidado. | opus | Read, Write, Edit, Glob, Grep |
 
 ### Revisión de código
 
@@ -75,6 +82,12 @@ El desarrollador **no invoca skills manualmente** — los agentes ya conocen sus
 | **docs-lookup** | Busca documentación actualizada de librerías, frameworks y APIs usando Context7 MCP. Usar cuando el usuario pregunta cómo usar una librería o necesita ejemplos de código actualizados. | sonnet | Read, Grep, mcp__context7__ |
 | **github-orchestrator** | Publica resultados de agentes en GitHub: comenta reviews en PRs, crea issues desde reportes de auditoría. Detecta duplicados y gestiona etiquetas. Usar cuando necesites que la salida de un agente sea visible en el repo remoto. | sonnet | Read, Bash |
 | **harness-optimizer** | Analiza y mejora la configuración del harness de agentes local (settings.json, stack.yaml, calidad de agentes). Activo en todos los stacks. | sonnet | Read, Grep, Glob, Bash, Edit |
+
+### Auditoría
+
+| Agente | Descripción | Modelo | Herramientas |
+|--------|-------------|--------|--------------|
+| **architecture-auditor** | Auditoría de cumplimiento arquitectónico de un proyecto. Lee reglas específicas del proyecto desde .claude/rules/project/architecture.md y las aplica con etiquetas de severidad CRITICAL/HIGH/MEDIUM. Soporta modo standard (visión rápida) y deep (análisis exhaustivo). Escribe AUDIT_REPORT.md estructurado. Usar vía `/architecture-audit` o spawnar un agente por proyecto. DEBE recibir PROJECT_PATH y OUTPUT_FILE como parámetros explícitos. | sonnet | Read, Grep, Glob, Bash, Write |
 
 ### Revisores por lenguaje
 

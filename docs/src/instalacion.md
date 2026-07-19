@@ -40,7 +40,7 @@ make install
 Copia a `~/.claude/` de una vez:
 
 - 12 reglas comunes (coding-style, security, testing, git-workflow, orchestration...)
-- 35 agentes especializados (planner, tdd-guide, code-reviewer, github-orchestrator...)
+- 38 agentes especializados (planner, tdd-guide, code-reviewer, github-orchestrator...)
 - Hook `session-consolidate.sh` — actualiza `.claude/memory/` al terminar cada sesión
 - `settings.json` con modelo, tokens y permisos preconfigurados
 
@@ -66,7 +66,7 @@ Verificando configuracion...
 ── Instalacion global (~/.claude/) ──────────────────
   ✅ settings.json global
   ✅ Reglas comunes globales (12 archivos)
-  ✅ Agentes globales (35 agentes)
+  ✅ Agentes globales (38 agentes)
   ✅ Hook de consolidacion de memoria
 
 ── Este repositorio (.claude/) ──────────────────────
@@ -79,9 +79,9 @@ Verificando configuracion...
   ✅ NotebookLM MCP instalado
 
 ── Sincronización de agentes ────────────────────────
-  Fuente: 35 agentes en agents/
-  Local:  35 agentes en .claude/agents/ (compilados con skills del stack activo)
-  Global: 35 agentes en ~/.claude/agents/
+  Fuente: 38 agentes en agents/
+  Local:  38 agentes en .claude/agents/ (compilados con skills del stack activo)
+  Global: 38 agentes en ~/.claude/agents/
   ✅ Agentes fuente disponibles
 
 ── ops/ scripts ─────────────────────────────────────
@@ -153,7 +153,7 @@ Salida:
 Inicializando stack 'laravel' + layer 'react' en /ruta/al/proyecto...
   ✅ Stack rules copiadas a /ruta/al/proyecto/.claude/rules/stack/
   Compilando agentes con skills embebidas...
-  ✅ Agentes compilados (35 agentes con skills del stack)
+  ✅ Agentes compilados (38 agentes con skills del stack)
   ✅ Comandos: /jedi-review, /git-workflow, /design-md, ...
   ✅ GitHub Actions copiados a .github/workflows/ — añade ANTHROPIC_API_KEY en Settings → Secrets
   ✅ CLAUDE.md creado — edita los [PLACEHOLDER] con el contexto del proyecto

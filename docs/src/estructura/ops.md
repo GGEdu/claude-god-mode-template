@@ -53,7 +53,7 @@ python3 ops/compile-agents.py <stack.yaml> <skills_dir> <agents_dir> <output_dir
 
 ### Cuándo se ejecuta
 
-- `make install` → compila los 35 agentes sin skills (instalación global)
+- `make install` → compila los 38 agentes sin skills (instalación global)
 - `make dev-stack STACK=x` → compila agentes con skills del stack para este repo
 - `make dev-stack STACK=x LAYERS=react` → stack + layer técnico
 - `make dev-stack STACK=x DOMAIN=y` → stack + domain overlay
