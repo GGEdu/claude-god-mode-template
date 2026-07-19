@@ -30,6 +30,35 @@ Recommended production stack:
 3. eval loop (`eval-harness`)
 4. session persistence (`nanoclaw-repl`)
 
+## Native Dynamic Workflows (Claude Code 2026)
+
+Claude Code's built-in parallel subagent orchestration — distinct from user-built patterns like Ralphinho or Infinite Loop. Announced May 2026.
+
+**Use when**: the operation is uniform across many targets (files, modules, repos) and each unit is independent.
+
+**How it works**: send multiple `Agent` tool calls in a single response. Claude Code runs them truly in parallel, then collects results.
+
+```
+# Example: audit all 15 stacks in parallel
+Spawn one architecture-auditor subagent per stacks/* directory.
+Each writes AUDIT_REPORT.md to its project path.
+Collect all reports and consolidate into AUDIT_SUMMARY.md.
+```
+
+**Built-in safeguards**: stall detection, escalation gates, checkpoint state.
+
+**Best for**:
+- Codebase-wide refactors (50+ files, each independent)
+- Mass test generation across modules
+- Parallel data migration with isolated units
+- Multi-repo security scans
+
+**Contrast with Ralphinho**: Ralphinho handles _interdependent_ units with a merge queue. Dynamic workflows assume each unit is independent — no coordination needed.
+
+**Contrast with Infinite Agentic Loop**: that pattern is spec-driven content generation. Dynamic workflows are operational — they transform existing artifacts.
+
+---
+
 ## Failure Modes
 
 - loop churn without measurable progress

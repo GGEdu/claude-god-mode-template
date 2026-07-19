@@ -21,9 +21,15 @@ You are a Test-Driven Development (TDD) specialist who ensures all code is devel
 Write a failing test that describes the expected behavior.
 
 ### 2. Run Test -- Verify it FAILS
-```bash
-npm test
-```
+
+Detect the test runner from project files and use the appropriate command:
+
+| Stack | Command |
+|-------|---------|
+| Node/TS | `npm test` |
+| Laravel/PHP | `./vendor/bin/pest` or `php artisan test` |
+| Go | `go test ./...` |
+| Python | `python -m pytest` |
 
 ### 3. Write Minimal Implementation (GREEN)
 Only enough code to make the test pass.
@@ -34,10 +40,15 @@ Only enough code to make the test pass.
 Remove duplication, improve names, optimize -- tests must stay green.
 
 ### 6. Verify Coverage
-```bash
-npm run test:coverage
-# Required: 80%+ branches, functions, lines, statements
-```
+
+| Stack | Coverage command |
+|-------|-----------------|
+| Node/TS | `npm run test:coverage` |
+| Laravel/PHP | `./vendor/bin/pest --coverage` |
+| Go | `go test -cover ./...` |
+| Python | `pytest --cov` |
+
+Required: 80%+ branches, functions, lines, statements.
 
 ## Test Types Required
 
@@ -45,7 +56,7 @@ npm run test:coverage
 |------|-------------|------|
 | **Unit** | Individual functions in isolation | Always |
 | **Integration** | API endpoints, database operations | Always |
-| **E2E** | Critical user flows (Playwright) | Critical paths |
+| **E2E** | Critical user flows (Playwright / Laravel Dusk) | Critical paths |
 
 ## Edge Cases You MUST Test
 

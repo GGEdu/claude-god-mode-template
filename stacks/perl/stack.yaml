@@ -87,7 +87,7 @@ commands:
     when: Al entrar en un repo nuevo — genera guía de onboarding
   benchmark:
     when: Medir rendimiento antes/después de un PR o cambio
-  continuous-learning-v2:
+  continuous-learning:
     when: Extrae patrones de sesiones y los persiste
   ck:
     when: Persistent memory per-project, git-aware tracking
@@ -121,6 +121,19 @@ commands:
     when: Verificación adversarial pre-ship — 2 revisores independientes
   agent-introspection-debugging:
     when: Cuando un agente falla en loop o sin progreso
+  blueprint:
+    when: Plan features grandes multi-sesión — convierte objetivo en pasos con outputs verificables
+  deep-research:
+    when: Investigación profunda con fuentes web — entrega reporte citado con evidencia
+  mcp-server-patterns:
+    when: Construir MCP servers (Node/TS SDK) — tools, resources, prompts, Zod validation
+
+  claude-api:
+    when: Patrones de la API de Claude (Python/TS) — Messages, streaming, tool use, batches
+
+  architecture-audit:
+    when: Audita arquitectura de N proyectos en paralelo — genera AUDIT_SUMMARY.md
+
 mcps:
   notebooklm: false
   n8n: false

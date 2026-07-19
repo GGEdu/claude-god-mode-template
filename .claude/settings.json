@@ -184,6 +184,26 @@
           }
         ]
       }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/post-compact.sh; [ -f \"$f\" ] && bash \"$f\" || echo 'Context compacted. Reload .claude/memory/ for session state if needed.'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/session-init.sh; [ -f \"$f\" ] && bash \"$f\" || true"
+          }
+        ]
+      }
     ]
   }
 }

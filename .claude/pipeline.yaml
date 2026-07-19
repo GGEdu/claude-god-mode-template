@@ -14,8 +14,19 @@ workflows:
       - agent: security-reviewer
         description: "Verificar vulnerabilidades"
         parallel_with: code-reviewer
+      - agent: database-reviewer
+        description: "Revisar queries, migraciones y esquema"
+        parallel_with: code-reviewer
+        continue_on_failure: true
       - audit: true
         description: "Ejecutar verificaciones automáticas"
+      - agent: e2e-runner
+        description: "Ejecutar tests E2E sobre flujos críticos"
+        continue_on_failure: true
+      - agent: github-orchestrator
+        description: "Crear PR con resumen de cambios"
+        approval_gate:
+          message: "¿Crear PR en GitHub con los cambios del feature workflow?"
       - agent: memory-consolidator
         description: "Guardar decisiones en memoria"
         always: true
@@ -27,7 +38,14 @@ workflows:
         description: "Escribir test para el fix, luego implementar"
       - agent: code-reviewer
         description: "Revisar el fix"
+      - agent: security-reviewer
+        description: "Verificar vulnerabilidades del fix"
+        parallel_with: code-reviewer
       - audit: true
+      - agent: github-orchestrator
+        description: "Crear PR de hotfix"
+        approval_gate:
+          message: "¿Crear PR en GitHub para este hotfix?"
       - agent: memory-consolidator
         description: "Guardar decisiones"
         always: true
@@ -45,6 +63,10 @@ workflows:
       - agent: code-reviewer
         description: "Revisar cambios"
       - audit: true
+      - agent: github-orchestrator
+        description: "Crear PR de refactoring"
+        approval_gate:
+          message: "¿Crear PR en GitHub para este refactoring?"
       - agent: memory-consolidator
         description: "Guardar decisiones"
         always: true
@@ -86,6 +108,9 @@ workflows:
         parallel_with: code-reviewer
       - agent: silent-failure-hunter
         description: "Buscar errores silenciados"
+      - agent: pr-test-analyzer
+        description: "Analizar cobertura de tests vs cambios del PR"
+        parallel_with: silent-failure-hunter
       - agent: memory-consolidator
         description: "Guardar hallazgos"
         always: true
@@ -150,7 +175,7 @@ workflows:
         approval_gate:
           message: "Diagramas listos. ¿Apruebas avanzar a Fase 5 (Publicación VitePress)?"
       - agent: business-analyst
-        parallel_with_agent: architect
+        parallel_with: architect
         description: "Fase 5: Publicación VitePress (sidebar agrupado por categoría universal)"
         outputs:
           - "docs/.vitepress/config.mts"

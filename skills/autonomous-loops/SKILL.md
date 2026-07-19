@@ -10,6 +10,9 @@ origin: ECC
 > The canonical skill name is now `continuous-agent-loop`. New loop guidance
 > should be authored there, while this skill remains available to avoid
 > breaking existing workflows.
+>
+> For Claude Code's native parallel subagent orchestration (2026), see the
+> "Native Dynamic Workflows" section in `continuous-agent-loop`.
 
 Patterns, architectures, and reference implementations for running Claude Code autonomously in loops. Covers everything from simple `claude -p` pipelines to full RFC-driven multi-agent DAG orchestration.
 

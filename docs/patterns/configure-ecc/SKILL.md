@@ -140,7 +140,7 @@ For each selected category, print the full list of skills below and ask the user
 | Skill | Description |
 |-------|-------------|
 | `continuous-learning` | Auto-extract reusable patterns from sessions as learned skills |
-| `continuous-learning-v2` | Instinct-based learning with confidence scoring, evolves into skills/commands/agents |
+| `continuous-learning` | Instinct-based learning with confidence scoring, evolves into skills/commands/agents |
 | `eval-harness` | Formal evaluation framework for eval-driven development (EDD) |
 | `iterative-retrieval` | Progressive context refinement for subagent context problem |
 | `security-review` | Security checklist: auth, input, secrets, API, payment features |
@@ -199,7 +199,7 @@ For each selected skill, copy the entire skill directory:
 cp -r $ECC_ROOT/skills/<skill-name> $TARGET/skills/
 ```
 
-Note: `continuous-learning` and `continuous-learning-v2` have extra files (config.json, hooks, scripts) — ensure the entire directory is copied, not just SKILL.md.
+Note: `continuous-learning` and `continuous-learning` have extra files (config.json, hooks, scripts) — ensure the entire directory is copied, not just SKILL.md.
 
 ---
 
@@ -264,7 +264,7 @@ Some skills reference others. Verify these dependencies:
 - `django-tdd` may reference `django-patterns`
 - `laravel-tdd` may reference `laravel-patterns`
 - `springboot-tdd` may reference `springboot-patterns`
-- `continuous-learning-v2` references `~/.claude/homunculus/` directory
+- `continuous-learning` references `~/.claude/homunculus/` directory
 - `python-testing` may reference `python-patterns`
 - `golang-testing` may reference `golang-patterns`
 - `crosspost` references `content-engine` and `x-api`
@@ -364,4 +364,4 @@ Then print a summary report:
 
 ### "Path reference errors after project-level install"
 - Some skills assume `~/.claude/` paths. Run Step 4 verification to find and fix these.
-- For `continuous-learning-v2`, the `~/.claude/homunculus/` directory is always user-level — this is expected and not an error.
+- For `continuous-learning`, the `~/.claude/homunculus/` directory is always user-level — this is expected and not an error.

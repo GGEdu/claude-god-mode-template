@@ -100,6 +100,80 @@ Si no se detecta ningún runner, el hook deja pasar el push.
 
 ---
 
+## `pre-push` con análisis IA via LiteLLM
+
+Para proyectos que tengan **LiteLLM desplegado localmente**, el pre-push puede incluir análisis semántico de seguridad además de (o en lugar de) los tests. Esta variante es apropiada cuando:
+
+- LiteLLM corre en el servidor (`localhost:4000` u otra URL LAN)
+- No se quiere depender de APIs externas de IA ni de `ANTHROPIC_API_KEY` en CI/CD
+- Se quiere análisis semántico (SQL injection, SSRF, JWT) que `bandit` no cubre
+
+### Flujo
+
+```
+git push
+    ↓
+¿Hay diff en rutas vigiladas? (src/api/, src/data/, src/scraper/, src/ingestion/)
+    │
+    ├─ No → skip silencioso — push continúa
+    │
+    └─ Sí → POST LiteLLM /v1/chat/completions (timeout 30 s)
+              │
+              ├─ LiteLLM no responde → fail-open (push pasa, aviso en stderr)
+              │
+              ├─ CRITICAL detectado → bloquear push (exit 1)
+              │
+              └─ HIGH / MEDIUM → warning impreso, push pasa (exit 0)
+```
+
+### Variables de entorno
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `LITELLM_URL` | `http://localhost:4000` | URL del servidor LiteLLM |
+| `LITELLM_MODEL` | `cerebro-lite` | Alias del modelo a usar |
+
+### Qué analiza el modelo
+
+Solo hallazgos con >80% de confianza. El prompt cubre:
+
+| Nº | Categoría | Ejemplo de hallazgo |
+|----|-----------|---------------------|
+| 1 | JWT sin `tenant_id` | Endpoint protegido que no extrae el tenant del token |
+| 2 | SQL injection | Query asyncpg con f-string o concatenación |
+| 3 | SSRF | URL de usuario pasada al scraper sin validación |
+| 4 | Secrets hardcodeados | Token o clave literal en el diff |
+| 5 | Outbox bypass | Notificación directa que salta `outbox_eventos` |
+| 6 | Pydantic sin validación | Campo que llega a la DB sin validator |
+
+Respuesta del modelo: una línea por hallazgo (`CRITICAL/HIGH/MEDIUM archivo:línea desc`) o `CLEAN`.
+
+### Comportamiento fail-open
+
+Si LiteLLM no responde (timeout, servicio caído, red no disponible):
+
+```
+⚠️  LiteLLM no disponible (...) — push continúa sin análisis
+```
+
+El push **no se bloquea**. La infraestructura caída no paraliza el flujo de trabajo.
+
+### Separación con GitHub Actions CI
+
+El análisis de IA corre en el hook local (donde LiteLLM es accesible). GitHub Actions ejecuta solo análisis estático determinista — sin API keys:
+
+```yaml
+# .github/workflows/ci.yml — sin IA, sin secrets Anthropic
+- run: ruff check src/
+- run: mypy src/ --ignore-missing-imports
+- run: bandit -r src/ -ll     # solo MEDIUM y HIGH
+- run: pip-audit
+```
+
+Esta separación permite que el CI/CD funcione en runners externos (GitHub, GitLab) sin acceso a la LAN privada donde vive LiteLLM.
+
+---
+
 ## Instalación
 
 ```bash

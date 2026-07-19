@@ -6,6 +6,7 @@
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
         triggers-setup triggers-list setup-labels workflows-status \
+        update check-updates generate-manifest \
         test test-quick
 
 GLOBAL_DIR := $(HOME)/.claude
@@ -216,6 +217,13 @@ init-stack: ## [deprecado] Usar dev-stack en su lugar
 		echo "✅ Domain context appended to CLAUDE.md"; \
 	fi
 	@echo ""
+	@# Write manifest so dev-stack users can track template version
+	@python3 ops/write-manifest.py \
+		--project "$$PWD" \
+		--template "$$PWD" \
+		--stack "$(STACK)" \
+		$(if $(LAYERS),--layers "$(LAYERS)",) \
+		$(if $(DOMAIN),--domain "$(DOMAIN)",)
 	@echo "Stack '$(STACK)' listo."
 	@echo ""
 	@echo "Reinicia Claude Code para que los agentes queden disponibles."
@@ -382,6 +390,14 @@ init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel
 		fi; \
 	fi
 	@echo "  ✅ .claude/memory/ listo — se llenara automaticamente al trabajar con Claude"
+	@# Write manifest — lets the project track template version and detect drift later
+	@python3 ops/write-manifest.py \
+		--project "$(PROJECT)" \
+		--template "$$PWD" \
+		--stack "$(STACK)" \
+		$(if $(LAYERS),--layers "$(LAYERS)",) \
+		$(if $(DOMAIN),--domain "$(DOMAIN)",)
+	@echo "  📌 Commitea .claude/.template-manifest.yaml para compartir la versión del template"
 	@echo ""
 	@echo "Proyecto listo."
 	@echo "  Agentes: skills embebidas (el developer no necesita invocar skills manualmente)"
@@ -389,6 +405,7 @@ init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel
 	@echo "  Layers disponibles: make list-layers"
 	@echo "  Domains disponibles: make list-domains"
 	@echo "  Los agentes globales adicionales vienen de ~/.claude/ (make install)."
+	@echo "  Actualizaciones: make check-updates PROJECT=$(PROJECT)"
 
 setup-project: ## Flujo unificado: auto-detecta stack + confirma + inicializa proyecto (ej: make setup-project PROJECT=/ruta)
 	@[ -n "$(PROJECT)" ] || (echo "❌ Indica la ruta: make setup-project PROJECT=/ruta/al/proyecto" && exit 1)
@@ -533,6 +550,32 @@ Consolida todos los resultados en projects/$(NAME)/REPORT.md con secciones clara
 Al final incluye un apartado 'Top 5 acciones' con las mejoras más impactantes ordenadas por severidad."
 	@echo ""
 	@echo "✅ Análisis completo. Resultado en projects/$(NAME)/REPORT.md"
+
+# ---- UPDATE / VERSIONING ----
+
+update: ## Actualiza agentes/reglas/comandos desde el template. Uso: make update PROJECT=/ruta [TEMPLATE=/ruta] [FORCE=true]
+	@[ -n "$(PROJECT)" ] || (echo "❌ PROJECT requerido. Uso: make update PROJECT=/ruta" && exit 1)
+	@[ -f "$(PROJECT)/.claude/.template-manifest.yaml" ] || \
+		(echo "❌ Sin manifest. Ejecuta: make generate-manifest PROJECT=$(PROJECT) STACK=<stack>" && exit 1)
+	@python3 ops/update-project.py "$(PROJECT)" \
+		$(if $(TEMPLATE),--template "$(TEMPLATE)",) \
+		$(if $(filter true,$(FORCE)),--force,)
+
+check-updates: ## Muestra cambios en el template desde el último update (dry-run). Uso: make check-updates PROJECT=/ruta
+	@[ -n "$(PROJECT)" ] || (echo "❌ PROJECT requerido. Uso: make check-updates PROJECT=/ruta" && exit 1)
+	@python3 ops/check-updates.py "$(PROJECT)" \
+		$(if $(TEMPLATE),--template "$(TEMPLATE)",) || true
+
+generate-manifest: ## Crea manifest para proyectos sin él. Uso: make generate-manifest PROJECT=/ruta STACK=<stack>
+	@[ -n "$(PROJECT)" ] || (echo "❌ PROJECT requerido" && exit 1)
+	@[ -n "$(STACK)" ] || (echo "❌ STACK requerido. Uso: make generate-manifest PROJECT=/ruta STACK=laravel" && exit 1)
+	@python3 ops/write-manifest.py \
+		--project "$(PROJECT)" \
+		--template "$$PWD" \
+		--stack "$(STACK)" \
+		$(if $(LAYERS),--layers "$(LAYERS)",) \
+		$(if $(DOMAIN),--domain "$(DOMAIN)",)
+	@echo "  📌 Commitea .claude/.template-manifest.yaml para compartir la versión del template"
 
 # ---- TESTS ----
 
