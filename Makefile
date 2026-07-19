@@ -383,7 +383,7 @@ init-project: ## Inicializa un proyecto externo: make init-project STACK=laravel
 	@# 7. Actualizar .gitignore del proyecto (excluir archivos generados de Claude)
 	@if [ -f "$(PROJECT)/.gitignore" ]; then \
 		if ! grep -q "\.claude/agents/" "$(PROJECT)/.gitignore"; then \
-			printf '\n# Claude Code — archivos generados (no commitear)\n.claude/agents/\n.claude/commands/\n.claude/rules/\n.claude/pipeline.yaml\n# Claude Code — si commitear (contexto del proyecto)\n!.claude/CLAUDE.md\n!.claude/memory/\n# Memoria: vault (Obsidian) se commitea; grafo y cache de Graphify/MemPalace no\ngraphify-out/\nentities.json\n!vault/\n# MemPalace per-project files (issue #185)\nmempalace.yaml\n' >> "$(PROJECT)/.gitignore"; \
+			printf '\n# Claude Code — archivos generados (no commitear)\n.claude/agents/\n.claude/commands/\n.claude/rules/\n.claude/pipeline.yaml\n# Claude Code — si commitear (contexto del proyecto)\n!.claude/CLAUDE.md\n!.claude/memory/\n# Memoria personal por developer (Claude Code la carga junto a CLAUDE.md)\nCLAUDE.local.md\n# Memoria: vault (Obsidian) se commitea; grafo y cache de Graphify/MemPalace no\ngraphify-out/\nentities.json\n!vault/\n# MemPalace per-project files (issue #185)\nmempalace.yaml\n' >> "$(PROJECT)/.gitignore"; \
 			echo "  ✅ .gitignore actualizado — archivos generados de Claude excluidos"; \
 		else \
 			echo "  ✅ .gitignore ya tiene entradas de Claude"; \

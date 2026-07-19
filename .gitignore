@@ -31,6 +31,9 @@ entities.json
 .claude/state.yaml.lock
 .claude/session-reads.log
 
+# Memoria personal por developer (Claude Code la carga junto a CLAUDE.md)
+CLAUDE.local.md
+
 # Worktrees de agentes (temporales, se crean/eliminan automáticamente)
 .claude/worktrees/
 

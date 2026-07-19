@@ -211,6 +211,18 @@ blog-api/.claude/memory/
 "Usa el agente memory-consolidator para consolidar .claude/memory/"
 ```
 
+### Memoria personal (`CLAUDE.local.md`, no compartida)
+
+Además de `CLAUDE.md` (raíz del proyecto, committeado, compartido por todo el equipo), Claude Code carga automáticamente `CLAUDE.local.md` si existe — mismo nivel, raíz del proyecto. Es personal por developer: preferencias propias, URLs de sandbox, datos de test locales. **No se commitea** — `make init-project` lo agrega al `.gitignore` del proyecto por defecto.
+
+Diferencia con `.claude/settings.local.json`: ese archivo es config/permisos locales (qué tools se auto-permiten). `CLAUDE.local.md` es memoria/instrucciones locales (qué le decís a Claude sobre tus preferencias). Ambos coexisten, cada uno cubre una cosa distinta.
+
+```text
+blog-api/
+├── CLAUDE.md          ← Compartido, committeado (contexto del proyecto)
+└── CLAUDE.local.md    ← Personal, gitignored (tus preferencias, no las del equipo)
+```
+
 ---
 
 ## Variables de entorno (settings.json)
