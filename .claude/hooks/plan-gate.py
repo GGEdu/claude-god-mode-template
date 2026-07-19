@@ -68,7 +68,26 @@ def is_sensitive(file_path: str) -> bool:
     return any(fnmatch.fnmatch(file_path, p) for p in SENSITIVE_PATTERNS)
 
 
-def is_trivial_change() -> bool:
+def _estimate_pending_change(event: dict) -> tuple[int, int]:
+    """Tamaño del write/edit propuesto en ESTE tool call. PreToolUse corre
+    antes de que el archivo toque disco, así que git diff nunca lo ve (P4-1:
+    Sintesis-errores.md). Sin esto, la primera escritura de la sesión —diff
+    acumulado vacío— siempre caía en FAST_PATH sin importar su tamaño real."""
+    tool_input = event.get("tool_input", {})
+    tool_name = event.get("tool_name", "")
+    if tool_name == "Write":
+        content = tool_input.get("content", "") or ""
+        return 1, (content.count("\n") + 1) if content else 0
+    if tool_name == "Edit":
+        old = tool_input.get("old_string", "") or ""
+        new = tool_input.get("new_string", "") or ""
+        return 1, abs(new.count("\n") - old.count("\n")) + 1
+    return 1, 0
+
+
+def is_trivial_change(event: dict | None = None) -> bool:
+    file_count = 0
+    total_lines = 0
     try:
         diff = subprocess.run(
             ["git", "diff", "--cached", "--stat", "--stat-count=100"],
@@ -80,21 +99,25 @@ def is_trivial_change() -> bool:
                 capture_output=True, text=True, timeout=5
             )
         lines = [l for l in diff.stdout.strip().split("\n") if l.strip()]
-        if not lines:
-            return True
-        file_count = len(lines) - 1 if len(lines) > 1 else len(lines)
-        summary = lines[-1] if lines else ""
-        total_lines = 0
-        for part in summary.split(","):
-            part = part.strip()
-            if "insertion" in part or "deletion" in part:
-                try:
-                    total_lines += int(part.split()[0])
-                except (ValueError, IndexError):
-                    pass
-        return file_count <= FAST_PATH_MAX_FILES and total_lines <= FAST_PATH_MAX_LINES
-    except (subprocess.TimeoutExpired, Exception):
-        return False
+        if lines:
+            file_count = len(lines) - 1 if len(lines) > 1 else len(lines)
+            summary = lines[-1]
+            for part in summary.split(","):
+                part = part.strip()
+                if "insertion" in part or "deletion" in part:
+                    try:
+                        total_lines += int(part.split()[0])
+                    except (ValueError, IndexError):
+                        pass
+    except Exception:
+        return False  # fail-closed: sin certeza sobre el tamaño, exigir PLAN.md
+
+    if event is not None:
+        cur_files, cur_lines = _estimate_pending_change(event)
+        file_count += cur_files
+        total_lines += cur_lines
+
+    return file_count <= FAST_PATH_MAX_FILES and total_lines <= FAST_PATH_MAX_LINES
 
 
 def main():
@@ -122,7 +145,7 @@ def main():
                    "reason": f"Archivo sensible ({file_path}) requiere PLAN.md. No FAST_PATH para auth/security/payments."}, sys.stdout)
         sys.exit(1)
 
-    if is_trivial_change():
+    if is_trivial_change(event):
         # FAST_PATH: cambio trivial sin PLAN — transicionar a FAST_PATH
         transition_state("FAST_PATH", extra={"mode": "fast_path"})
         json.dump({"decision": "allow",

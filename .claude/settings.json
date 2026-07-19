@@ -100,6 +100,10 @@
           {
             "type": "command",
             "command": "f=.claude/hooks/tdd-gate.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/non-goal-guard.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
           }
         ]
       },
@@ -117,6 +121,10 @@
           {
             "type": "command",
             "command": "f=.claude/hooks/tdd-gate.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
+          },
+          {
+            "type": "command",
+            "command": "f=.claude/hooks/non-goal-guard.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
           }
         ]
       },
@@ -136,10 +144,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=.claude/hooks/non-goal-guard.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
-          },
-          {
-            "type": "command",
             "command": "f=.claude/hooks/plan-drift-detector.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
           },
           {
@@ -151,10 +155,6 @@
       {
         "matcher": "Edit",
         "hooks": [
-          {
-            "type": "command",
-            "command": "f=.claude/hooks/non-goal-guard.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"
-          },
           {
             "type": "command",
             "command": "f=.claude/hooks/plan-drift-detector.py; [ -f \"$f\" ] && python3 \"$f\" || echo '{\"decision\":\"allow\",\"reason\":\"hook not installed\"}'"

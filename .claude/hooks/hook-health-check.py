@@ -4,6 +4,17 @@
 import json, sys, os, subprocess, time
 from datetime import datetime, timezone
 
+# P4-2 fix (Sintesis-errores.md): comparte el lock best-effort de _paths.py
+# con los demás hooks que tocan state.yaml (plan-gate, tdd-gate, commit-checklist)
+# para reducir la ventana de race condition. No requiere pyyaml.
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from _paths import StateLock
+except ImportError:
+    class StateLock:
+        def __enter__(self): return self
+        def __exit__(self, *exc_info): return False
+
 STATE_PATH = ".claude/state.yaml"
 HEALTH_LOG = ".claude/memory/hook-health.log"
 HOOKS_DIR = ".claude/hooks"
@@ -58,28 +69,37 @@ def read_state() -> dict:
         return {}
 
 
-def write_state(session_id: str, timestamp: str):
+def _atomic_write(content: str):
+    """Escritura atómica (tmp + os.replace) — P4-2 fix, mismo mecanismo que
+    _paths.py save_state() para que un lector nunca vea el archivo truncado."""
     os.makedirs(".claude", exist_ok=True)
-    content = INITIAL_STATE.format(session_id=session_id, timestamp=timestamp)
-    with open(STATE_PATH, "w") as f:
+    tmp_path = f"{STATE_PATH}.tmp.{os.getpid()}"
+    with open(tmp_path, "w") as f:
         f.write(content)
+    os.replace(tmp_path, STATE_PATH)
+
+
+def write_state(session_id: str, timestamp: str):
+    content = INITIAL_STATE.format(session_id=session_id, timestamp=timestamp)
+    with StateLock():
+        _atomic_write(content)
 
 
 def update_health_check_timestamp(session_id: str, timestamp: str):
     """Actualiza solo last_health_check y session_id en el state.yaml existente."""
     try:
-        with open(STATE_PATH) as f:
-            lines = f.readlines()
-        new_lines = []
-        for line in lines:
-            if line.startswith("last_health_check:"):
-                new_lines.append(f'last_health_check: "{timestamp}"\n')
-            elif line.startswith("session_id:"):
-                new_lines.append(f'session_id: "{session_id}"\n')
-            else:
-                new_lines.append(line)
-        with open(STATE_PATH, "w") as f:
-            f.writelines(new_lines)
+        with StateLock():
+            with open(STATE_PATH) as f:
+                lines = f.readlines()
+            new_lines = []
+            for line in lines:
+                if line.startswith("last_health_check:"):
+                    new_lines.append(f'last_health_check: "{timestamp}"\n')
+                elif line.startswith("session_id:"):
+                    new_lines.append(f'session_id: "{session_id}"\n')
+                else:
+                    new_lines.append(line)
+            _atomic_write("".join(new_lines))
     except Exception:
         pass
 

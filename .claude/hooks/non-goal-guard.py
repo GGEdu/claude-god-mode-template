@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""PostToolUse(Write/Edit): detecta writes a paths de non_goals en PLAN.md.
-   Bloquea + rollback si el archivo escrito coincide con un non_goal glob (Sintesis.md §2.5).
+"""PreToolUse(Write/Edit): bloquea writes a paths de non_goals en PLAN.md,
+   ANTES de que el archivo toque disco (Sintesis.md §2.5).
 
    HIGH-3 fix: usa yaml.safe_load para parser robusto.
-   HIGH-4 fix: rollback real (git checkout o rm) tras detectar match."""
-import json, sys, os, fnmatch, subprocess
+   P4-4 fix (Sintesis-errores.md): este hook vivía en PostToolUse y hacía
+   rollback (git checkout / rm) DESPUÉS del write — el archivo ya había
+   tocado disco, con ventanas donde el rollback podía fallar (partial write,
+   dependencias no comiteadas). La verificación solo necesita tool_input.file_path
+   (nunca el contenido), así que no hay razón técnica para no prevenir en
+   PreToolUse en vez de corregir después. Rollback eliminado — ya no aplica."""
+import json, sys, os, fnmatch
 from datetime import datetime, timezone
 
 try:
@@ -132,39 +137,6 @@ def log_event(file_path: str, msg: str, action: str = "BLOCK"):
         pass
 
 
-def file_was_tracked(file_path: str) -> bool:
-    """¿El archivo existía en git antes del write actual?"""
-    try:
-        result = subprocess.run(
-            ["git", "ls-files", "--error-unmatch", file_path],
-            capture_output=True, timeout=5
-        )
-        return result.returncode == 0
-    except Exception:
-        return False
-
-
-def rollback(file_path: str) -> tuple[bool, str]:
-    """Intenta deshacer el write. Si el archivo estaba en git → git checkout.
-    Si era nuevo → eliminar."""
-    if not os.path.exists(file_path):
-        return True, "archivo ya no existe"
-    try:
-        if file_was_tracked(file_path):
-            r = subprocess.run(
-                ["git", "checkout", "--", file_path],
-                capture_output=True, text=True, timeout=5
-            )
-            if r.returncode == 0:
-                return True, "git checkout OK"
-            return False, f"git checkout falló: {r.stderr.strip()[:100]}"
-        else:
-            os.remove(file_path)
-            return True, "archivo nuevo eliminado (no estaba en git)"
-    except Exception as e:
-        return False, f"rollback falló: {e}"
-
-
 def main():
     event = json.load(sys.stdin)
     file_path = event.get("tool_input", {}).get("file_path", "")
@@ -185,13 +157,11 @@ def main():
 
     for ng in non_goals:
         if fnmatch.fnmatch(file_path, ng["pattern"]):
-            ok, rb_msg = rollback(file_path)
-            action = "BLOCK_ROLLBACK_OK" if ok else "BLOCK_ROLLBACK_FAIL"
             msg = (
                 f"NON-GOAL VIOLADO: '{file_path}' coincide con patrón '{ng['pattern']}' "
-                f"({ng['reason']}). Rollback: {rb_msg}."
+                f"({ng['reason']}). Bloqueado antes de escribir (PreToolUse)."
             )
-            log_event(file_path, msg, action)
+            log_event(file_path, msg, "BLOCK")
             json.dump({"decision": "block", "reason": msg}, sys.stdout)
             sys.exit(1)
 
