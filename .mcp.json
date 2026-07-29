@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "mempalace": {
-      "command": "mempalace-mcp",
-      "args": []
-    },
     "notebooklm": {
       "command": "notebooklm-mcp",
       "args": []
