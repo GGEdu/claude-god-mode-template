@@ -4,7 +4,7 @@ description: Carga el sistema de diseño de una empresa como contexto visual par
 when: "Al crear o refactorizar componentes UI, páginas, o sistemas de diseño — especialmente al inicio de un proyecto frontend"
 ---
 
-Carga y aplica el sistema de diseño de **"$ARGUMENTS"** (ej: `linear`, `stripe`, `vercel`, `supabase`).
+Carga y aplica el sistema de diseño de **"$ARGUMENTS"** (ej: `linear.app`, `stripe`, `vercel`, `supabase`).
 
 ## Paso 1 — Buscar DESIGN.md local
 
@@ -57,8 +57,8 @@ Al generar componentes: aplicar estos tokens explícitamente. Indicar qué token
 
 ## Empresas disponibles (selección curada)
 
-**Herramientas SaaS**: linear, stripe, vercel, supabase, figma, notion, raycast, cursor
-**Big Tech**: apple, github, airbnb, spotify, uber
-**Design-first**: tailwind, shadcn, radix
+**Herramientas SaaS**: linear.app, stripe, vercel, supabase, figma, notion, raycast, cursor
+**Big Tech**: apple, airbnb, spotify, uber, meta, nvidia, ibm
+**Design-first**: sanity, mintlify, framer, webflow
 
 Para ver todas: `https://github.com/VoltAgent/awesome-design-md/tree/main/design-md`
