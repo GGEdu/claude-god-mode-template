@@ -1,8 +1,9 @@
 name: Agent — Scheduled Audit
 
-# Weekly audit: security review + documentation health check.
-# Runs every Monday at 09:00 UTC. Results are posted as a GitHub Issue.
-# Can also be triggered manually via workflow_dispatch.
+# Weekly audit: security review + documentation health check, run as parallel
+# jobs via anthropics/claude-code-action@v1. Runs every Monday at 09:00 UTC.
+# Results are posted as a GitHub Issue. Can also be triggered manually via
+# workflow_dispatch.
 #
 # Required secret: ANTHROPIC_API_KEY
 # Required permission: issues: write
@@ -28,103 +29,90 @@ jobs:
   security-audit:
     if: ${{ env.SCOPE == 'full' || env.SCOPE == 'security' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     outputs:
-      report: ${{ steps.audit.outputs.report }}
+      report: ${{ steps.audit.outputs.structured_output }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
       - name: Run security-reviewer agent
         id: audit
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          SINCE=$(date -d '7 days ago' +%Y-%m-%d)
-          CHANGED_FILES=$(git log --since="${SINCE}" --name-only --pretty=format: | sort -u | grep -v '^$' | head -50)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
 
-          claude -p \
-            --allowedTools "Read,Grep,Glob,Bash(git log*),Bash(git diff*)" \
-            --model sonnet \
-            "You are the security-reviewer agent. Conduct a weekly security audit.
-            Files modified in the last 7 days:
-            ${CHANGED_FILES}
-
-            Review each relevant file for:
+            You are the security-reviewer agent. Conduct a weekly security
+            audit. Find the files modified in the last 7 days
+            (`git log --since="7 days ago" --name-only --pretty=format: | sort -u`)
+            and review each relevant one for:
             - Hardcoded secrets or credentials
             - Authentication/authorization issues
             - Input validation gaps
             - OWASP Top 10 vulnerabilities
             - Insecure dependencies (check package.json/composer.json if present)
 
-            Produce a markdown security audit report with:
+            Return a markdown security audit report via the `report` field
+            with:
             1. Executive summary (1-2 sentences)
             2. Findings by severity (CRITICAL/HIGH/MEDIUM)
             3. Recommended actions
-            4. Files audited" \
-          > /tmp/security-audit.md
-
-          echo "report<<EOF" >> $GITHUB_OUTPUT
-          cat /tmp/security-audit.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+            4. Files audited
+          claude_args: |
+            --model sonnet
+            --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(git diff:*)"
+            --json-schema '{"type":"object","properties":{"report":{"type":"string"}},"required":["report"]}'
 
   docs-audit:
     if: ${{ env.SCOPE == 'full' || env.SCOPE == 'docs' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     outputs:
-      report: ${{ steps.audit.outputs.report }}
+      report: ${{ steps.audit.outputs.structured_output }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
       - name: Run doc-updater agent
         id: audit
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          claude -p \
-            --allowedTools "Read,Grep,Glob,Bash(git log*)" \
-            --model sonnet \
-            "You are the doc-updater agent. Review the documentation health of this project.
-            Check:
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+
+            You are the doc-updater agent. Review the documentation health of
+            this project. Check:
             - README.md completeness and accuracy
             - CLAUDE.md accuracy vs current agents/skills/rules
             - Docs in docs/ that may be stale (compare with recent git changes)
             - Missing documentation for recently added features
 
-            Produce a markdown docs health report with:
+            Return a markdown docs health report via the `report` field with:
             1. Summary
             2. Stale or missing docs (file, issue, suggestion)
-            3. Recommended updates (prioritized)" \
-          > /tmp/docs-audit.md
-
-          echo "report<<EOF" >> $GITHUB_OUTPUT
-          cat /tmp/docs-audit.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+            3. Recommended updates (prioritized)
+          claude_args: |
+            --model sonnet
+            --allowedTools "Read,Grep,Glob,Bash(git log:*)"
+            --json-schema '{"type":"object","properties":{"report":{"type":"string"}},"required":["report"]}'
 
   create-audit-issue:
     needs: [security-audit, docs-audit]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
       - name: Create audit issue
         env:
@@ -133,31 +121,35 @@ jobs:
           DOCS_REPORT: ${{ needs.docs-audit.outputs.report }}
         run: |
           DATE=$(date +%Y-%m-%d)
-          TITLE="Weekly Audit — ${DATE}"
+          SECURITY_TEXT=$(echo "$SECURITY_REPORT" | jq -r '.report // empty' 2>/dev/null)
+          DOCS_TEXT=$(echo "$DOCS_REPORT" | jq -r '.report // empty' 2>/dev/null)
+          SECURITY_TEXT="${SECURITY_TEXT:-_Skipped (scope: docs)_}"
+          DOCS_TEXT="${DOCS_TEXT:-_Skipped (scope: security)_}"
 
-          BODY="# Weekly Audit — ${DATE}
+          {
+            echo "# Weekly Audit — ${DATE}"
+            echo
+            echo "Automated audit generated by Claude Code agents."
+            echo
+            echo "## Security Audit"
+            echo
+            echo "$SECURITY_TEXT"
+            echo
+            echo "---"
+            echo
+            echo "## Documentation Health"
+            echo
+            echo "$DOCS_TEXT"
+            echo
+            echo "---"
+            echo "*Triggered by: ${{ github.event_name }} | Scope: ${SCOPE}*"
+          } > /tmp/audit-issue.md
 
-          Automated audit generated by Claude Code agents.
-
-          ## Security Audit
-
-          ${SECURITY_REPORT:-*Skipped (scope: docs)*}
-
-          ---
-
-          ## Documentation Health
-
-          ${DOCS_REPORT:-*Skipped (scope: security)*}
-
-          ---
-          *Triggered by: ${{ github.event_name }} | Scope: ${SCOPE}*"
-
-          # Create label if missing
           gh label create audit --color e4e669 --description "Automated audit report" \
             --repo ${{ github.repository }} 2>/dev/null || true
 
           gh issue create \
             --repo ${{ github.repository }} \
-            --title "${TITLE}" \
-            --body "${BODY}" \
+            --title "Weekly Audit — ${DATE}" \
+            --body-file /tmp/audit-issue.md \
             --label audit

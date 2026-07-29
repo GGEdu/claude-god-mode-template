@@ -1,8 +1,9 @@
 name: Agent — PR Review
 
 # Triggers on every PR open, update or reopen.
-# Runs code-reviewer + security-reviewer in parallel and posts
-# a combined markdown comment on the PR.
+# Runs code-reviewer + security-reviewer as genuinely parallel jobs (via the
+# official anthropics/claude-code-action@v1) and posts one combined markdown
+# comment on the PR once both finish.
 #
 # Required secret: ANTHROPIC_API_KEY
 # Required permission: pull-requests: write
@@ -16,75 +17,109 @@ permissions:
   pull-requests: write
 
 jobs:
-  agent-review:
+  code-review:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    outputs:
+      review: ${{ steps.review.outputs.structured_output }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
       - name: Code review (code-reviewer agent)
-        id: code-review
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          BASE=${{ github.event.pull_request.base.sha }}
-          HEAD=${{ github.event.pull_request.head.sha }}
+        id: review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            BASE SHA: ${{ github.event.pull_request.base.sha }}
+            HEAD SHA: ${{ github.event.pull_request.head.sha }}
 
-          claude -p \
-            --allowedTools "Bash(git diff*),Bash(git log*),Read,Grep,Glob" \
-            --model sonnet \
-            "You are the code-reviewer agent. Review the changes in this PR.
-            Run: git diff ${BASE}...${HEAD}
-            to see all changes, then read the full context of modified files.
+            You are the code-reviewer agent. Review the changes in this PR.
+            Run `git diff <BASE SHA>...<HEAD SHA>` to see all changes, then read
+            the full context of modified files.
             Apply the full review checklist: CRITICAL/HIGH/MEDIUM/LOW.
-            Output the complete review in markdown. Be concise — skip LOW issues." \
-          > /tmp/code-review.md
+            Return the complete review in markdown via the `review` field. Be
+            concise — skip LOW issues.
+          claude_args: |
+            --model sonnet
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Read,Grep,Glob"
+            --json-schema '{"type":"object","properties":{"review":{"type":"string"}},"required":["review"]}'
+
+  security-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    outputs:
+      review: ${{ steps.review.outputs.structured_output }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Security review (security-reviewer agent)
-        id: security-review
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          BASE=${{ github.event.pull_request.base.sha }}
-          HEAD=${{ github.event.pull_request.head.sha }}
+        id: review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            BASE SHA: ${{ github.event.pull_request.base.sha }}
+            HEAD SHA: ${{ github.event.pull_request.head.sha }}
 
-          claude -p \
-            --allowedTools "Bash(git diff*),Bash(git log*),Read,Grep,Glob" \
-            --model sonnet \
-            "You are the security-reviewer agent. Analyze the PR changes for security vulnerabilities.
-            Run: git diff ${BASE}...${HEAD}
-            Focus on OWASP Top 10: injection, auth bypasses, XSS, exposed secrets, insecure dependencies.
-            Only report real findings (>80% confidence). Output as markdown with severity labels." \
-          > /tmp/security-review.md
+            You are the security-reviewer agent. Analyze the PR changes for
+            security vulnerabilities.
+            Run `git diff <BASE SHA>...<HEAD SHA>`.
+            Focus on OWASP Top 10: injection, auth bypasses, XSS, exposed
+            secrets, insecure dependencies.
+            Only report real findings (>80% confidence). Return the report as
+            markdown with severity labels via the `review` field.
+          claude_args: |
+            --model sonnet
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Read,Grep,Glob"
+            --json-schema '{"type":"object","properties":{"review":{"type":"string"}},"required":["review"]}'
 
+  post-review:
+    needs: [code-review, security-review]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
       - name: Post combined review as PR comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODE_REVIEW: ${{ needs.code-review.outputs.review }}
+          SECURITY_REVIEW: ${{ needs.security-review.outputs.review }}
         run: |
-          COMMENT=$(cat <<'EOF'
-          ## Code Review — Claude Code Agents
+          CODE_TEXT=$(echo "$CODE_REVIEW" | jq -r '.review // empty' 2>/dev/null)
+          SECURITY_TEXT=$(echo "$SECURITY_REVIEW" | jq -r '.review // empty' 2>/dev/null)
+          CODE_TEXT="${CODE_TEXT:-_Review unavailable._}"
+          SECURITY_TEXT="${SECURITY_TEXT:-_Review unavailable._}"
 
-          EOF
-          )
-          COMMENT="${COMMENT}$(cat /tmp/code-review.md)"
-          COMMENT="${COMMENT}
-
-          ---
-
-          ## Security Review — Claude Code Agents
-
-          $(cat /tmp/security-review.md)"
+          {
+            echo "## Code Review — Claude Code Agents"
+            echo
+            echo "$CODE_TEXT"
+            echo
+            echo "---"
+            echo
+            echo "## Security Review — Claude Code Agents"
+            echo
+            echo "$SECURITY_TEXT"
+          } > /tmp/combined-review.md
 
           gh pr comment ${{ github.event.pull_request.number }} \
             --repo ${{ github.repository }} \
-            --body "${COMMENT}"
+            --body-file /tmp/combined-review.md
