@@ -22,6 +22,14 @@ ALWAYS_INSTALL_AGENTS = {
     "repo-reviewer",         # ops/triggers/weekly-repo-discovery.yaml
 }
 
+# Mismo criterio que ALWAYS_INSTALL_AGENTS pero para skills: meta-tooling de
+# invocación manual/on-demand (no ligado a un stack ni disparado por hooks),
+# así que sin este allowlist nunca se instalaría (council 2026-07-24: decisión
+# deliberada de NO conectarlo a pipeline.yaml/triggers — disponible, no forzado).
+ALWAYS_INSTALL_SKILLS = {
+    "skill-creator",
+}
+
 
 def main():
     if len(sys.argv) < 2:
@@ -68,6 +76,7 @@ def main():
         used_agents.update(d.get("agents", []) or [])
 
     used_agents.update(ALWAYS_INSTALL_AGENTS)
+    used_skills.update(ALWAYS_INSTALL_SKILLS)
 
     agents_dir = os.path.join(global_dir, "agents")
     a_count = 0
@@ -81,11 +90,16 @@ def main():
 
     s_count = 0
     for name in sorted(used_skills):
-        src = os.path.join("skills", name, "SKILL.md")
-        if os.path.exists(src):
+        src_dir = os.path.join("skills", name)
+        if os.path.exists(os.path.join(src_dir, "SKILL.md")):
             dest_dir = os.path.join(global_dir, "skills", name)
-            os.makedirs(dest_dir, exist_ok=True)
-            shutil.copy(src, os.path.join(dest_dir, "SKILL.md"))
+            # Copia el directorio completo, no solo SKILL.md — algunos skills
+            # (ck, videodb, skill-comply, skill-creator...) traen scripts/,
+            # references/ o assets/ que SKILL.md referencia por ruta relativa
+            # y que antes nunca llegaban a global_dir (bug encontrado 2026-07-24).
+            if os.path.exists(dest_dir):
+                shutil.rmtree(dest_dir)
+            shutil.copytree(src_dir, dest_dir)
             s_count += 1
 
     print(f"  \u2705 Skills instalados ({s_count} referenciados en stacks)")

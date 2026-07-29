@@ -59,36 +59,32 @@ gh pr create --title "feat: mark task as complete"
 
 **Qué ocurre automáticamente:**
 
-El workflow `agent-pr-review.yml` se dispara. En CI, Claude Code ejecuta dos agentes con `claude -p`:
+El workflow `agent-pr-review.yml` se dispara. En CI, dos jobs corren en paralelo usando la GitHub Action oficial `anthropics/claude-code-action@v1` (desde 2026-07-24 — antes se hacía con `npm install -g @anthropic-ai/claude-code` + `claude -p` a mano):
 
 ```yaml
-# Fragment de agent-pr-review.yml
+# Fragmento de agent-pr-review.yml
 - name: Code review (code-reviewer agent)
-  run: |
-    BASE=${{ github.event.pull_request.base.sha }}
-    HEAD=${{ github.event.pull_request.head.sha }}
+  id: review
+  uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: |
+      REPO: ${{ github.repository }}
+      PR NUMBER: ${{ github.event.pull_request.number }}
+      BASE SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD SHA: ${{ github.event.pull_request.head.sha }}
 
-    claude -p \
-      --allowedTools "Bash(git diff*),Bash(git log*),Read,Grep,Glob" \
-      --model sonnet \
-      "You are the code-reviewer agent. Review the changes in this PR.
-      Run: git diff ${BASE}...${HEAD}
+      You are the code-reviewer agent. Review the changes in this PR.
+      Run `git diff <BASE SHA>...<HEAD SHA>` to see all changes.
       Apply the full review checklist: CRITICAL/HIGH/MEDIUM/LOW.
-      Output the complete review in markdown. Be concise — skip LOW issues."
-    > /tmp/code-review.md
-
-- name: Security review (security-reviewer agent)
-  run: |
-    claude -p \
-      --allowedTools "Bash(git diff*),Bash(git log*),Read,Grep,Glob" \
-      --model sonnet \
-      "You are the security-reviewer agent. Analyze the PR changes.
-      Focus on OWASP Top 10: injection, auth bypasses, XSS, exposed secrets.
-      Only report real findings. Output as markdown with severity labels."
-    > /tmp/security-review.md
+      Return the complete review in markdown via the `review` field.
+    claude_args: |
+      --model sonnet
+      --allowedTools "Bash(git diff:*),Bash(git log:*),Read,Grep,Glob"
+      --json-schema '{"type":"object","properties":{"review":{"type":"string"}},"required":["review"]}'
 ```
 
-Primero corre `code-reviewer`, luego `security-reviewer`, y el resultado combinado se publica como comentario en el PR:
+`security-review` corre como job hermano con el mismo patrón (prompt de `security-reviewer`, foco OWASP Top 10). Un tercer job (`post-review`) espera a que ambos terminen (`needs: [code-review, security-review]`) y publica el resultado combinado como comentario en el PR:
 
 ```
 ## Code Review — Claude Code Agents

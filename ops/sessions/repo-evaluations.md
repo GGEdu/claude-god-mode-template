@@ -65,3 +65,14 @@
 - **Status:** Integrate v2 RC now
 - **Notes:** v1.10.0 skills (council, santa-method, agent-introspection, hookify-rules) have zero breaking changes—forks remain valid. RC released 2026-05-25 with tarball + cross-harness surfaces (Codex, OpenCode, Cursor, Gemini, Zed). New optimization pack directly enables speedup in harness orchestration. Itô prediction-market skills are gated/separate billing, low priority for core template. Adoption path: (1) pull v2.0.0-rc.1 tarball, (2) extract 5 optimization skills + refresh 4 existing forks, (3) integrate 95 new domain skills on backlog. Estimated effort: 4-6h for top 9, 20-30h for full domain suite. Recommendation: ADOPT RC NOW vs waiting for GA—ECC has battle-tested track record (199k stars, Hackathon winner), RC gates adequate, early adoption = 3-4mo competitive advantage in agent perf tuning.
 
+
+### google-labs-code/design.md — https://github.com/google-labs-code/design.md
+- **Date:** 2026-07-24
+- **Score:** 88/100 (Relevancia: 23/25, Calidad: 34/35, Extractabilidad: 18/20, Coste: 13/20)
+- **Tier:** INCLUDE
+- **Reason:** Official Google Labs specification for DESIGN.md format (YAML+Markdown tokens for AI agents). Brand-new (April 2026) but massively adopted (26k stars, 2k forks in 3 months). Template already uses DESIGN.md format in 3+ skills—integrating official spec + CLI tooling (lint, diff, WCAG validation) enhances without breaking changes. Apache 2.0 licensed, zero external dependencies, local-first validation.
+- **Discovered via:** user evaluation request
+- **Extracted:** new skill: design-md-validate (CLI wrapper for lint/diff/validation); enhancements to existing: design-md (spec reference), design-system (validation integration), ui-engineer (spec compliance documentation)
+- **Status:** Proposed
+- **Notes:** Complementary to, not competitive with, existing `skills/design-md/` and `skills/design-system/` — spec legitimizes existing format usage. No breaking changes required. Effort: 3-5h (immediate: 1h docs + spec link, short-term: 1-2h validate skill, backlog: 1-2h workflow integration). Integration plan: (1) Update CLAUDE.md to reference official spec, (2) Create `design-md-validate` skill using @google/design.md CLI, (3) Add npm dependency to Node stacks, (4) Optionally integrate validation into design-system workflow. Existing design files (stripe.md, linear.md) are documentation-grade, not required to upgrade but can be validated/migrated at leisure. v0.3.0 stable, pushed 2026-07-22 (4 days ago), latest release 2026-06-15. Risk mitigation: pin major version in package.json, monitor spec evolution in weekly reviews.
+
