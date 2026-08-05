@@ -79,7 +79,6 @@ disponibles:
 | `/design-md` | Aplicar dirección visual en trabajo UI (cuando está habilitado en el stack). |
 | `/benchmark` | Medir regresiones de rendimiento antes/después de cambios. |
 | `/codebase-onboarding` | Generar guía de onboarding de un repo. |
-| `/continuous-learning` y `/continuous-learning` | Persistir patrones aprendidos de la sesión. |
 | `/ck` | Memoria persistente por proyecto (git-aware). |
 | `/plankton-code-quality` | Enforcement de formato/lint durante edición. |
 | `/strategic-compact` | Recomendar momentos óptimos para compactar contexto. |

@@ -95,8 +95,6 @@ commands:
     when: Medir rendimiento antes/después de un PR o cambio
   design-md:
     when: Al crear componentes o vistas — aplica sistema de diseño
-  continuous-learning:
-    when: Extrae patrones de sesiones y los persiste
   ck:
     when: Persistent memory per-project, git-aware tracking
   plankton-code-quality:

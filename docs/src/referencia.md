@@ -97,8 +97,6 @@ Ejemplo:
 
 | Comando | Qué hace |
 | --- | --- |
-| `/continuous-learning` | Extrae patrones de la sesión y los persiste como skills |
-| `/continuous-learning` | v2 con confidence scoring y project-scoped instincts |
 | `/ck` | Memoria persistente per-project, git-aware |
 | `/plankton-code-quality` | Auto-format y lint en cada edición vía hooks |
 | `/strategic-compact` | Sugiere `/compact` en puntos lógicos de la sesión |

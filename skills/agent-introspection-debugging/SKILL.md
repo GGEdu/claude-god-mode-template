@@ -138,7 +138,7 @@ Good pattern:
 ## Integration with ECC
 
 - Use `verification-loop` after recovery if code was changed.
-- Use `continuous-learning` when the failure pattern is worth turning into an instinct or later skill.
+- Record a lesson in `.claude/memory/lessons/` when the failure pattern is worth remembering — see `.claude/memory/lessons/README.md` for schema and promotion rules.
 - Use `council` when the issue is not technical failure but decision ambiguity.
 - Use `workspace-surface-audit` if the failure came from conflicting local state or repo drift.
 

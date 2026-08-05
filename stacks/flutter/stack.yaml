@@ -97,8 +97,6 @@ commands:
     when: Testing visual de Flutter web con browser automation
   design-md:
     when: Al crear widgets o screens — aplica sistema de diseño
-  continuous-learning:
-    when: Extrae patrones de sesiones y los persiste
   ck:
     when: Persistent memory per-project, git-aware tracking
   plankton-code-quality:

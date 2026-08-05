@@ -93,6 +93,7 @@ scope: "api-auth"             # Namespace explícito para detección de contradi
 trigger: "Qué causó el error (acción concreta)"
 pattern: "Qué hacía mal (patrón reconocible)"
 fix: "Qué debe hacer en su lugar (acción correctiva)"
+confidence: 0.5            # 0.3 tentativa | 0.5 moderada | 0.7 fuerte (auto-aplicable) | 0.9 casi certeza
 rule_created: false
 sessions_without_repeat: 0
 last_referenced: 2026-04-17
@@ -100,6 +101,14 @@ supersedes: null          # ID de lesson anterior que esta reemplaza
 superseded_by: null       # ID de lesson que reemplaza esta
 status: active            # active | promoted | archived | superseded
 ```
+
+> `confidence` cuantifica cuánto pesar la lesson antes de que `sessions_without_repeat` llegue al umbral de promoción — inicia en 0.5 al crearse.
+
+**Evolución de `confidence`:**
+- **Sube +0.1** (máx. 0.9) cada vez que `sessions_without_repeat` se incrementa sin contradicción.
+- **Sube +0.1** si 2+ agentes referencian la misma lesson en sesiones distintas (señal de consenso).
+- **Baja a 0.3** si se detecta un caso límite que casi contradice el `fix` sin llegar a superseder la lesson.
+- Al ser superseded (ver detección de contradicciones), la lesson vieja pasa a `status: superseded` sin importar su `confidence` — el campo no protege contra contradicción directa.
 
 > Detección de contradicciones usa `scope` + keywords, no solo keywords.
 
@@ -112,8 +121,12 @@ status: active            # active | promoted | archived | superseded
 **Criterios de promoción (lesson → rule):**
 - **Señal explícita:** Usuario ejecuta `/promote <lesson-id>`
 - **Señal implícita:** `sessions_without_repeat >= 5` Y `status == active`
+- **Señal de confianza:** `confidence >= 0.8` Y `status == active` (puede calificar antes que el umbral de 5 sesiones si la confianza sube rápido por consenso)
 - **Señal de consenso:** 2+ agentes referencian la misma lección en sesiones distintas
-- Al promover: crear/actualizar rule en `.claude/rules/` + actualizar `rule_created: true` + `status: promoted`
+- Al promover, elegir destino según alcance:
+  - **`.claude/rules/`** (project) — si el `fix` depende del dominio/negocio de este proyecto específico (ej. reglas de un módulo, convención de este codebase).
+  - **`~/.claude/rules/common/`** (global, cross-proyecto) — si el `fix` seguiría siendo cierto en un proyecto distinto con otro stack (ej. hábito de tooling, práctica de seguridad genérica, workflow de git). Heurística: "¿esta lección es sobre CÓMO trabajar o sobre QUÉ hace este proyecto?" — lo primero es global, lo segundo es project.
+- Actualizar `rule_created: true` + `status: promoted` en ambos casos.
 
 **Garbage collection (TTL):**
 - Campo `last_referenced` se actualiza cada vez que la lesson es consultada.
