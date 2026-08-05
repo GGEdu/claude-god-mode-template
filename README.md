@@ -22,6 +22,19 @@ uv pip install -r requirements.txt
 
 Si pyyaml no está disponible, los hooks degradan a un parser custom (más frágil, ver `non-goal-guard.py`).
 
+> **⚠️ Madurez de los hooks (2026-08-05).** Solo el hook de **memoria**
+> (`session-consolidate.sh`, Stop) está activo y probado — es el que gobierna el
+> [sistema de 3 capas](#) y funciona vía copia global en `~/.claude/hooks/`.
+> Los **gates de workflow** (`plan-gate`, `tdd-gate`, `non-goal-guard`,
+> `commit-checklist`, `hook-health-check`, `plan-drift-detector`, `auto-format`)
+> son **opt-in y están en esquema de hook antiguo** (`{"decision":"allow"}`), que
+> Claude Code ≥2.1 rechaza con `Invalid input`. En la práctica el workflow real
+> lo gobiernan los **agentes** (`planner`, `tdd-guide`, `code-reviewer`), que
+> guían sin bloquear. **No cablees estos gates en `~/.claude/settings.json` tal
+> cual**: primero migra su salida a `hookSpecificOutput.permissionDecision`
+> (`allow`/`deny`/`ask`) o a exit-0 sin JSON. Council 2026-08-05: mantener los
+> gates dormidos hasta que un proyecto concreto los pida.
+
 ## Quick Start
 
 ```bash
