@@ -1,0 +1,19 @@
+# Docs internos (VitePress → nginx) — SOLO LAN/Tailscale, nunca público.
+# Alternativa segura a GitHub Pages para repos privados/homelab.
+#   docker compose -f docker-compose.yml up -d --build
+# Publica en un host sin IP pública (p.ej. un CT del homelab) → solo LAN/tailnet.
+services:
+  docs:
+    build:
+      context: ..                      # el directorio docs/
+      dockerfile: deploy-internal/Dockerfile
+    image: ${DOCS_IMAGE:-project-docs:local}
+    container_name: ${DOCS_NAME:-project-docs}   # renombra por proyecto o exporta DOCS_NAME
+    ports:
+      - "8095:80"                       # ajusta el puerto por proyecto
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
