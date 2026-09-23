@@ -93,8 +93,9 @@ Consult `ui-ux-pro-max` only for specific UX rules or chart and palette referenc
    Fix every `low-contrast`, `gray-on-color`, `overused-font`, `side-tab`, `nested-cards`, `hero-eyebrow-chip` and `cream-palette` finding, unless the brief pinned that choice.
 2. **One batched screenshot round**, desktop and mobile together (or use `browser-qa` / Playwright if the project has it):
    ```bash
-   google-chrome --headless=new --hide-scrollbars --window-size=1440,2200 --screenshot=/tmp/ui-desktop.png "file://$PWD/index.html"
-   google-chrome --headless=new --hide-scrollbars --window-size=390,1800 --screenshot=/tmp/ui-mobile.png "file://$PWD/index.html"
+   shots=$(mktemp -d)   # never a fixed /tmp path: parallel agents overwrite each other
+   google-chrome --headless=new --hide-scrollbars --window-size=1440,2200 --screenshot="$shots/desktop.png" "file://$PWD/index.html"
+   google-chrome --headless=new --hide-scrollbars --window-size=390,1800 --screenshot="$shots/mobile.png" "file://$PWD/index.html"
    ```
    Read both images. Fix everything they show in one batch, confirm with at most one more round, and stop.
 3. **Refuse list** (`$IMP/reference/craft-floor.md` § Refuse): same-size icon+heading+text cards as the page structure; hero-metric template; eyebrow/kicker above headings; gradient text; decorative glass; coloured side borders over 1 px; emoji as icons.
