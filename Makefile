@@ -3,7 +3,7 @@
 # ============================================================
 
 
-.PHONY: check-skills
+.PHONY: check-skills drift collect
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-layers list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
@@ -589,6 +589,13 @@ test: ## Ejecuta la suite de tests integral (struct + embed + invoke)
 test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
 	python3 ops/check-skill-integrity.py
 	python3 ops/test-suite.py --no-invoke
+
+drift: ## Compara ~/.claude con el catálogo (igual/difiere/solo-instalada/externa/retirada). JSON: make drift ARGS=--json
+	@cd ops && python3 drift.py $(ARGS)
+
+collect: ## Recoge al catálogo una pieza instalada: make collect KIND=skill NAME=x [OVERWRITE=1]
+	@test -n "$(KIND)" -a -n "$(NAME)" || (echo "Uso: make collect KIND=skill|agent|rule NAME=<nombre> [OVERWRITE=1]"; exit 2)
+	@cd ops && python3 collect.py $(KIND) $(NAME) $(if $(OVERWRITE),--overwrite,)
 
 check-skills: ## Verifica que cada skill contiene los ficheros que su SKILL.md manda usar
 	python3 ops/check-skill-integrity.py
