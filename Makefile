@@ -2,6 +2,8 @@
 # Claude God Mode Template — Panel de Control
 # ============================================================
 
+
+.PHONY: check-skills drift collect catalog adapters install-opencode mcp-diff mcp-render apply repo-status
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-layers list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
@@ -581,10 +583,46 @@ generate-manifest: ## Crea manifest para proyectos sin él. Uso: make generate-m
 # ---- TESTS ----
 
 test: ## Ejecuta la suite de tests integral (struct + embed + invoke)
+	python3 ops/check-skill-integrity.py
+	cd ops && python3 catalog.py --summary
 	python3 ops/test-suite.py
 
 test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
+	python3 ops/check-skill-integrity.py
+	cd ops && python3 catalog.py --summary
 	python3 ops/test-suite.py --no-invoke
+
+catalog: ## Genera dist/catalog.json (índice de todas las piezas; lo lee agent-deck). Resumen: make catalog ARGS=--summary
+	@cd ops && python3 catalog.py $(if $(ARGS),$(ARGS),--out dist/catalog.json --index)
+
+adapters: ## Genera en dist/ los agentes y comandos en formato de otros harness (hoy: opencode)
+	@cd ops && python3 adapters.py
+
+install-opencode: adapters ## Instala agentes, comandos y reglas del catálogo en opencode (global). Plan sin WRITE=1
+	@cd ops && python3 install-opencode.py $(if $(WRITE),--write,)
+
+mcp-diff: ## Compara mcp/servers.yaml con el MCP instalado en Claude Code y opencode
+	@cd ops && python3 mcp.py diff
+
+mcp-render: ## Imprime el MCP del catálogo para un harness: make mcp-render HARNESS=claude|opencode
+	@cd ops && python3 mcp.py render $(or $(HARNESS),claude)
+
+apply: ## Aplica piezas a un repo: make apply REPO=/ruta ITEMS=skill:x,agent:y [HARNESS=claude,opencode] [MODE=auto|link|copy]
+	@test -n "$(REPO)" -a -n "$(ITEMS)" || (echo "Uso: make apply REPO=/ruta ITEMS=skill:x,agent:y [HARNESS=…] [MODE=…]"; exit 2)
+	@cd ops && python3 apply.py "$(REPO)" --items "$(ITEMS)" --harness "$(or $(HARNESS),claude)" --mode "$(or $(MODE),auto)"
+
+repo-status: ## Estado de lo aplicado en un repo (al día / catálogo más nuevo / editado / roto): make repo-status REPO=/ruta
+	@cd ops && python3 repo-status.py "$(REPO)"
+
+drift: ## Compara ~/.claude con el catálogo (igual/difiere/solo-instalada/externa/retirada). JSON: make drift ARGS=--json
+	@cd ops && python3 drift.py $(ARGS)
+
+collect: ## Recoge al catálogo una pieza instalada: make collect KIND=skill NAME=x [OVERWRITE=1]
+	@test -n "$(KIND)" -a -n "$(NAME)" || (echo "Uso: make collect KIND=skill|agent|rule NAME=<nombre> [OVERWRITE=1]"; exit 2)
+	@cd ops && python3 collect.py $(KIND) $(NAME) $(if $(OVERWRITE),--overwrite,)
+
+check-skills: ## Verifica que cada skill contiene los ficheros que su SKILL.md manda usar
+	python3 ops/check-skill-integrity.py
 
 # ---- DIAGNÓSTICO Y VERIFICACIÓN ----
 

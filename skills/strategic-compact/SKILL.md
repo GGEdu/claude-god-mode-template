@@ -2,6 +2,9 @@
 name: strategic-compact
 description: Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction.
 origin: ECC
+compatibility: "Específica de Claude Code: gestiona su compactación de contexto."
+metadata:
+  harnesses: "claude"
 ---
 
 # Strategic Compact Skill

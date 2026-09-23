@@ -1,6 +1,9 @@
 ---
 description: "Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation."
 origin: ECC
+compatibility: "Evalúa por lotes con subagentes en Claude Code; en otros harness, lote a lote en el hilo principal."
+metadata:
+  harnesses: "claude, opencode, freebuff"
 ---
 
 # skill-stocktake

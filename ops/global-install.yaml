@@ -1,0 +1,39 @@
+# Piezas que `make install` copia a ~/.claude aunque ningún stack, layer o domain
+# las referencie. Antes eran constantes en ops/install-global.py; están aquí para
+# que ops/collect.py (y agent-deck) puedan añadir entradas sin editar código.
+#
+# - agents / skills: se instalan siempre. `why` explica quién las usa.
+# - external: las instala otra herramienta; el catálogo no las copia ni compara.
+# - retired: quitadas del catálogo a propósito; si siguen instaladas, desinstalar.
+# - skill-creator se retiró del catálogo (2026-09-23): el plugin oficial
+#   anthropic-skills:skill-creator es la misma skill y se actualiza solo.
+#
+# Este fichero lo reescribe ops/collect.py: los comentarios solo sobreviven aquí arriba.
+agents:
+- name: architecture-auditor
+  why: .claude/pipeline.yaml → workflow architecture-audit
+- name: repo-reviewer
+  why: ops/triggers/weekly-repo-discovery.yaml
+skills:
+- name: repo-eval
+  why: la usa agents/repo-reviewer.md y weekly-repo-discovery
+- name: impeccable
+  why: la usa agents/ui-engineer.md (fase de dirección); no está en ningún stack
+- name: auditoria-curricular-fp
+  why: recogida desde ~/.claude (2026-09-23)
+- name: scraping-reviewer
+  why: recogida desde ~/.claude (2026-09-23)
+external:
+  skills:
+  - name: graphify
+    reinstall: graphify install --platform claude
+  - name: synced
+    reinstall: sincronización de skills de claude.ai (la gestiona Claude Code)
+retired:
+  skills:
+  - name: continuous-learning
+    why: confidence scoring extraído al sistema de lessons (commit 108e51d)
+  - name: skill-creator
+    why: duplicada por el plugin oficial anthropic-skills:skill-creator (2026-09-23)
+  - name: effort-control
+    why: sin uso en stacks, agentes ni pipelines (2026-09-23)

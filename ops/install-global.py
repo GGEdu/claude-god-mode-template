@@ -13,23 +13,11 @@ import os
 import shutil
 import yaml
 
-# Agentes "meta" que se invocan por .claude/pipeline.yaml o ops/triggers/*.yaml
-# en vez de por stack.yaml/domain.yaml/layer.yaml — este script no escanea
-# pipelines ni triggers, así que sin este allowlist nunca se instalarían
-# globalmente pese a ser de uso genuino (fix ítem P1-6, auditoría 2026-07-18).
-ALWAYS_INSTALL_AGENTS = {
-    "architecture-auditor",  # .claude/pipeline.yaml → workflow architecture-audit
-    "repo-reviewer",         # ops/triggers/weekly-repo-discovery.yaml
-}
-
-# Mismo criterio que ALWAYS_INSTALL_AGENTS pero para skills: meta-tooling de
-# invocación manual/on-demand (no ligado a un stack ni disparado por hooks),
-# así que sin este allowlist nunca se instalaría (council 2026-07-24: decisión
-# deliberada de NO conectarlo a pipeline.yaml/triggers — disponible, no forzado).
-ALWAYS_INSTALL_SKILLS = {
-    "skill-creator",
-    "impeccable",  # la usa agents/ui-engineer.md (fase de dirección); no está en ningún stack
-}
+# Piezas instaladas aunque ningún stack las referencie: ver ops/global-install.yaml
+# (antes eran constantes aquí; en YAML para que ops/collect.py pueda añadirlas).
+_GLOBAL = yaml.safe_load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "global-install.yaml"))) or {}
+ALWAYS_INSTALL_AGENTS = {e["name"] for e in _GLOBAL.get("agents") or []}
+ALWAYS_INSTALL_SKILLS = {e["name"] for e in _GLOBAL.get("skills") or []}
 
 
 def main():

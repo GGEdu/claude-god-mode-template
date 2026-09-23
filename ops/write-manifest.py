@@ -126,6 +126,8 @@ def main() -> None:
         },
         "checksums": collect_checksums(project),
         "symlinks_enabled": existing.get("symlinks_enabled", False),
+        # Piezas sueltas aplicadas con ops/apply.py (agent-deck): se conservan.
+        **({"items": existing["items"]} if existing.get("items") else {}),
     }
 
     with open(manifest_path, "w") as f:

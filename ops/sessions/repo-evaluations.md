@@ -4,8 +4,9 @@
 <!-- NO editar manualmente — el agente gestiona este archivo -->
 
 ## Stats
-- Total evaluados: 4
-- INCLUDE: 3 | REVIEW: 1 | WATCH: 0 | SKIP: 0
+- Total evaluados: 8
+- INCLUDE: 5 | REVIEW: 3 | WATCH: 0 | SKIP: 0
+- Status válidos: Proposed → Integrated → **Verified** (solo tras `ops/check-skill-integrity.py` en verde)
 
 ---
 
@@ -20,6 +21,7 @@
 - **Extracted:** skills: ui-ux-pro-max (search engine, design system gen, 11 domains, 10 tech stacks)
 - **Status:** Proposed
 - **Notes:** Complements existing design-system/banner-design/brand skills (narrower scope). Large dataset requires integration care. No external dependencies. Medium effort (8-12h).
+- **Re-evaluación 2026-09-23:** la integración copió solo `SKILL.md`; `scripts/search.py` y `data/` nunca llegaron y el SKILL.md mandaba ejecutarlos → el modelo caía en sus defaults (causa principal de los diseños repetidos). **Status: Integración parcial — rota**. Resolución (rama `feat/design-diversity`): se retiran las instrucciones del motor y la skill queda como catálogo de reglas UX; no se restaura el motor porque una búsqueda BM25 determinista por tipo de producto reproduce la homogeneidad. Upstream hoy: 130k★, 192 paletas, 22 stacks, skills extra (brand, banner-design, slides, ui-styling) sin evaluar.
 
 ### Everything Claude Code — https://github.com/affaan-m/everything-claude-code
 - **Date:** 2026-04-16
@@ -40,6 +42,36 @@
 - **Extracted:** skills: [], agents: [], rules: []
 - **Status:** Watchlist
 - **Notes:** Valor real solo si hay colecciones de documentos privados a gran escala (+10k docs). 10x más barato que GraphRAG. Reconsiderar si Maya DMS necesita RAG sobre docs clínicos/legales. MIT licensed. Python package `lightrag-hku`.
+
+### Impeccable — https://github.com/pbakaus/impeccable
+- **Date:** 2026-09-23
+- **Score:** 92/100 (Relevancia: 25/25, Calidad: 35/35, Extractabilidad: 18/20, Coste: 14/20)
+- **Tier:** INCLUDE
+- **Reason:** Único repo evaluado que ataca la homogeneidad por diseño: `concept-seed` asigna la dirección (excluye el default de la categoría y su opuesto), fuentes y looks de IA vetados, craft-floor, detector de 60+ antipatrones, 24 comandos (critique, audit, bolder, quieter, distill, polish, live…). 70k★, Apache-2.0, activo.
+- **Discovered via:** manual
+- **Extracted:** skills: [impeccable (verbatim)], agents: [ui-engineer reescrito sobre él]
+- **Status:** Integrated (rama `feat/design-diversity`, pendiente de merge)
+- **Notes:** Motor Rust descargado de GitHub Releases → huella fijada en `skills/impeccable/ENGINE.sha256` (verificada contra sidecar y `digest` de GitHub). `concept-seed` hace un GET a impeccable.style/api/roll sin datos del proyecto; telemetría y update-check desactivados por env. El valor está en `reference/new-work.md` (52 KB), no en SKILL.md: el límite de 5 ficheros de la Fase 2 no lo habría visto.
+
+### ui-skills — https://github.com/ibelick/ui-skills
+- **Date:** 2026-09-23
+- **Score:** 78/100 (Relevancia: 12/25, Calidad: 30/35, Extractabilidad: 20/20, Coste: 16/20)
+- **Tier:** REVIEW
+- **Reason:** 7 skills propias de design engineering (9k★, MIT): auditorías útiles (fixing-accessibility, fixing-motion-performance, fixing-metadata, improve-ui) y create-design-md; no aportan variedad estética.
+- **Discovered via:** manual
+- **Extracted:** skills: [fixing-accessibility, fixing-motion-performance, fixing-metadata, improve-ui] (candidatas)
+- **Status:** Proposed — aplazado hasta medir impeccable (council 2026-09-23)
+- **Notes:** `baseline-ui` impone defaults de Tailwind → aumenta la homogeneidad; no adoptar como default. `create-design-md` es fusionable en `design-md`.
+
+### Agentic Design Patterns — https://github.com/evoiz/Agentic-Design-Patterns
+- **Date:** 2026-09-23
+- **Score:** 50/100 (Relevancia: 6/25, Calidad: 24/35, Extractabilidad: 8/20, Coste: 12/20)
+- **Tier:** REVIEW
+- **Reason:** Libro de Antonio Gulli (21 patrones: chaining, routing, reflection, planning, multi-agente, guardrails, evaluación) + 66 notebooks. Conceptos ya cubiertos por autonomous-loops, santa-method, council, blueprint.
+- **Discovered via:** manual
+- **Extracted:** (nada)
+- **Status:** Skip — solo referencia conceptual
+- **Notes:** Sin licencia declarada y redistribuye el PDF completo del libro: no copiar texto. El pipeline "N direcciones en paralelo → evaluador → gate humano → build → crítica" que sugiere ya lo implementa impeccable.
 
 <!-- Formato por entrada:
 

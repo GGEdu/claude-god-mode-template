@@ -59,7 +59,6 @@ projects. Adding them to project stacks would be misleading.
 | `continuous-agent-loop` | Reference for choosing loop patterns |
 | `dmux-workflows` | Terminal multiplexer orchestration (tmux/zellij) |
 | `enterprise-agent-ops` | Enterprise-scale agent operations |
-| `effort-control` | `/effort` levels — set cost/reasoning budget before a workflow |
 
 **Action**: Document in `docs/` as harness-building tools. No stack integration needed.
 

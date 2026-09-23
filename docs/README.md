@@ -38,7 +38,7 @@ Mapa de lectura para entender este template, ordenado por urgencia y profundidad
 
 ## 🔧 Operación y mantenimiento
 
-12. **[`../skills/INDEX.md`](../skills/INDEX.md)** — Índice navegable de las 139 skills.
+12. **[`../skills/INDEX.md`](../skills/INDEX.md)** — Índice navegable de las skills (generado desde el catálogo con `make catalog`).
 13. **[`../.claude/pipeline.schema.yaml`](../.claude/pipeline.schema.yaml)** — Gramática formal de workflows.
 14. **[`../.claude/memory/lessons/README.md`](../.claude/memory/lessons/README.md)** — Schema y reglas de promoción de lessons.
 
@@ -61,4 +61,4 @@ Mapa de lectura para entender este template, ordenado por urgencia y profundidad
 3 → 4 → 5 → 15
 
 ### Implementas una skill o agent nuevo
-2 (§5-7) → 12 → `skills/skill-creator/`
+2 (§5-7) → 12 → plugin oficial `anthropic-skills:skill-creator`

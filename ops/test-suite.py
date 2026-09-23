@@ -797,6 +797,15 @@ def check_skills_coverage() -> tuple[set, set, dict]:
         commands_cfg = data.get("commands", {}) or {}
         declared.update(commands_cfg.keys())
 
+    # Layers (mismo formato que domains) y lo que se instala siempre (ops/global-install.yaml):
+    # sin esto, las skills instaladas a propósito salían como huérfanas.
+    for layer_yaml in (SKILLS_DIR.parent / "layers").glob("*/layer.yaml"):
+        data = load_yaml(layer_yaml)
+        for skill_list in (data.get("agent_skills", {}) or {}).values():
+            declared.update(skill_list or [])
+    global_install = load_yaml(SKILLS_DIR.parent / "ops" / "global-install.yaml") or {}
+    declared.update(e["name"] for e in global_install.get("skills") or [])
+
     all_skills = {d.name for d in SKILLS_DIR.iterdir() if d.is_dir()}
     orphaned = all_skills - declared
     missing = declared - all_skills

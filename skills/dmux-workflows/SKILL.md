@@ -140,6 +140,9 @@ git merge feat/billing
 
 ECC now includes a helper for external tmux-pane orchestration with separate git worktrees:
 
+> **Not bundled here.** The helper lives in a checkout of [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code); run it from that repo's root. This skill ships no scripts.
+<!-- integrity-ignore: scripts/orchestrate-worktrees.js -->
+
 ```bash
 node scripts/orchestrate-worktrees.js plan.json --execute
 ```

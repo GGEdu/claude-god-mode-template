@@ -2,6 +2,9 @@
 name: santa-method
 description: "Multi-agent adversarial verification with convergence loop. Two independent review agents must both pass before output ships."
 origin: "ECC — Ronald Skelton, RapportScore.ai"
+compatibility: "Usa dos revisores independientes (subagentes) en Claude Code; en otros harness, dos pasadas separadas sin compartir contexto."
+metadata:
+  harnesses: "claude, opencode, freebuff"
 ---
 
 # Santa Method

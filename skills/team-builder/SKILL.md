@@ -2,6 +2,9 @@
 name: team-builder
 description: Interactive agent picker for composing and dispatching parallel teams
 origin: community
+compatibility: "Requiere Claude Code: lanza agentes de ~/.claude/agents con la herramienta Agent."
+metadata:
+  harnesses: "claude"
 ---
 
 # Team Builder

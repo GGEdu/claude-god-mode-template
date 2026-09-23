@@ -1,0 +1,205 @@
+# Categoría de cada skill del catálogo (la usa ops/catalog.py y el panel de agent-deck).
+# Una skill nueva sin categoría hace fallar `make catalog`.
+categories:
+- id: diseno-ui
+  label: Diseño / UI / Frontend
+  skills:
+  - impeccable
+  - ui-ux-pro-max
+  - design-md
+  - design-system
+  - frontend-patterns
+  - frontend-slides
+  - liquid-glass-design
+  - browser-qa
+  - click-path-audit
+- id: stack-laravel
+  label: Stack Laravel / PHP
+  skills:
+  - laravel-patterns
+  - laravel-security
+  - laravel-tdd
+  - laravel-verification
+  - laravel-plugin-discovery
+  - livewire-patterns
+- id: stack-python
+  label: Stack Python / Django / ML
+  skills:
+  - python-patterns
+  - python-testing
+  - django-patterns
+  - django-security
+  - django-tdd
+  - django-verification
+  - pytorch-patterns
+- id: stack-js
+  label: Stack JS/TS (Node, Next, Nuxt, Bun)
+  skills:
+  - coding-standards
+  - backend-patterns
+  - nextjs-turbopack
+  - nuxt4-patterns
+  - bun-runtime
+- id: stack-sistemas
+  label: Stack Go / Rust / C++ / Perl
+  skills:
+  - golang-patterns
+  - golang-testing
+  - rust-patterns
+  - rust-testing
+  - cpp-coding-standards
+  - cpp-testing
+  - perl-patterns
+  - perl-security
+  - perl-testing
+- id: stack-jvm
+  label: Stack Java / Kotlin / Android
+  skills:
+  - springboot-patterns
+  - springboot-security
+  - springboot-tdd
+  - springboot-verification
+  - java-coding-standards
+  - jpa-patterns
+  - kotlin-patterns
+  - kotlin-testing
+  - kotlin-coroutines-flows
+  - kotlin-exposed-patterns
+  - kotlin-ktor-patterns
+  - android-clean-architecture
+  - compose-multiplatform-patterns
+- id: stack-apple-flutter
+  label: Stack Apple / Flutter
+  skills:
+  - swiftui-patterns
+  - swift-actor-persistence
+  - swift-concurrency-6-2
+  - swift-protocol-di-testing
+  - foundation-models-on-device
+  - flutter-dart-code-review
+- id: datos-infra
+  label: Datos / API / Infra
+  skills:
+  - api-design
+  - database-migrations
+  - postgres-patterns
+  - clickhouse-io
+  - docker-patterns
+  - deployment-patterns
+  - canary-watch
+  - benchmark
+  - mcp-server-patterns
+  - git-workflow
+- id: calidad
+  label: Calidad, testing y verificación
+  skills:
+  - tdd-workflow
+  - e2e-testing
+  - verification-loop
+  - ai-regression-testing
+  - eval-harness
+  - plankton-code-quality
+  - code-simplification-patterns
+  - jedi-review
+  - scraping-reviewer
+- id: seguridad
+  label: Seguridad
+  skills:
+  - security-review
+  - security-scan
+  - safety-guard
+  - requirements-stride
+- id: arquitectura
+  label: Arquitectura y planificación
+  skills:
+  - blueprint
+  - architecture-audit
+  - architecture-decision-records
+  - codebase-onboarding
+  - product-lens
+  - search-first
+  - council
+- id: orquestacion
+  label: Orquestación multi-agente y loops
+  skills:
+  - autonomous-loops
+  - continuous-agent-loop
+  - ralphinho-rfc-pipeline
+  - santa-method
+  - team-builder
+  - workflow-runner
+  - claude-devfleet
+  - dmux-workflows
+  - tentacle
+  - tentacle-context
+  - enterprise-agent-ops
+- id: ingenieria-agentes
+  label: Ingeniería de agentes / Claude API
+  skills:
+  - agentic-engineering
+  - ai-first-engineering
+  - agent-harness-construction
+  - agent-introspection-debugging
+  - agent-eval
+  - claude-api
+  - cost-aware-llm-pipeline
+  - agent-payment-x402
+  - prompt-optimizer
+- id: contexto-coste
+  label: Memoria, contexto y coste
+  skills:
+  - ck
+  - strategic-compact
+  - context-budget
+  - token-budget-advisor
+  - caveman
+  - project-wiki
+- id: meta
+  label: 'Meta: skills, reglas, hooks, repos'
+  skills:
+  - skill-comply
+  - skill-stocktake
+  - rules-distill
+  - hookify-rules
+  - repo-eval
+  - repo-scan
+- id: investigacion
+  label: Investigación y documentación
+  skills:
+  - deep-research
+  - exa-search
+  - last30days
+  - documentation-lookup
+  - market-research
+  - data-scraper-agent
+- id: contenido
+  label: Contenido, negocio y media
+  skills:
+  - article-writing
+  - content-engine
+  - crosspost
+  - x-api
+  - investor-materials
+  - investor-outreach
+  - fal-ai-media
+  - video-editing
+  - videodb
+- id: docencia
+  label: Docencia FP
+  skills:
+  - auditoria-curricular-fp
+- id: verticales
+  label: Dominios verticales
+  skills:
+  - carrier-relationship-management
+  - customs-trade-compliance
+  - energy-procurement
+  - inventory-demand-planning
+  - logistics-exception-management
+  - production-scheduling
+  - quality-nonconformance
+  - returns-reverse-logistics
+  - healthcare-cdss-patterns
+  - healthcare-emr-patterns
+  - healthcare-eval-harness
+  - healthcare-phi-compliance

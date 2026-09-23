@@ -6,6 +6,9 @@ disallowed-tools:
   - Write
   - Edit
   - NotebookEdit
+compatibility: "Paraleliza con subagentes en Claude Code; en otros harness, las búsquedas van en secuencia."
+metadata:
+  harnesses: "claude, opencode, freebuff"
 ---
 
 # Deep Research

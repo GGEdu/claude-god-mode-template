@@ -2,6 +2,9 @@
 name: search-first
 description: Research-before-coding workflow. Search for existing tools, libraries, and patterns before writing custom code. Invokes the researcher agent.
 origin: ECC
+compatibility: "Delega la búsqueda en un subagente en Claude Code; en otros harness, hazla en el hilo principal."
+metadata:
+  harnesses: "claude, opencode, freebuff"
 ---
 
 # /search-first — Research Before You Code

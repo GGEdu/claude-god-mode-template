@@ -2,6 +2,9 @@
 name: autonomous-loops
 description: "Patterns and architectures for autonomous Claude Code loops — from simple sequential pipelines to RFC-driven multi-agent DAG systems."
 origin: ECC
+compatibility: "Requiere Claude Code: los bucles se construyen sobre `claude -p`."
+metadata:
+  harnesses: "claude"
 ---
 
 # Autonomous Loops Skill
@@ -112,6 +115,9 @@ claude -p --allowedTools "Read,Write,Edit,Bash" "Implement the fixes from securi
 ## 2. NanoClaw REPL
 
 **ECC's built-in persistent loop.** A session-aware REPL that calls `claude -p` synchronously with full conversation history.
+
+> **Not bundled here.** `scripts/claw.js` lives in a checkout of [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code); run these commands from that repo's root. This skill ships no scripts.
+<!-- integrity-ignore: scripts/claw.js -->
 
 ```bash
 # Start the default session
