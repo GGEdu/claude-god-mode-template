@@ -28,6 +28,7 @@ ALWAYS_INSTALL_AGENTS = {
 # deliberada de NO conectarlo a pipeline.yaml/triggers — disponible, no forzado).
 ALWAYS_INSTALL_SKILLS = {
     "skill-creator",
+    "impeccable",  # la usa agents/ui-engineer.md (fase de dirección); no está en ningún stack
 }
 
 

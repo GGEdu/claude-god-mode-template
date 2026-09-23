@@ -40,6 +40,7 @@ install: ## Instala config global en ~/.claude/ (una vez por maquina)
 	@cp rules/* $(GLOBAL_DIR)/rules/common/
 	@echo "  ✅ Reglas comunes instaladas"
 	@python3 ops/install-global.py "$(GLOBAL_DIR)"
+	@bash ops/install-impeccable-engine.sh
 	@cp hooks/session-consolidate.sh $(GLOBAL_DIR)/hooks/session-consolidate.sh
 	@chmod +x $(GLOBAL_DIR)/hooks/session-consolidate.sh
 	@echo "  ✅ Hook de consolidacion de memoria instalado"
