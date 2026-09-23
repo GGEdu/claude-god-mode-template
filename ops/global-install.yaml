@@ -19,6 +19,8 @@ skills:
   why: la usa agents/repo-reviewer.md y weekly-repo-discovery
 - name: impeccable
   why: la usa agents/ui-engineer.md (fase de dirección); no está en ningún stack
+- name: auditoria-curricular-fp
+  why: recogida desde ~/.claude (2026-09-23)
 external:
   skills:
   - name: graphify
