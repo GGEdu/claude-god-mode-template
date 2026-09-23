@@ -43,6 +43,7 @@ agents:
     - code-simplification-patterns
   ui-engineer:
     skills:
+    - impeccable
     - ui-ux-pro-max
   e2e-runner:
     skills: []
