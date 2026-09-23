@@ -5,6 +5,9 @@ disallowed-tools:
   - Write
   - Edit
   - NotebookEdit
+compatibility: "Requiere Claude Code: un subagente architecture-auditor por proyecto (herramienta Agent)."
+metadata:
+  harnesses: "claude"
 ---
 
 # Architecture Audit Skill

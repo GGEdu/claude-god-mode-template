@@ -3,7 +3,7 @@
 # ============================================================
 
 
-.PHONY: check-skills drift collect
+.PHONY: check-skills drift collect catalog
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-layers list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
@@ -584,11 +584,16 @@ generate-manifest: ## Crea manifest para proyectos sin él. Uso: make generate-m
 
 test: ## Ejecuta la suite de tests integral (struct + embed + invoke)
 	python3 ops/check-skill-integrity.py
+	cd ops && python3 catalog.py --summary
 	python3 ops/test-suite.py
 
 test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
 	python3 ops/check-skill-integrity.py
+	cd ops && python3 catalog.py --summary
 	python3 ops/test-suite.py --no-invoke
+
+catalog: ## Genera dist/catalog.json (índice de todas las piezas; lo lee agent-deck). Resumen: make catalog ARGS=--summary
+	@cd ops && python3 catalog.py $(if $(ARGS),$(ARGS),--out dist/catalog.json)
 
 drift: ## Compara ~/.claude con el catálogo (igual/difiere/solo-instalada/externa/retirada). JSON: make drift ARGS=--json
 	@cd ops && python3 drift.py $(ARGS)
