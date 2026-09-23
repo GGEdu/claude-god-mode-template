@@ -1,6 +1,6 @@
 ---
 name: effort-control
-description: Control Claude Code's cost/speed trade-off using /effort levels. Use before starting a workflow or complex task to set the reasoning budget. Levels — standard (default), extra/xhigh (more thorough), max (maximum reasoning, most expensive).
+description: Control Claude Code's cost/speed trade-off using /effort levels. Use before starting a workflow or complex task to set the reasoning budget. Levels — low, medium, high, xhigh, max (from cheapest/fastest to deepest/most expensive).
 disallowed-tools:
   - Write
   - Edit
@@ -13,30 +13,16 @@ Set the reasoning effort level for the current task using `/effort`. This contro
 
 ## Levels
 
-| Level | Command | Extended Thinking | Best For |
-|-------|---------|-----------------|----------|
-| Standard | `/effort standard` | Minimal | Most day-to-day tasks |
-| Extra | `/effort extra` or `/effort xhigh` | Elevated | Complex features, security review |
-| Max | `/effort max` | Maximum budget | Critical decisions, architecture, pre-release |
+Real levels (`claude --help` → `--effort <level>`): `low`, `medium`, `high`, `xhigh`, `max`.
+Set them with `/effort <level>` in a session or `claude --effort <level>` at launch.
 
-## When to Use Each Level
-
-### Standard (default)
-- Routine code edits, bug fixes, documentation
-- Tasks where the path is clear and reversible
-- Cost-sensitive batch operations
-
-### Extra
-- Complex feature implementation spanning multiple files
-- Security audits where missing something is costly
-- Refactors with broad side-effect surface
-- Debugging hard-to-reproduce issues
-
-### Max
-- Architectural decisions (before `/workflow architecture-audit`)
-- Pre-release security scan
-- Reviewing a PR that touches auth, payments, or core data models
-- When a mistake here would be expensive to reverse
+| Level | Best For |
+|-------|----------|
+| `low` | Mechanical edits, renames, formatting, quick lookups |
+| `medium` | Routine fixes and documentation on a clear, reversible path |
+| `high` | Everyday feature work spanning a few files |
+| `xhigh` | Complex features, security review, hard-to-reproduce bugs, refactors with broad side effects |
+| `max` | Architecture decisions, pre-release security scan, auth/payments/core-data PRs; mistakes expensive to reverse |
 
 ## Pairing with Workflow Runner
 
@@ -48,7 +34,7 @@ Set effort before invoking a workflow to amplify the entire pipeline:
 ```
 
 ```
-/effort extra
+/effort xhigh
 /workflow feature
 ```
 
@@ -56,22 +42,22 @@ For routine hotfixes, leave at default — max is expensive and unnecessary for 
 
 ## Cost Implications
 
-- `extra` / `xhigh` activates elevated extended thinking — ~2-3x cost of standard for the same task
+- `xhigh` spends noticeably more reasoning than `high` for the same task
 - `max` uses the maximum reasoning budget — best reserved for high-stakes decisions
-- Effort resets to standard at session end
+- `/effort` applies to the current session only
 
 ## Decision Matrix
 
 ```
 Is this reversible in < 5 minutes?
-  Yes → standard
+  Yes → low or medium
 
 Is this a security/auth/payment change?
   Yes → max
 
 Does this span > 5 files or introduce a new architectural layer?
-  Yes → extra or max
+  Yes → xhigh or max
 
 Is this a routine fix on a well-understood path?
-  Yes → standard
+  Yes → low or medium
 ```

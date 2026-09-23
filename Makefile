@@ -2,6 +2,8 @@
 # Claude God Mode Template — Panel de Control
 # ============================================================
 
+
+.PHONY: check-skills
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-layers list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
@@ -581,10 +583,15 @@ generate-manifest: ## Crea manifest para proyectos sin él. Uso: make generate-m
 # ---- TESTS ----
 
 test: ## Ejecuta la suite de tests integral (struct + embed + invoke)
+	python3 ops/check-skill-integrity.py
 	python3 ops/test-suite.py
 
 test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
+	python3 ops/check-skill-integrity.py
 	python3 ops/test-suite.py --no-invoke
+
+check-skills: ## Verifica que cada skill contiene los ficheros que su SKILL.md manda usar
+	python3 ops/check-skill-integrity.py
 
 # ---- DIAGNÓSTICO Y VERIFICACIÓN ----
 

@@ -27,7 +27,9 @@ ALWAYS_INSTALL_AGENTS = {
 # así que sin este allowlist nunca se instalaría (council 2026-07-24: decisión
 # deliberada de NO conectarlo a pipeline.yaml/triggers — disponible, no forzado).
 ALWAYS_INSTALL_SKILLS = {
-    "skill-creator",
+    # skill-creator ya no: el plugin oficial (anthropic-skills:skill-creator) es la
+    # misma skill y se actualiza solo; skills/skill-creator queda como fallback manual.
+    "repo-eval",   # la usa agents/repo-reviewer.md (instalado) y weekly-repo-discovery
     "impeccable",  # la usa agents/ui-engineer.md (fase de dirección); no está en ningún stack
 }
 

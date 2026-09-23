@@ -113,6 +113,9 @@ claude -p --allowedTools "Read,Write,Edit,Bash" "Implement the fixes from securi
 
 **ECC's built-in persistent loop.** A session-aware REPL that calls `claude -p` synchronously with full conversation history.
 
+> **Not bundled here.** `scripts/claw.js` lives in a checkout of [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code); run these commands from that repo's root. This skill ships no scripts.
+<!-- integrity-ignore: scripts/claw.js -->
+
 ```bash
 # Start the default session
 node scripts/claw.js

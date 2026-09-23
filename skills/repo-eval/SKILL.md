@@ -68,12 +68,27 @@ gh api repos/<owner>/<repo>/git/trees/HEAD?recursive=1 \
 gh api repos/<owner>/<repo>/contents/<path> --jq '.content' | base64 -d
 ```
 
+### Modo skill-repo (obligatorio si el repo contiene `SKILL.md`)
+
+El límite de 5 archivos no sirve para repos de skills: su valor suele estar fuera de
+`SKILL.md` (referencias, scripts, datos). Casos reales: el núcleo de `pbakaus/impeccable`
+está en `reference/new-work.md` (52 KB) y el de `ui-ux-pro-max` en `scripts/` + `data/`.
+
+```bash
+tmp=$(mktemp -d) && git clone --depth 1 https://github.com/<owner>/<repo> "$tmp/repo"
+find "$tmp/repo" -name SKILL.md -not -path '*/node_modules/*'   # localizar skills
+du -sh <dir-de-cada-skill>; find <dir-de-cada-skill> -type f      # inventario completo
+```
+
+Lee el `SKILL.md` **y** todo lo que cite (referencias, scripts, datos). Anota el
+coste en contexto (KB de cada fichero que se carga) y cualquier binario o llamada de red.
+
 **Analizar:**
 - Patrones que mapean a `SKILL.md` (best practices, guidelines, workflows)
 - Patrones que mapean a `agent.md` (roles especializados con herramientas)
 - Reglas que mapean a `rules/*.md` (convenciones de código, seguridad, testing)
 - Scripts que mapean a `ops/*.py` o `hooks/*.sh`
-- Conflictos con los 130 skills existentes (`ls skills/` para verificar nombres)
+- Conflictos con las skills existentes (`ls skills/` para verificar nombres)
 
 **Output esperado de Fase 2:**
 ```json
@@ -114,7 +129,7 @@ gh api repos/<owner>/<repo>/contents/<path> --jq '.content' | base64 -d
 ## Dimensiones de scoring (100 puntos total)
 
 ### 1. Relevancia (25 pts)
-¿Cubre un gap real en los 130 skills existentes?
+¿Cubre un gap real en las skills existentes?
 
 | Puntos | Criterio |
 |--------|----------|
@@ -204,13 +219,25 @@ Loguear con razón. No re-evaluar. Blacklisted.
 
 ---
 
+## Verificación de integración (antes de marcar `Integrated`)
+
+Una skill integrada a medias falla en silencio: el modelo no encuentra el script que su
+`SKILL.md` manda ejecutar y cae en sus defaults. Pasó con `ui-ux-pro-max` (abril 2026:
+se copió solo `SKILL.md`, sin `scripts/` ni `data/`; nadie lo notó en 5 meses).
+
+1. Copiar el **directorio completo** de la skill, nunca solo `SKILL.md`.
+2. `python3 ops/check-skill-integrity.py skills <nombre>` debe salir en verde.
+3. Si la skill descarga binarios o llama a la red: documentar qué y fijar huella
+   (ejemplo: `skills/impeccable/UPSTREAM.md` + `ENGINE.sha256`).
+4. Solo entonces `Status: Integrated`; `Verified` cuando se ha usado en una tarea real.
+
 ## Reglas de memoria
 
 1. **Siempre leer primero** `ops/sessions/repo-evaluations.md` antes de evaluar
 2. **Si URL ya existe** en el log: retornar resultado cacheado, no re-evaluar
 3. **Exception:** forzar re-evaluación si el repo tiene >90 días desde la evaluación
    Y el usuario lo pide explícitamente
-4. **Siempre actualizar** el log tras cada evaluación (incluso SKIP)
+4. **Siempre actualizar** el log tras cada evaluación (incluso SKIP) y **recalcular `## Stats`** contando las entradas reales
 
 ---
 
