@@ -593,7 +593,7 @@ test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
 	python3 ops/test-suite.py --no-invoke
 
 catalog: ## Genera dist/catalog.json (índice de todas las piezas; lo lee agent-deck). Resumen: make catalog ARGS=--summary
-	@cd ops && python3 catalog.py $(if $(ARGS),$(ARGS),--out dist/catalog.json)
+	@cd ops && python3 catalog.py $(if $(ARGS),$(ARGS),--out dist/catalog.json --index)
 
 adapters: ## Genera en dist/ los agentes y comandos en formato de otros harness (hoy: opencode)
 	@cd ops && python3 adapters.py

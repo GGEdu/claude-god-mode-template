@@ -5,8 +5,8 @@
 # - agents / skills: se instalan siempre. `why` explica quién las usa.
 # - external: las instala otra herramienta; el catálogo no las copia ni compara.
 # - retired: quitadas del catálogo a propósito; si siguen instaladas, desinstalar.
-# - skill-creator no está: el plugin oficial (anthropic-skills:skill-creator) es la
-#   misma skill y se actualiza solo; skills/skill-creator queda como fallback manual.
+# - skill-creator se retiró del catálogo (2026-09-23): el plugin oficial
+#   anthropic-skills:skill-creator es la misma skill y se actualiza solo.
 #
 # Este fichero lo reescribe ops/collect.py: los comentarios solo sobreviven aquí arriba.
 agents:
@@ -33,3 +33,7 @@ retired:
   skills:
   - name: continuous-learning
     why: confidence scoring extraído al sistema de lessons (commit 108e51d)
+  - name: skill-creator
+    why: duplicada por el plugin oficial anthropic-skills:skill-creator (2026-09-23)
+  - name: effort-control
+    why: sin uso en stacks, agentes ni pipelines (2026-09-23)

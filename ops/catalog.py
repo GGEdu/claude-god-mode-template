@@ -66,6 +66,10 @@ def usage_index() -> dict[str, list[str]]:
                     names.update(v.get("skills") or [])
             for skills in (d.get("agent_skills") or {}).values():
                 names.update(skills or [])
+            cmds = d.get("commands") or {}
+            names.update(cmds.keys() if isinstance(cmds, dict) else cmds)
+            if kind == "layer":
+                names.update(d.get("agents") or [] if isinstance(d.get("agents"), list) else [])
             for n in names:
                 used.setdefault(n, set()).add(ref)
     return {k: sorted(v) for k, v in used.items()}
@@ -147,9 +151,35 @@ def build() -> dict:
             "items": items}
 
 
+def write_index(data: dict) -> Path:
+    """skills/INDEX.md generado: navegable por categoría, nunca editado a mano."""
+    skills_ = [i for i in data["items"] if i["type"] == "skill"]
+    lines = ["---", "name: skills-index",
+             f"description: Índice de las {len(skills_)} skills del catálogo por categoría (generado).",
+             f"updated: {data['generated_at'][:10]}", "---", "",
+             f"<!-- generado por ops/catalog.py --index @{data['commit'][:7]}; no editar: `make catalog` -->", "",
+             "# Skills — índice por categoría", "",
+             f"**{len(skills_)} skills.** Instaladas globalmente: {sum(1 for s in skills_ if s['global_install'])}. "
+             "Solo Claude Code: " + str(sum(1 for s in skills_ if s['harnesses'] == ['claude'])) + ". "
+             "El detalle completo (huella, quién la usa, compatibilidad) está en `dist/catalog.json`.", ""]
+    for cat in data["categories"]:
+        rows = [s for s in skills_ if s["category"] == cat["id"]]
+        lines += [f"## {cat['label']} ({len(rows)})", "", "| Skill | Harness | Para qué |", "|---|---|---|"]
+        for s in rows:
+            desc = s["description"].replace("|", "\\|")
+            desc = desc if len(desc) <= 160 else desc[:157].rstrip() + "…"
+            harness = "solo Claude" if s["harnesses"] == ["claude"] else "todos"
+            lines.append(f"| [`{s['name']}`]({s['name']}/SKILL.md) | {harness} | {desc} |")
+        lines.append("")
+    path = CATALOG / "skills/INDEX.md"
+    path.write_text("\n".join(lines))
+    return path
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out")
+    ap.add_argument("--index", action="store_true", help="regenera skills/INDEX.md")
     ap.add_argument("--summary", action="store_true")
     args = ap.parse_args()
     try:
@@ -157,6 +187,10 @@ def main() -> int:
     except CatalogError as e:
         print(f"✗ {e}", file=sys.stderr)
         return 1
+    if args.index:
+        print(f"✓ {write_index(data).relative_to(CATALOG)}")
+        if not args.out:
+            return 0
     if args.summary:
         counts: dict[str, int] = {}
         for i in data["items"]:

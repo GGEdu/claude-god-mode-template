@@ -152,13 +152,11 @@ categories:
   - strategic-compact
   - context-budget
   - token-budget-advisor
-  - effort-control
   - caveman
   - project-wiki
 - id: meta
   label: 'Meta: skills, reglas, hooks, repos'
   skills:
-  - skill-creator
   - skill-comply
   - skill-stocktake
   - rules-distill
