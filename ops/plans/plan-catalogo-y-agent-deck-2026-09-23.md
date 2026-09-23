@@ -75,16 +75,21 @@ El ejecutor es Node sin dependencias; el catálogo es Python. El contrato entre
 ambos son **comandos del catálogo con salida JSON**, no que agent-deck reimplemente
 la lógica (su riesgo 5: "el ejecutor se convierte en un segundo producto").
 
-| Comando del catálogo | Existe | Salida | Uso desde agent-deck |
+Todos aceptan `--json` y **ninguno imprime secretos ni contenido de ficheros**. Estado a
+2026-09-23 (rama `feat/catalog`, pendiente de fusionar):
+
+| Comando del catálogo | Estado | Salida | Uso desde agent-deck |
 |---|---|---|---|
-| `make catalog` → `dist/catalog.json` | **nuevo** | índice: `{type, name, description, compatibility, harnesses, files[], sha256, path}` por pieza + `commit` del catálogo | Listado del panel |
-| `ops/check-skill-integrity.py` | sí (rama `chore/skills-maintenance`) | exit 0/1 + lista | Puerta antes de aplicar nada |
-| `ops/write-manifest.py` | sí | `.claude/.template-manifest.yaml` en el repo | Registrar qué se aplicó |
-| `ops/check-updates.py <repo>` | sí | exit 0/1 (+ `--json` **nuevo**) | "Este repo va por detrás" |
-| `ops/update-project.py <repo>` | sí | exit 0/1/2 | Aplicar actualización |
-| `ops/apply.py <repo> --items … --mode … --harness …` | **nuevo** | JSON con ficheros escritos | Aplicar piezas sueltas (no solo un stack entero) |
-| `ops/collect.py <ruta>` | **nuevo** | JSON con lo recogido | Botón "recoger" (ver §5) |
-| `make drift` | **nuevo** | JSON: instalado vs catálogo | Estado de `~/.claude` |
+| `ops/catalog.py [--out dist/catalog.json]` · `make catalog` | ✅ | índice de 230 piezas: `{type, name, description, path, sha256, files, bytes, category, harnesses, compatibility, used_by, global_install}` + `commit`, `dirty`, `categories`, `external`, `retired` | Listado del panel |
+| `ops/drift.py` · `make drift` | ✅ | `~/.claude` vs catálogo: igual/difiere (con ficheros)/solo-instalada/externa/retirada | Semáforo de `~/.claude` |
+| `ops/collect.py <tipo> <nombre> [--overwrite]` · `make collect` | ✅ | recoge al catálogo, commit en rama (nunca `main`) | Botón "recoger" |
+| `ops/apply.py <repo> --items t:n,… --harness … --mode auto\|link\|copy [--remove]` · `make apply` | ✅ | por pieza y harness: aplicado / no-aplica / omitido (conflicto) / rechazado; registra en el manifiesto → `items` | Aplicar y quitar piezas |
+| `ops/repo-status.py <repo>` · `make repo-status` | ✅ | al-dia / catalogo-mas-nuevo / editado-localmente / enlace-roto / falta | "Este repo va por detrás" |
+| `ops/check-skill-integrity.py` · `make check-skills` | ✅ | exit 0/1 + lista | Puerta antes de aplicar (apply.py ya la usa) |
+| `ops/adapters.py` · `make adapters` | ✅ opencode · ⏳ freebuff | `dist/opencode/{agents,commands}` | Lo usa apply.py |
+| `ops/install-opencode.py [--write]` · `make install-opencode` | ✅ | instala en `~/.config/opencode` + `instructions` | Instalación global opencode |
+| `ops/mcp.py import\|render\|diff` · `make mcp-diff` | ✅ | `mcp/servers.yaml` → Claude `${VAR}` / opencode `{env:VAR}` | Vista y aplicación de MCP |
+| `ops/check-updates.py`, `ops/update-project.py` | ya existían | a nivel de stack completo | Proyectos creados con `init-project` |
 
 Ya existe el manifiesto por proyecto (`.claude/.template-manifest.yaml`, con SHA
 del template y huellas de cada fichero generado) y `symlinks_enabled`. Hoy solo
@@ -134,11 +139,11 @@ Cada fase cierra con algo comprobable desde fuera.
 
 | Fase | Contenido | Salida medible |
 |---|---|---|
-| **C0** | Fusionar `feat/design-diversity` y después `chore/skills-maintenance` (hoy sin push) | `main` contiene impeccable, `check-skill-integrity`, `repo-eval` ampliada |
-| **C1** | `collect.py` + recoger las 3 skills huérfanas + `make drift` | `make drift` sin filas *solo instalada* |
-| **C2** | `make catalog` → `dist/catalog.json`; `compatibility` en las ~15 skills atadas a Claude | JSON válido con todas las piezas; test que falla si una pieza no aparece |
-| **C3** | Adaptadores opencode y freebuff en `distribute-agents.py` + `AGENTS.md` generado + MCP declarativo | Un agente del catálogo aparece y se invoca en opencode desde un repo de prueba |
-| **C4** | `apply.py` (piezas sueltas, 3 modos) + `check-updates --json` | Aplicar 2 skills a un repo en modo copia y ver el manifiesto actualizado |
+| **C0** | Fusionar `feat/design-diversity` → `chore/skills-maintenance` → `feat/catalog` (hoy sin push; espera confirmación) | `main` contiene impeccable, `check-skill-integrity`, `repo-eval` ampliada |
+| **C1** ✅ | `collect.py` + recoger las 3 skills huérfanas + `make drift` | `make drift` sin filas *solo instalada* |
+| **C2** ✅ | `make catalog` → `dist/catalog.json`; `compatibility` en las ~15 skills atadas a Claude | JSON válido con todas las piezas; test que falla si una pieza no aparece |
+| **C3** ✅ | Adaptadores opencode y freebuff en `distribute-agents.py` + `AGENTS.md` generado + MCP declarativo | Un agente del catálogo aparece y se invoca en opencode desde un repo de prueba |
+| **C4** ✅ | `apply.py` (piezas sueltas, 3 modos) + `check-updates --json` | Aplicar 2 skills a un repo en modo copia y ver el manifiesto actualizado |
 
 ### agent-deck — encima del catálogo
 
@@ -193,7 +198,15 @@ panel y se reconstruye leyendo manifiestos (mismo principio que `events.jsonl`).
   binarios); formato de agentes distinto en ambos; manifiesto y `update-project.py`
   existentes; 3 skills huérfanas; `check-skill-integrity` en verde en catálogo e
   instaladas.
-- **Sin verificar:** si opencode lee también `.claude/skills` **del proyecto** (su
-  documentación interna solo cita las rutas globales); Codex y Gemini CLI (no
-  instalados en la VM 111); formato exacto de `.agents/*.ts` de freebuff para
-  generar agentes (leerlo antes de C3).
+- **Hecho y verificado (C1–C4, 2026-09-23):** `opencode agent list` ve los 38 agentes
+  del catálogo; `opencode debug config` carga 8 reglas por `instructions` (antes
+  ninguna); `make mcp-diff` sin diferencias en ambos harness; `apply.py` probado en
+  repos temporales (enlace, copia con CI, conflicto con fichero a mano, skill solo
+  Claude pedida para opencode, eliminación); `repo-status.py` detecta una edición local.
+- **Pendiente para agent-deck:** decidir en el panel los 3 agentes cuya copia instalada
+  es más nueva que el catálogo (`code-reviewer`, `repo-reviewer`, `tdd-guide`) y
+  desinstalar `continuous-learning` (retirada).
+- **Sin verificar:** si opencode lee también `.claude/skills` **del proyecto** (por eso
+  apply.py usa `.opencode/skills`); agentes de freebuff (`.agents/*.ts` exige `model`
+  de OpenRouter y freebuff elige el modelo en su servidor); Codex y Gemini CLI (no
+  instalados en la VM 111).

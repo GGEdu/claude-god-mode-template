@@ -3,7 +3,7 @@
 # ============================================================
 
 
-.PHONY: check-skills drift collect catalog adapters install-opencode mcp-diff mcp-render
+.PHONY: check-skills drift collect catalog adapters install-opencode mcp-diff mcp-render apply repo-status
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-layers list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
@@ -606,6 +606,13 @@ mcp-diff: ## Compara mcp/servers.yaml con el MCP instalado en Claude Code y open
 
 mcp-render: ## Imprime el MCP del catálogo para un harness: make mcp-render HARNESS=claude|opencode
 	@cd ops && python3 mcp.py render $(or $(HARNESS),claude)
+
+apply: ## Aplica piezas a un repo: make apply REPO=/ruta ITEMS=skill:x,agent:y [HARNESS=claude,opencode] [MODE=auto|link|copy]
+	@test -n "$(REPO)" -a -n "$(ITEMS)" || (echo "Uso: make apply REPO=/ruta ITEMS=skill:x,agent:y [HARNESS=…] [MODE=…]"; exit 2)
+	@cd ops && python3 apply.py "$(REPO)" --items "$(ITEMS)" --harness "$(or $(HARNESS),claude)" --mode "$(or $(MODE),auto)"
+
+repo-status: ## Estado de lo aplicado en un repo (al día / catálogo más nuevo / editado / roto): make repo-status REPO=/ruta
+	@cd ops && python3 repo-status.py "$(REPO)"
 
 drift: ## Compara ~/.claude con el catálogo (igual/difiere/solo-instalada/externa/retirada). JSON: make drift ARGS=--json
 	@cd ops && python3 drift.py $(ARGS)
