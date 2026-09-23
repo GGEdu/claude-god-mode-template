@@ -1,0 +1,16 @@
+# Qué reglas de rules/ carga cada harness distinto de Claude Code (Claude carga todas
+# desde ~/.claude/rules/common). Se excluyen las que solo tienen sentido en Claude:
+#   agents.md (agentes de ~/.claude/agents), hooks.md, orchestration.md (Antigravity/
+#   Actions con `claude -p`), performance.md (selección de modelos Claude).
+# opencode las lee por la clave `instructions` de su config, apuntando a las copias
+# instaladas en ~/.claude/rules/common: no se duplica texto.
+opencode:
+  rules:
+    - coding-style.md
+    - security.md
+    - testing.md
+    - git-workflow.md
+    - patterns.md
+    - code-review.md
+    - development-workflow.md
+    - output-efficiency.md

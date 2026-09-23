@@ -3,7 +3,7 @@
 # ============================================================
 
 
-.PHONY: check-skills drift collect catalog
+.PHONY: check-skills drift collect catalog adapters install-opencode mcp-diff mcp-render
 .PHONY: help setup install dev-stack init-stack init-project list-stacks list-domains list-layers list-unused-skills activate-notebooklm deactivate-notebooklm \
         activate-n8n deactivate-n8n hooks-install hooks-uninstall \
         new-project load-project analyze-project setup-project check \
@@ -594,6 +594,18 @@ test-quick: ## Tests rápidos sin invocaciones de Claude (solo struct + embed)
 
 catalog: ## Genera dist/catalog.json (índice de todas las piezas; lo lee agent-deck). Resumen: make catalog ARGS=--summary
 	@cd ops && python3 catalog.py $(if $(ARGS),$(ARGS),--out dist/catalog.json)
+
+adapters: ## Genera en dist/ los agentes y comandos en formato de otros harness (hoy: opencode)
+	@cd ops && python3 adapters.py
+
+install-opencode: adapters ## Instala agentes, comandos y reglas del catálogo en opencode (global). Plan sin WRITE=1
+	@cd ops && python3 install-opencode.py $(if $(WRITE),--write,)
+
+mcp-diff: ## Compara mcp/servers.yaml con el MCP instalado en Claude Code y opencode
+	@cd ops && python3 mcp.py diff
+
+mcp-render: ## Imprime el MCP del catálogo para un harness: make mcp-render HARNESS=claude|opencode
+	@cd ops && python3 mcp.py render $(or $(HARNESS),claude)
 
 drift: ## Compara ~/.claude con el catálogo (igual/difiere/solo-instalada/externa/retirada). JSON: make drift ARGS=--json
 	@cd ops && python3 drift.py $(ARGS)

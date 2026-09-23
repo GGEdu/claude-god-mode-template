@@ -1,0 +1,121 @@
+# Servidores MCP: definición única. `make mcp-diff` compara con lo instalado;
+# ops/mcp.py render claude|opencode genera cada formato. Sin secretos: los valores
+# sensibles son {env: VAR} y se resuelven del entorno (vault SOPS).
+servers:
+  NotebookLMEdu:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/notebooklm-mcp/dist/index.js
+    env:
+      HEADLESS: 'false'
+      DISPLAY: :0
+    overrides:
+      opencode:
+        env:
+          HEADLESS: 'true'
+        command:
+        - /home/ggarrido/mcp-workspace/notebooklm-atado.sh
+  NotebookLMPersonal:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/notebooklm-mcp/dist/index.js
+    env:
+      HEADLESS: 'false'
+      DISPLAY: :0
+      XDG_DATA_HOME: /home/ggarrido/.local/share-nb2
+    overrides:
+      opencode:
+        env:
+          HEADLESS: 'true'
+        command:
+        - /home/ggarrido/mcp-workspace/notebooklm-atado.sh
+  brave-search:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/@modelcontextprotocol/server-brave-search/dist/index.js
+    env:
+      BRAVE_API_KEY:
+        env: BRAVE_API_KEY
+  cloudflare:
+    type: http
+    url: https://mcp.cloudflare.com/mcp
+  context7:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/@upstash/context7-mcp/dist/index.js
+    env:
+      CONTEXT7_API_KEY:
+        env: CONTEXT7_API_KEY
+  docker:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/@0xshariq/docker-mcp-server/dist/index.js
+  filesystem:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js
+    - /home/ggarrido/development/
+  git:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/@mseep/git-mcp-server/dist/index.js
+  github:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/@modelcontextprotocol/server-github/dist/index.js
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN:
+        env: GITHUB_PERSONAL_ACCESS_TOKEN
+  ha-mcp:
+    type: stdio
+    command: uvx
+    args:
+    - hass-mcp
+    env:
+      HA_URL:
+        env: HA_URL
+      HA_TOKEN:
+        env: HA_TOKEN
+  jcodemunch:
+    type: stdio
+    command: uvx
+    args:
+    - jcodemunch-mcp
+  mempalace:
+    type: stdio
+    command: /home/ggarrido/.local/bin/mempalace-mcp
+    args: []
+    overrides:
+      opencode:
+        env:
+          LOG_LEVEL: warn
+          DISABLE_METRICS: 'true'
+          MCP_TIMEOUT_MS: '30000'
+        command:
+        - mempalace-mcp
+  n8n:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/n8n-mcp/dist/mcp/index.js
+    env:
+      MCP_MODE: stdio
+      DISABLE_CONSOLE_OUTPUT: 'true'
+      N8N_API_URL:
+        env: N8N_API_URL
+      N8N_API_KEY:
+        env: N8N_API_KEY
+  web-reader:
+    type: stdio
+    command: node
+    args:
+    - /home/ggarrido/mcp-workspace/node_modules/@just-every/mcp-read-website-fast/dist/index.js
+    - serve
