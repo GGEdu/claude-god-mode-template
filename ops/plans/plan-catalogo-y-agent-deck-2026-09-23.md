@@ -76,7 +76,7 @@ ambos son **comandos del catálogo con salida JSON**, no que agent-deck reimplem
 la lógica (su riesgo 5: "el ejecutor se convierte en un segundo producto").
 
 Todos aceptan `--json` y **ninguno imprime secretos ni contenido de ficheros**. Estado a
-2026-09-23 (rama `feat/catalog`, pendiente de fusionar):
+2026-09-24: **fusionado en `main` y subido** (merge `e44d129`, 2026-09-23). La rama `feat/catalog` ya no existe:
 
 | Comando del catálogo | Estado | Salida | Uso desde agent-deck |
 |---|---|---|---|
@@ -139,7 +139,7 @@ Cada fase cierra con algo comprobable desde fuera.
 
 | Fase | Contenido | Salida medible |
 |---|---|---|
-| **C0** | Fusionar `feat/design-diversity` → `chore/skills-maintenance` → `feat/catalog` (hoy sin push; espera confirmación) | `main` contiene impeccable, `check-skill-integrity`, `repo-eval` ampliada |
+| **C0** ✅ | Fusionar `feat/design-diversity` → `chore/skills-maintenance` → `feat/catalog`. **Hecho el 2026-09-23** (merges `8a3094e` y `e44d129`, subidos a `origin/main`) | `main` contiene impeccable, `check-skill-integrity`, `repo-eval` ampliada |
 | **C1** ✅ | `collect.py` + recoger las 3 skills huérfanas + `make drift` | `make drift` sin filas *solo instalada* |
 | **C2** ✅ | `make catalog` → `dist/catalog.json`; `compatibility` en las ~15 skills atadas a Claude | JSON válido con todas las piezas; test que falla si una pieza no aparece |
 | **C3** ✅ | Adaptadores opencode y freebuff en `distribute-agents.py` + `AGENTS.md` generado + MCP declarativo | Un agente del catálogo aparece y se invoca en opencode desde un repo de prueba |
@@ -206,7 +206,24 @@ panel y se reconstruye leyendo manifiestos (mismo principio que `events.jsonl`).
 - **Pendiente para agent-deck:** decidir en el panel los 3 agentes cuya copia instalada
   es más nueva que el catálogo (`code-reviewer`, `repo-reviewer`, `tdd-guide`) y
   desinstalar `continuous-learning` (retirada).
+- **Comprobado en las sesiones de agent-deck (2026-09-24):**
+  - El servicio `agent-deck-exec` arranca con el `PATH` mínimo de systemd, sin `~/.local/bin` ni nvm.
+  - Las sesiones funcionan solo porque `tmux new-session` abre un **shell de login** (carga `~/.profile`) y el comando se teclea dentro. Con ese entorno reproducido se encuentran `claude`, `claude-litellm`, `opencode`, `freebuff`, `mempalace-mcp`, `graphify`, `node` y Chrome. **Si el ejecutor pasa a lanzar el comando directamente (`new-session … cmd`) o en modo autónomo, hay que darle un `PATH` explícito o no encontrará ninguno.**
+  - Skills visibles dentro de `agent-deck/panel`: Claude Code 146 (`~/.claude/skills`) y opencode 153 (las mismas más las suyas; `opencode debug skill`). freebuff las lee de `~/.claude/skills`, verificado en su código.
+  - opencode ve también las 7 skills marcadas solo Claude: las carga de forma global y no filtra por `metadata.harnesses`. Funcionarán a medias allí.
+  - `impeccable detect` funciona sobre el código del panel (`.tsx`/`.css`).
+  - La autoactualización de opencode (a 1.18.32, 2026-09-24 07:17) lo dejó roto sin ejecutar su `postinstall` («opencode-ai's postinstall script was not run»). Se arregló con `node postinstall.mjs` en su carpeta global. El panel debería comprobar `<bin> --version` de cada harness antes de ofrecerlo.
 - **Sin verificar:** si opencode lee también `.claude/skills` **del proyecto** (por eso
   apply.py usa `.opencode/skills`); agentes de freebuff (`.agents/*.ts` exige `model`
   de OpenRouter y freebuff elige el modelo en su servidor); Codex y Gemini CLI (no
   instalados en la VM 111).
+
+## 11. Respuesta de la sesión de agent-deck (2026-09-24)
+
+Plan aceptado, con las decisiones del usuario:
+- **Skills: se crean aquí, en el catálogo.** agent-deck no tendrá editor; solo
+  recoge y aplica. Confirma §8.
+- **freebuff: entra en agent-deck como harness lanzable**, marcado "solo terminal"
+  (sin hooks no hay eventos) y **fuera de LiteLLM** (solo tiene `login` contra su
+  servicio). Excepción consciente al contrato de alias.
+- Detalle en `agent-deck/exec/PLAN.md` §14.
